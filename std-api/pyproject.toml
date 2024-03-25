@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "fsg-api"
+version = "0.0.1"
+description = ""
+authors = ["Monkey.d.rupi <minsuhya@gmail.com>"]
+readme = "README.md"
+packages = [{include = "fsg-api"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pytest = "^7.1.3"
+python-dotenv = "^0.21.0"
+pydantic = {extras = ["email"], version = "^1.10.2"}
+fastapi = {extras = ["full"], version = "^0.85.0"}
+sqlmodel = "^0.0.8"
+loguru = "^0.6.0"
+psycopg2-binary = "^2.9.3"
+pymongo = "^4.2.0"
+python-multipart = "^0.0.5"
+uvicorn = "^0.18.3"
+pymysql = "^1.1.0"
+strawberry-graphql = {extras = ["debug-server"], version= "^0.199.0"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+
+
+[tool.poetry.group.tests.dependencies]
+httpx = "^0.23.0"
+requests = "^2.28.1"
+aiohttp = "^3.8.3"
+
+
+[tool.poetry.group.docs.dependencies]
+ipykernel = "^6.16.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
