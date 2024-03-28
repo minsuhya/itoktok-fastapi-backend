@@ -3,13 +3,14 @@ from typing import List, Optional
 from sqlmodel import Field, Relationship
 
 from .user import UserBase
+from .board import BoardInfoBase, BoardBase
+from .schedule import ScheduleBase
 from .hero import HeroBase
 from .team import TeamBase
 
 #####################################################
 #  ImportError: most likely due to a circular import
 #  ==> 상호참조 모델은 한곳에서 정의해야 한다.
-#
 
 
 class User(UserBase, table=True):
@@ -17,6 +18,31 @@ class User(UserBase, table=True):
 
 
 class UserRead(UserBase):
+    id: int
+
+
+class BoardInfo(BoardInfoBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
+class BoardInfoRead(BoardInfoBase):
+    id: int
+
+
+class Board(BoardBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user: Optional["User"] = Relationship(back_populates="boards")
+
+
+class BoardRead(BoardBase):
+    id: int
+
+
+class Schedule(ScheduleBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
+class ScheduleRead(ScheduleBase):
     id: int
 
 
