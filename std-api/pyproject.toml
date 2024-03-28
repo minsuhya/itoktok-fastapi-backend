@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "fsg-api"
+name = "std-api"
 version = "0.0.1"
 description = ""
 authors = ["Monkey.d.rupi <minsuhya@gmail.com>"]
 readme = "README.md"
-packages = [{include = "fsg-api"}]
+packages = [{include = "std-api"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
