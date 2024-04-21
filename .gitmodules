@@ -1,0 +1,3 @@
+[submodule "src/itoktok-vue-frontend"]
+	path = src/itoktok-vue-frontend
+	url = git@github.com:minsuhya/itoktok-vue-frontend.git
