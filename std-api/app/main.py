@@ -1,7 +1,9 @@
 import uvicorn
 
-from .api import (auth_router, book_router, file_router, graphql_router,
-                  hero_router, team_router, tutorial_router, user_router)
+# from .api import (auth_router, book_router, file_router, graphql_router,
+#                   hero_router, team_router, tutorial_router, user_router)
+from .api import (auth_router, graphql_router, hero_router, team_router,
+                  tutorial_router, user_router)
 from .core import app
 
 app.include_router(auth_router)
@@ -9,8 +11,8 @@ app.include_router(user_router)
 app.include_router(hero_router)
 app.include_router(team_router)
 app.include_router(tutorial_router)
-app.include_router(file_router)
-app.include_router(book_router)
+# app.include_router(file_router)
+# app.include_router(book_router)
 app.include_router(graphql_router, prefix="/graphql")
 
 
