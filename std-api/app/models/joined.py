@@ -2,11 +2,11 @@ from typing import List, Optional
 
 from sqlmodel import Field, Relationship
 
-from .user import UserBase
-from .board import BoardInfoBase, BoardBase
-from .schedule import ScheduleBase
+from .board import BoardBase, BoardInfoBase
 from .hero import HeroBase
+from .schedule import ScheduleBase
 from .team import TeamBase
+from .user import UserBase
 
 #####################################################
 #  ImportError: most likely due to a circular import
@@ -31,7 +31,7 @@ class BoardInfoRead(BoardInfoBase):
 
 class Board(BoardBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    user: Optional["User"] = Relationship(back_populates="boards")
+    # user: Optional["User"] = Relationship(back_populates="boards")
 
 
 class BoardRead(BoardBase):
