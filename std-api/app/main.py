@@ -1,15 +1,7 @@
 import uvicorn
 
-from .api import (
-    auth_router,
-    user_router,
-    book_router,
-    file_router,
-    hero_router,
-    team_router,
-    tutorial_router,
-    graphql_router,
-)
+from .api import (auth_router, book_router, file_router, graphql_router,
+                  hero_router, team_router, tutorial_router, user_router)
 from .core import app
 
 app.include_router(auth_router)

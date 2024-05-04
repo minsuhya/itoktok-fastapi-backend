@@ -3,8 +3,9 @@ import os
 import sqlalchemy as sa
 from dotenv import load_dotenv
 from loguru import logger
-from ..models import User, Hero, Team
 from sqlmodel import Session, SQLModel, create_engine
+
+from ..models import Hero, Team, User
 
 # from sqlmodel import text, select
 
