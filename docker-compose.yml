@@ -1,5 +1,4 @@
-version: "3.7"
-
+---
 services:
   # nginx
   nginx:
@@ -17,24 +16,39 @@ services:
       - TZ=Asia/Seoul
     depends_on:
       - api
-      - db
+    networks:
+      - std-net
+
+  api:
+    image: python:3.12-alpine
+    container_name: std-api
+    build: ./std-api
+    # command: poetry run python app/main.py
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
+    env_file:
+      - api.env
+    ports:
+      - 3000:3000
+    volumes:
+      - ./std-api/app:/backend/app
+      - ./data:/data
     networks:
       - std-net
 
   # mariadb
-  db:
-    image: mariadb:10
-    container_name: std-mysql
-    restart: unless-stopped
-    ports:
-      - 3308:3306
-    env_file: db.my.env
-    volumes:
-      - ./std-db/conf.d:/etc/mysql/conf.d
-      - ./std-db/initdb.d:/docker-entrypoint-initdb.d
-      - stdmydb_data:/var/lib/mysql # docker volume
-    networks:
-      - std-net
+  # db:
+  #   image: mariadb:10
+  #   container_name: std-mysql
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3308:3306
+  #   env_file: db.my.env
+  #   volumes:
+  #     - ./std-db/conf.d:/etc/mysql/conf.d
+  #     - ./std-db/initdb.d:/docker-entrypoint-initdb.d
+  #     - stdmydb_data:/var/lib/mysql # docker volume
+  #   networks:
+  #     - std-net
 
   # postgresql
   # db:
@@ -48,49 +62,31 @@ services:
   #   volumes:
   #     - stdpgdb_data:/var/lib/postgresql/data
 
-  mongo:
-    image: mongo:6
-    container_name: std-mongo
-    restart: always
-    ports:
-      - 27018:27017/tcp
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: rupi
-      MONGO_INITDB_ROOT_PASSWORD: rupi
-    volumes:
-      - stdmg_data:/data/db
-      - stdmg_cfg:/data/configdb
-    networks:
-      - std-net
-
-  api:
-    image: py39-slim
-    container_name: std-api
-    build: ./std-api
-    # command: poetry run python app/main.py
-    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
-    env_file:
-      - api.env
-    depends_on:
-      - db
-      - mongo
-    ports:
-      - 3000:3000
-    volumes:
-      - ./std-api/app:/backend/app
-      - ./data:/data
-    networks:
-      - std-net
+  # mongo:
+  #   image: mongo:6
+  #   container_name: std-mongo
+  #   restart: always
+  #   ports:
+  #     - 27018:27017/tcp
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: rupi
+  #     MONGO_INITDB_ROOT_PASSWORD: rupi
+  #   volumes:
+  #     - stdmg_data:/data/db
+  #     - stdmg_cfg:/data/configdb
+  #   networks:
+  #     - std-net
 
 networks:
   std-net:
     driver: bridge
-volumes:
-  #   stdpgdb_data:
-  #     name: stdpgdb_data
-  stdmydb_data:
-    name: stdmydb_data
-  stdmg_data:
-    name: stdmg_data
-  stdmg_cfg:
-    name: stdmg_cfg
+
+# volumes:
+#   #   stdpgdb_data:
+#   #     name: stdpgdb_data
+#   stdmydb_data:
+#     name: stdmydb_data
+#   stdmg_data:
+#     name: stdmg_data
+#   stdmg_cfg:
+#     name: stdmg_cfg
