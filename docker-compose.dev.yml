@@ -1,0 +1,91 @@
+---
+services:
+  # nginx
+  nginx:
+    container_name: std-nginx
+    image: nginx
+    restart: unless-stopped
+    #외부와 소통하는 경우에는 ports로 포트 설정.
+    ports:
+      - "2080:80"
+      - "2443:443"
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./src/itoktok-vue-frontend/dist:/var/www/html
+    environment:
+      - TZ=Asia/Seoul
+    depends_on:
+      - api
+    networks:
+      - std-net
+
+  api:
+    image: python:3.12-alpine
+    container_name: std-api
+    build: ./std-api
+    # command: poetry run python app/main.py
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
+    ports:
+      - 3000:3000
+    env_file: ./.env
+    volumes:
+      - ./std-api/app:/backend/app
+      - ./data:/data
+    networks:
+      - std-net
+
+  # mariadb
+  # db:
+  #   image: mariadb:10
+  #   container_name: std-mysql
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3308:3306
+  #   env_file: db.my.env
+  #   volumes:
+  #     - ./std-db/conf.d:/etc/mysql/conf.d
+  #     - ./std-db/initdb.d:/docker-entrypoint-initdb.d
+  #     - stdmydb_data:/var/lib/mysql # docker volume
+  #   networks:
+  #     - std-net
+
+  # postgresql
+  # db:
+  #   image: postgres:14
+  #   container_name: std-pgsql
+  #   restart: always
+  #   env_file:
+  #     - db.pg.env
+  #   ports:
+  #     - "5432:5432/tcp"
+  #   volumes:
+  #     - stdpgdb_data:/var/lib/postgresql/data
+
+  # mongo:
+  #   image: mongo:6
+  #   container_name: std-mongo
+  #   restart: always
+  #   ports:
+  #     - 27018:27017/tcp
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: rupi
+  #     MONGO_INITDB_ROOT_PASSWORD: rupi
+  #   volumes:
+  #     - stdmg_data:/data/db
+  #     - stdmg_cfg:/data/configdb
+  #   networks:
+  #     - std-net
+
+networks:
+  std-net:
+    driver: bridge
+
+# volumes:
+#   #   stdpgdb_data:
+#   #     name: stdpgdb_data
+#   stdmydb_data:
+#     name: stdmydb_data
+#   stdmg_data:
+#     name: stdmg_data
+#   stdmg_cfg:
+#     name: stdmg_cfg
