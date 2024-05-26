@@ -1,20 +1,30 @@
 from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 
 # from core.pgdb import create_db_and_tables, engine
 from .mydb import create_db_and_tables, engine
 
-# from .mgdb import get_mongodb
 
+app = FastAPI()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+origins = [
+    "*",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,  # cross-origin request에서 cookie를 포함할 것인지 (default=False)
+    allow_methods=["*"],     # cross-origin request에서 허용할 method들을 나타냄. (default=['GET']
+    allow_headers=["*"],     # cross-origin request에서 허용할 HTTP Header 목록
+)
 
-app = FastAPI(title="FastAPI + SQLModel + PostgreSQL(or Mysql)", version="0.1.0")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    pass
+    # create_db_and_tables()
     # app.mongodb = get_mongodb()
 
 

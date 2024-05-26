@@ -11,8 +11,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 router = APIRouter(
     prefix="/users",
     tags=["users"],
-    dependencies=[Depends(get_session), Depends(oauth2_scheme)],
-    # dependencies=[Depends(get_session)],
+    # dependencies=[Depends(get_session), Depends(oauth2_scheme)],
+    dependencies=[Depends(get_session)],
     responses={404: {"description": "API Not found"}},
 )
 

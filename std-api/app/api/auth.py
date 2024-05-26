@@ -13,7 +13,7 @@ from ..models import Token, TokenData, User
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter(
-    prefix="/auth",
+    prefix="/api/auth",
     tags=["auth"],
     dependencies=[Depends(get_session)],
     responses={404: {"description": "API Not found"}},
@@ -71,7 +71,7 @@ async def get_auth_user(
     return current_user
 
 
-@router.post("/token")
+@router.post("/login")
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
