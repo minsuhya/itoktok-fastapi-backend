@@ -7,6 +7,8 @@ def create_notice(db: Session, notice: NoticeCreate):
     print(db_notice)
     db.add(db_notice)
     db.commit()
+    db.refresh(db_notice)
+
     return db_notice
 
 def get_notices(db: Session, skip: int = 0, limit: int = 100):
