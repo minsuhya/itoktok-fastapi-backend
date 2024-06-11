@@ -23,8 +23,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 @app.on_event("startup")
 def on_startup():
-    pass
-    # create_db_and_tables()
+    create_db_and_tables()
     # app.mongodb = get_mongodb()
 
 

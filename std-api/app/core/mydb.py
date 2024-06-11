@@ -22,7 +22,7 @@ engine = create_engine(os.environ["CONN_URL"], echo=False)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
-    insert_samples()
+    # insert_samples()
 
 
 def insert_samples():

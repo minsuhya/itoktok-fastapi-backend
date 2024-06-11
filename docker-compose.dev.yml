@@ -20,7 +20,7 @@ services:
       - std-net
 
   api:
-    image: python:3.12-alpine
+    # image: python:3.12-alpine
     container_name: std-api
     build: ./std-api
     # command: poetry run python app/main.py
@@ -79,7 +79,6 @@ services:
 networks:
   std-net:
     driver: bridge
-
 # volumes:
 #   #   stdpgdb_data:
 #   #     name: stdpgdb_data

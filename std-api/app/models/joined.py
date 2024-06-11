@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from sqlmodel import Field, Relationship
 
-from .board import BoardBase, BoardInfoBase
+# from .board import BoardBase, BoardInfoBase
 from .hero import HeroBase
 from .schedule import ScheduleBase
 from .team import TeamBase
@@ -21,21 +21,21 @@ class UserRead(UserBase):
     id: int
 
 
-class BoardInfo(BoardInfoBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-
-
-class BoardInfoRead(BoardInfoBase):
-    id: int
-
-
-class Board(BoardBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    # user: Optional["User"] = Relationship(back_populates="boards")
-
-
-class BoardRead(BoardBase):
-    id: int
+# class BoardInfo(BoardInfoBase, table=True):
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#
+#
+# class BoardInfoRead(BoardInfoBase):
+#     id: int
+#
+#
+# class Board(BoardBase, table=True):
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     # user: Optional["User"] = Relationship(back_populates="boards")
+#
+#
+# class BoardRead(BoardBase):
+#     id: int
 
 
 class Schedule(ScheduleBase, table=True):

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Union
 
 from ..core import get_session, oauth2_scheme
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +9,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlmodel import Session, desc, select
 from ..models import Token, TokenData, User
+from ..schemas import ErrorResponse, SuccessResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -71,11 +72,11 @@ async def get_auth_user(
     return current_user
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_200_OK, response_model=Union[SuccessResponse, ErrorResponse])
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
-) -> Token:
+):
     user = session.exec(select(User).where(User.username == form_data.username)).first()
 
     if not user or not verify_password(form_data.password, user.password):
@@ -91,4 +92,5 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
-    return Token(access_token=access_token, token_type="bearer")
+    return SuccessResponse(data={'access_token': access_token})
+    # return Token(access_token=access_token, token_type="bearer")
