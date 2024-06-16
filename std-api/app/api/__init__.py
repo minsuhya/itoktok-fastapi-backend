@@ -1,21 +1,25 @@
 from .auth import router as auth_router
 from .users import router as user_router
 from .notice import router as notice_router
-# from .books import router as book_router
-# from .graphql import router as graphql_router
-# from .files import router as file_router
-# from .heroes import router as hero_router
-# from .teams import router as team_router
-# from .tutorials import router as tutorial_router
+from .teacher import router as teacher_router
+from .customer import router as customer_router
+from .program import router as program_router
+from .voucher import router as voucher_router
+from .schedule import router as schedule_router
+from .record import router as record_router
+from .inquiry import router as inquiry_router
+from .announcement import router as announcement_router
 
 __all__ = [
     auth_router,
     user_router,
     notice_router,
-    # hero_router,
-    # team_router,
-    # tutorial_router,
-    # file_router,
-    # book_router,
-    # graphql_router,
+    teacher_router,
+    customer_router,
+    program_router,
+    voucher_router,
+    schedule_router,
+    record_router,
+    inquiry_router,
+    announcement_router,
 ]

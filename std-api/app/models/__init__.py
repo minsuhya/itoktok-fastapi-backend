@@ -1,4 +1,6 @@
 from .user import UserCreate, UserUpdate, Token, TokenData
+from .teacher import Teacher
+from .customer import Customer
 from .book import Book, BookUpdate, Person
 from .hero import HeroCreate, HeroUpdate
 from .joined import (
