@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
-from .models.voucher import Voucher
 from typing import List, Optional
+from ..models.voucher import Voucher
 
 def create_voucher(session: Session, voucher: Voucher) -> Voucher:
     session.add(voucher)

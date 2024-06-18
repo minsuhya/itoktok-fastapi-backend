@@ -1,8 +1,6 @@
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, func
 from typing import Optional
-
-from sqlmodel import Field, SQLModel
-from sqlalchemy.sql import func
-from sqlalchemy import Column, DateTime
 from datetime import datetime
 
 class Customer(SQLModel, table=True):

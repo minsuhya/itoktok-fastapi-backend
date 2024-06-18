@@ -1,7 +1,8 @@
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, func
 from typing import Optional
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 class InquiryType(str, Enum):
     service_inquiry = "서비스문의"
@@ -15,4 +16,11 @@ class Inquiry(SQLModel, table=True):
     inquiry_type: str = Field(default=InquiryType.service_inquiry)
     title: str
     content: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )
+    deleted_at: Optional[datetime] = Field(default=None)

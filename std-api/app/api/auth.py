@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Union
+from typing import Annotated, Union, Optional
 
 from ..core import get_session, oauth2_scheme
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlmodel import Session, desc, select
-from ..models import Token, TokenData, User
+from ..models.user import Token, TokenData, CenterDirector, Teacher
 from ..schemas import ErrorResponse, SuccessResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -41,6 +41,14 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     )
     return encoded_jwt
 
+def get_user_by_username(username: str, session: Session = Depends(get_session)):
+    statement = select(CenterDirector).where(CenterDirector.username == username)
+    director = session.exec(statement).first()
+    if director:
+        return director
+    statement = select(Teacher).where(Teacher.username == username)
+    return session.exec(statement).first()
+
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -58,26 +66,17 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(username=token_data.username)
+    user = get_user_by_username(username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
 
 
-async def get_auth_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    if current_user.is_active is False:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=Union[SuccessResponse, ErrorResponse])
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session),
 ):
-    user = session.exec(select(User).where(User.username == form_data.username)).first()
+    user = get_user_by_username(form_data.username)
 
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(

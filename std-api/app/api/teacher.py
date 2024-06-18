@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, desc, select
 
 from ..core import get_session
-from ..models.teacher import Teacher
-from ..schemas.teacher import TeacherCreate, TeacherUpdate, TeacherRead
-from ..crud.teacher import create_teacher, get_teacher, get_teachers, update_teacher, delete_teacher
+from ..models.user import Teacher
+from ..schemas.user import TeacherCreate, TeacherUpdate, TeacherRead
+from ..crud.teacher import create_teacher, get_teacher_by_id, get_teacher_by_username, get_teachers, update_teacher, delete_teacher
 from ..schemas import ErrorResponse, SuccessResponse
 
 router = APIRouter(
@@ -19,13 +19,13 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=TeacherRead)
-def create_teacher(teacher: TeacherCreate, session: Session = Depends(get_session)):
+def register_teacher(teacher: TeacherCreate, session: Session = Depends(get_session)):
     teacher_data = Teacher.from_orm(teacher)
     return create_teacher(session, teacher_data)
 
 @router.get("/{teacher_id}", response_model=TeacherRead)
 def read_teacher(teacher_id: int, session: Session = Depends(get_session)):
-    teacher = get_teacher(session, teacher_id)
+    teacher = get_teacher_by_id(session, teacher_id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
     return teacher
@@ -35,8 +35,8 @@ def read_teachers(skip: int = 0, limit: int = 10, session: Session = Depends(get
     return get_teachers(session, skip=skip, limit=limit)
 
 @router.put("/{teacher_id}", response_model=TeacherRead)
-def update_teacher(teacher_id: int, teacher: TeacherUpdate, session: Session = Depends(get_session)):
-    existing_teacher = get_teacher(session, teacher_id)
+def update_teacher_endpoint(teacher_id: int, teacher: TeacherUpdate, session: Session = Depends(get_session)):
+    existing_teacher = get_teacher_by_id(session, teacher_id)
     if not existing_teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
     teacher_data = teacher.dict(exclude_unset=True)
@@ -45,7 +45,7 @@ def update_teacher(teacher_id: int, teacher: TeacherUpdate, session: Session = D
     return update_teacher(session, teacher_id, existing_teacher)
 
 @router.delete("/{teacher_id}", response_model=bool)
-def delete_teacher(teacher_id: int, session: Session = Depends(get_session)):
+def delete_teacher_endpoint(teacher_id: int, session: Session = Depends(get_session)):
     if not delete_teacher(session, teacher_id):
         raise HTTPException(status_code=404, detail="Teacher not found")
     return True

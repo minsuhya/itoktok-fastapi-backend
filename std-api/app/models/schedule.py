@@ -1,6 +1,7 @@
-from sqlmodel import SQLModel, Field
 from typing import Optional
-from datetime import date, time
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, func
+from datetime import date, time, datetime
 from enum import Enum
 
 class ScheduleType(str, Enum):
@@ -18,3 +19,11 @@ class Schedule(SQLModel, table=True):
     start_time: time
     end_time: time
     note: Optional[str] = None
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )
+    deleted_at: Optional[datetime] = Field(default=None)

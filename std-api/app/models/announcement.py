@@ -1,7 +1,8 @@
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, func
 from typing import Optional
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 class AnnouncementType(str, Enum):
     center_notice = "센터 공지사항"
@@ -21,5 +22,12 @@ class Announcement(SQLModel, table=True):
     content: str
     announcement_type: str = Field(default=AnnouncementType.center_notice)
     end_date: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
     attachment_url: Optional[str] = None
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )
+    deleted_at: Optional[datetime] = Field(default=None)

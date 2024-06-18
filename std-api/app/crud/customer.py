@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from .models.customer import Customer
+from ..models.customer import Customer
 from typing import List, Optional
 
 def create_customer(session: Session, customer: Customer) -> Customer:

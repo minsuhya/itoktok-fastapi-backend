@@ -1,7 +1,6 @@
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, func
 from typing import Optional
-from sqlalchemy.sql import func
-from sqlalchemy import Column, DateTime
 from datetime import datetime
 
 class Record(SQLModel, table=True):

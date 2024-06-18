@@ -6,7 +6,7 @@ from sqlmodel import Session, desc, select
 from ..core import get_session
 from ..models.program import Program
 from ..schemas.program import ProgramCreate, ProgramUpdate, ProgramRead
-from ..crud.programe import create_program, get_program, get_programs, update_program, delete_program
+from ..crud.program import create_program, get_program, get_programs, update_program, delete_program
 from ..schemas import ErrorResponse, SuccessResponse
 
 router = APIRouter(

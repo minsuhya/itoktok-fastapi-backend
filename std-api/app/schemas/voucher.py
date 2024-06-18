@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from .models.voucher import VoucherType, VoucherStatus
+from ..models.voucher import VoucherType, VoucherStatus
 
 class VoucherCreate(BaseModel):
     type: VoucherType
