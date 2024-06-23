@@ -13,12 +13,12 @@ class UserBaseSchema(BaseModel):
     email: EmailStr
     is_active: bool
     role: Role
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime]
+    created_at: Optional[datetime] = datetime.now()
+    updated_at: Optional[datetime] = datetime.now()
+    deleted_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CenterDirectorCreate(BaseModel):
     username: str
@@ -35,6 +35,9 @@ class CenterDirectorCreate(BaseModel):
     qualification_number: Optional[str] = None
     receive_alerts: bool = False
     receive_schedule_alerts: bool = False
+    created_at: Optional[datetime] = datetime.now()
+    updated_at: Optional[datetime] = datetime.now()
+    deleted_at: Optional[datetime] = None
 
 class CenterDirectorRead(UserBaseSchema):
     id: int

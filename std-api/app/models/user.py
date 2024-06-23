@@ -26,7 +26,7 @@ class UserBase(SQLModel):
     full_name: str # 이름
     email: str # 이메일
     is_active: bool = True # 활성화 여부
-    role: Role # 역할
+    role: str = Field(default=Role.center_director) # 역할
 
 class CenterDirector(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

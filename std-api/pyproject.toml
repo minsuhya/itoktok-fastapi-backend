@@ -22,6 +22,8 @@ pymysql = "^1.1.0"
 # strawberry-graphql = { extras = ["debug-server"], version = "^0.199.0" }
 python-jose = { extras = ["cryptography"], version = "^3.3.0" }
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
+# Pin bcrypt until passlib supports the latest
+bcrypt = "4.0.1"
 
 
 [tool.poetry.group.tests.dependencies]

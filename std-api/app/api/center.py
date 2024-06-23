@@ -20,11 +20,12 @@ router = APIRouter(
 
 @router.post("/", response_model=CenterDirectorRead)
 def register_center_director(director: CenterDirectorCreate, session: Session = Depends(get_session)):
-    director_data = CenterDirector.from_orm(director)
+    director_data = CenterDirector.model_validate(director)
     return create_center_director(session, director_data)
 
 @router.get("/{director_id}", response_model=CenterDirectorRead)
 def read_center_director(director_id: int, session: Session = Depends(get_session)):
+    print("read", director_id)
     director = get_center_director_by_id(session, director_id)
     if not director:
         raise HTTPException(status_code=404, detail="Center Director not found")
@@ -34,18 +35,15 @@ def read_center_director(director_id: int, session: Session = Depends(get_sessio
 def read_center_directors(skip: int = 0, limit: int = 10, session: Session = Depends(get_session)):
     return get_center_directors(session, skip=skip, limit=limit)
 
-@router.put("/{director_id}", response_model=CenterDirectorRead)
-def update_center_director(director_id: int, director: CenterDirectorUpdate, session: Session = Depends(get_session)):
+@router.put("/{director_id}", response_model=SuccessResponse[CenterDirectorRead])
+def update_center_director_endpoint(director_id: int, director: CenterDirectorUpdate, session: Session = Depends(get_session)):
     existing_director = get_center_director_by_id(session, director_id)
     if not existing_director:
         raise HTTPException(status_code=404, detail="Center Director not found")
-    director_data = director.dict(exclude_unset=True)
-    for key, value in director_data.items():
-        setattr(existing_director, key, value)
-    return update_center_director(session, director_id, existing_director)
+    return SuccessResponse(data=update_center_director(session, director, existing_director))
 
-@router.delete("/{director_id}", response_model=bool)
-def delete_center_director(director_id: int, session: Session = Depends(get_session)):
+@router.delete("/{director_id}", response_model=SuccessResponse[bool])
+def delete_center_director_endpoint(director_id: int, session: Session = Depends(get_session)):
     if not delete_center_director(session, director_id):
         raise HTTPException(status_code=404, detail="Center Director not found")
-    return True
+    return SuccessResponse(data=True)

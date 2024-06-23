@@ -37,4 +37,4 @@ class ProgramRead(BaseModel):
     status: ProgramStatus
 
     class Config:
-        orm_mode = True
+        from_attributes = True

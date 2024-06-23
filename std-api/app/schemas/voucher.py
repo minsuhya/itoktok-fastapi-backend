@@ -28,4 +28,4 @@ class VoucherRead(BaseModel):
     social_welfare_service_number: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
