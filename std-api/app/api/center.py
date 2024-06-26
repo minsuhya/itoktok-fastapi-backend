@@ -18,7 +18,7 @@ router = APIRouter(
     }},
 )
 
-@router.post("/", response_model=CenterDirectorRead)
+@router.post("", response_model=CenterDirectorRead)
 def register_center_director(director: CenterDirectorCreate, session: Session = Depends(get_session)):
     director_data = CenterDirector.model_validate(director)
     return create_center_director(session, director_data)
@@ -31,7 +31,7 @@ def read_center_director(director_id: int, session: Session = Depends(get_sessio
         raise HTTPException(status_code=404, detail="Center Director not found")
     return director
 
-@router.get("/", response_model=List[CenterDirectorRead])
+@router.get("", response_model=List[CenterDirectorRead])
 def read_center_directors(skip: int = 0, limit: int = 10, session: Session = Depends(get_session)):
     return get_center_directors(session, skip=skip, limit=limit)
 

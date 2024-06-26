@@ -56,7 +56,7 @@ class Teacher(UserBase, table=True):
     position: str # 직급(호칭)
     mobile_number: str # 휴대폰번호
     office_number: Optional[str] = None # 업무용전화번호
-    birthdate: Optional[str] = None # 생년월일
+    birthdate: Optional[date] = None # 생년월일
     teacher_role: str # 역할(재활사, 관리자)
     created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now())

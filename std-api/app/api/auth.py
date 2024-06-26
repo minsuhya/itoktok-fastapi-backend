@@ -41,7 +41,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     )
     return encoded_jwt
 
-def get_user_by_username(username: str, session: Session = Depends(get_session)):
+def get_user_by_username(username: str, session: Session):
     statement = select(CenterDirector).where(CenterDirector.username == username)
     director = session.exec(statement).first()
     if director:
@@ -75,8 +75,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=Union[SuccessResponse, ErrorResponse])
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
 ):
-    user = get_user_by_username(form_data.username)
+    user = get_user_by_username(form_data.username, session)
 
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(

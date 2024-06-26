@@ -79,6 +79,9 @@ class TeacherCreate(BaseModel):
     birthdate: Optional[date] = None
     profile_image: Optional[str] = None
     teacher_role: str
+    created_at: Optional[datetime] = datetime.now()
+    updated_at: Optional[datetime] = datetime.now()
+    deleted_at: Optional[datetime] = None
 
 class TeacherRead(UserBaseSchema):
     id: int
