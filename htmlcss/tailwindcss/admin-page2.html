@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="flex h-screen bg-gray-100">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-gray-200 flex flex-col">
+      <div
+        class="h-16 flex items-center justify-center border-b border-gray-700"
+      >
+        <span class="text-xl font-bold">Admin</span>
+      </div>
+      <nav class="flex-grow p-4">
+        <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+          >Dashboard</a
+        >
+
+        <!-- Users section with submenu -->
+        <div x-data="{ open: false }">
+          <button
+            @click="open = !open"
+            class="w-full flex justify-between items-center py-2.5 px-4 rounded hover:bg-gray-700 focus:outline-none"
+          >
+            <span>Users</span>
+            <svg
+              :class="{'transform rotate-180': open}"
+              class="w-4 h-4 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </button>
+          <div x-show="open" class="mt-2 space-y-2 pl-8">
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >All Users</a
+            >
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >Add New</a
+            >
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >Roles</a
+            >
+          </div>
+        </div>
+
+        <!-- Settings section with submenu -->
+        <div x-data="{ open: false }">
+          <button
+            @click="open = !open"
+            class="w-full flex justify-between items-center py-2.5 px-4 rounded hover:bg-gray-700 focus:outline-none"
+          >
+            <span>Settings</span>
+            <svg
+              :class="{'transform rotate-180': open}"
+              class="w-4 h-4 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </button>
+          <div x-show="open" class="mt-2 space-y-2 pl-8">
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >General</a
+            >
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >Security</a
+            >
+            <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+              >Notifications</a
+            >
+          </div>
+        </div>
+
+        <a href="#" class="block py-2.5 px-4 rounded hover:bg-gray-700"
+          >Reports</a
+        >
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <div class="flex-grow flex flex-col">
+      <!-- Top bar -->
+      <header class="bg-white shadow-md h-16 flex items-center px-6">
+        <div class="flex-grow">
+          <h1 class="text-xl font-semibold text-gray-700">Dashboard</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <a href="#" class="text-gray-600 hover:text-gray-900">Profile</a>
+          <a href="#" class="text-gray-600 hover:text-gray-900">Logout</a>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="p-6 flex-grow bg-gray-100">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-2xl font-bold mb-4">
+            Welcome to the Admin Dashboard
+          </h2>
+          <p class="text-gray-700">
+            Here you can manage your application content and settings.
+          </p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

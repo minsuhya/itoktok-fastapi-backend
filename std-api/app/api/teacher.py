@@ -30,9 +30,10 @@ def read_teacher(teacher_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Teacher not found")
     return teacher
 
-@router.get("", response_model=List[TeacherRead])
+@router.get("", response_model=SuccessResponse[List[TeacherRead]])
 def read_teachers(skip: int = 0, limit: int = 10, session: Session = Depends(get_session)):
-    return get_teachers(session, skip=skip, limit=limit)
+    results=get_teachers(session, skip=skip, limit=limit)
+    return SuccessResponse(data={'total': len(results), 'list': results})
 
 @router.put("/{teacher_id}", response_model=SuccessResponse[TeacherRead])
 def update_teacher_endpoint(teacher_id: int, teacher: TeacherUpdate, session: Session = Depends(get_session)):
