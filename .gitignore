@@ -3,7 +3,7 @@
 
 ### Custom
 mysql/data
-src
+.src/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
