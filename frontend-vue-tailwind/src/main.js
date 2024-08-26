@@ -2,7 +2,7 @@ import './assets/tailwind.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import axios from 'axios';
+// import axios from 'axios';
 
 import App from './App.vue'
 import router from './router'
@@ -11,8 +11,10 @@ import { configure } from 'vee-validate';
 import { defineRule } from 'vee-validate';
 import { all } from '@vee-validate/rules';
 
+import '@/api/interceptors'
+
 // global axios
-axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
+// axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
 
 // Define global rules
 Object.entries(all).forEach(([name, rule]) => {
@@ -32,6 +34,7 @@ configure({
       : `${context.field} is not valid.`;
   },
 });
+
 
 const app = createApp(App)
 
