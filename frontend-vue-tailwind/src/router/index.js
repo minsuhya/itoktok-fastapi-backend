@@ -57,10 +57,10 @@ const router = createRouter({
 })
 
 // route gruards
-router.beforeEach((to, from, next) => {
-  // Redirect to login page if not authenticated
-  if (to.name !== 'login' && !localStorage.getItem('authToken')) next({ name: 'login' })
-  else next()
-})
+// router.beforeEach((to, from, next) => {
+//   // Redirect to login page if not authenticated
+//   if (to.name !== 'login' && !localStorage.getItem('authToken')) next({ name: 'login' })
+//   else next()
+// })
 
 export default router
