@@ -4,7 +4,10 @@ export default [
   {
     path: '/admin',
     name: 'Admin',
-    component: () => LayoutView,
+    component: () => import('@/components/LayoutView.vue'),
+    meta: {
+      requiresAuth: false
+    },
     children: [
       {
         path: 'about',
@@ -17,14 +20,15 @@ export default [
         component: () => import('@/views/HomeView.vue')
       },
       {
-        path: 'home',
-        name: 'Home',
-        component: () => import('@/views/HomeView.vue')
-      },
-      {
         path: '',
         name: 'Dashboard',
         component: () => import('@/views/DashboardView.vue')
+      },
+      // 내정보
+      {
+        path: 'myinfo',
+        name: 'MyInfo',
+        component: () => import('@/views/MyPageView.vue')
       },
       // 내담자 관리
       {

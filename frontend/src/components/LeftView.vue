@@ -1,10 +1,16 @@
+<script setup>
+import { ref } from 'vue'
+
+const open_user_menu = ref(false)
+const open_schedule_menu = ref(false)
+</script>
 <template>
   <aside class="w-64 bg-gray-800 text-gray-200 flex flex-col shadow-lg">
     <!-- <div class="h-16 flex items-center justify-center border-b border-gray-700"> -->
     <!--   <span class="text-xl font-bold text-white">Monkey</span> -->
     <!-- </div> -->
     <nav class="flex-grow p-4">
-      <a href="/home" class="block py-2.5 px-4 rounded hover:bg-gray-800 transition-colors duration-200">
+      <router-link to="/admin" class="block py-2.5 px-4 rounded hover:bg-gray-800 transition-colors duration-200">
         <div class="flex items-center">
           <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -12,11 +18,11 @@
           </svg>
           Dashboard
         </div>
-      </a>
+      </router-link>
 
       <!-- Users section with submenu -->
-      <div x-data="{ open: false }">
-        <button @click="open = !open"
+      <div>
+        <button @click="open_user_menu = !open_user_menu"
           class="w-full flex justify-between items-center py-2.5 px-4 rounded hover:bg-gray-800 transition-colors duration-200 focus:outline-none">
           <div class="flex items-center">
             <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -26,24 +32,24 @@
             </svg>
             사용자
           </div>
-          <svg :class="{ 'transform rotate-180': open }" class="w-4 h-4 transition-transform" fill="none"
+          <svg :class="{ 'transform rotate-180': open_user_menu }" class="w-4 h-4 transition-transform" fill="none"
             stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
-        <div x-show="open" class="mt-2 space-y-2 pl-8 text-gray-400">
-          <a href="/admin/client"
-            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">내담자
-            관리</a>
-          <a href="/admin/counselor"
+        <div class="mt-2 space-y-2 pl-8 text-gray-400" :class="open_user_menu ? 'block' : 'hidden'">
+          <router-link to="/admin/client"
+            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">사용자
+            관리</router-link>
+          <router-link to="/admin/counselor"
             class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">상담사
-            관리</a>
+            관리</router-link>
         </div>
       </div>
 
-      <!-- Settings section with submenu -->
-      <div x-data="{ open: false }" class="mt-4">
-        <button @click="open = !open"
+      <!-- 일정관리 section with submenu -->
+      <div class="mt-2">
+        <button @click="open_schedule_menu = !open_schedule_menu"
           class="w-full flex justify-between items-center py-2.5 px-4 rounded hover:bg-gray-800 transition-colors duration-200 focus:outline-none">
           <div class="flex items-center">
             <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -54,16 +60,16 @@
             </svg>
             일정관리
           </div>
-          <svg :class="{ 'transform rotate-180': open }" class="w-4 h-4 transition-transform" fill="none"
+          <svg :class="{ 'transform rotate-180': open_schedule_menu }" class="w-4 h-4 transition-transform" fill="none"
             stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
-        <div x-show="open" class="mt-2 space-y-2 pl-8 text-gray-400">
-          <a href="/admin/monthly"
-            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">Monthly</a>
-          <a href="/admin/daily"
-            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">Daily</a>
+        <div x-show="open" class="mt-2 space-y-2 pl-8 text-gray-400" :class="open_schedule_menu ? 'block' : 'hidden'">
+          <router-link to="/admin/monthly"
+            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">Monthly</router-link>
+          <router-link to="/admin/daily"
+            class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200">Daily</router-link>
         </div>
       </div>
 

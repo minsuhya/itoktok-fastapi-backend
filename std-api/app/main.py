@@ -1,12 +1,23 @@
 import uvicorn
 
-from .api import (auth_router, customer_router, 
-    teacher_router, program_router, voucher_router, 
-    schedule_router, record_router, inquiry_router, 
-    announcement_router, center_router)
+from .api import (
+    announcement_router,
+    auth_router,
+    center_router,
+    customer_router,
+    inquiry_router,
+    program_router,
+    record_router,
+    schedule_router,
+    signup_router,
+    teacher_router,
+    users_router,
+    voucher_router,
+)
 from .core import app
 
 app.include_router(auth_router)
+app.include_router(signup_router)
 app.include_router(customer_router)
 app.include_router(teacher_router)
 app.include_router(program_router)
@@ -16,6 +27,7 @@ app.include_router(record_router)
 app.include_router(inquiry_router)
 app.include_router(announcement_router)
 app.include_router(center_router)
+app.include_router(users_router)
 
 
 @app.get("/")

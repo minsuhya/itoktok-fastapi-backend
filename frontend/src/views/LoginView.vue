@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import useAuth from '@/hooks/auth'
@@ -13,6 +13,7 @@ const validationSchema = yup.object({
 })
 
 const router = useRouter()
+const authStore = useUserStore()
 const { loginApp } = useAuth()
 const { errors, handleSubmit, defineField, setValues } = useForm({
   validationSchema
@@ -26,8 +27,8 @@ const [password, passwordAttrs] = defineField('password')
 
 // Set the default values
 setValues({
-  username: 'rupi',
-  password: '12345678'
+  username: '',
+  password: ''
 })
 
 const onSubmit = handleSubmit(async (values) => {
@@ -46,58 +47,109 @@ const onSubmit = handleSubmit(async (values) => {
     alert('아이디와 비밀번호를 확인하세요. ') // Show alert on failure
   }
 })
+
+const showLogoutModal = computed(() => authStore.showLogoutModal)
+
+const closeLogoutModal = () => {
+  authStore.closeLogoutModal()
+}
 </script>
 
 <template>
   <main>
     <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-          alt="Your Company" />
-        <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+        <img class="mx-auto h-10 w-auto rounded-lg" src="/imgs/itoktok-sm.png" alt="Your Company" />
+        <h2 class="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Sign in to your account
         </h2>
       </div>
 
-      <div class="bg-white mt-10 sm:mx-auto sm:w-full sm:max-w-lg border border-gray-400/50 p-9 rounded-lg">
-        <form class="space-y-6" @submit.prevent="onSubmit">
-          <div>
-            <label for="username" class="block text-sm font-medium leading-6 text-gray-900">아이디</label>
-            <div class="mt-2">
-              <input v-model="username" id="username" name="username" type="username" autocomplete="email"
-                v-bind="userNameAttrs"
-                class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-            </div>
-            <div class="mt-2 text-red-500">{{ errors.username }}</div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between">
-              <label for="password" class="block text-sm font-medium leading-6 text-gray-900">비밀번호</label>
-              <div class="text-sm">
-                <a href="/forgot-password" class="font-semibold text-indigo-600 hover:text-indigo-500">비밀번호를 잊어버렸나요?</a>
+      <div
+        class="bg-white mt-5 sm:mx-auto sm:w-full sm:max-w-[600px] border border-gray-400/50 rounded-lg grid grid-cols-2"
+      >
+        <div>
+          <img
+            src="/imgs/login.png"
+            alt="Login Image"
+            class="w-full h-[400px] object-none object-center rounded-lg"
+          />
+        </div>
+        <div class="p-6 mb-auto">
+          <form class="space-y-6" @submit.prevent="onSubmit">
+            <div>
+              <label for="username" class="block text-sm font-medium leading-6 text-gray-900"
+                >아이디</label
+              >
+              <div class="mt-2">
+                <input
+                  v-model="username"
+                  id="username"
+                  name="username"
+                  type="username"
+                  autocomplete="email"
+                  v-bind="userNameAttrs"
+                  class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
               </div>
+              <div class="mt-1 text-red-500">{{ errors.username }}</div>
             </div>
-            <div class="mt-2">
-              <input v-model="password" id="password" name="password" type="password" autocomplete="current-password"
-                v-bind="passwordAttrs"
-                class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="password" class="block text-sm font-medium leading-6 text-gray-900"
+                  >비밀번호</label
+                >
+                <div class="text-sm">
+                  <a
+                    href="/forgot-password"
+                    class="font-semibold text-indigo-600 hover:text-indigo-500"
+                    >비밀번호를 잊어버렸나요?</a
+                  >
+                </div>
+              </div>
+              <div class="mt-2">
+                <input
+                  v-model="password"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  v-bind="passwordAttrs"
+                  class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+              <div class="mt-1 text-red-500">{{ errors.password }}</div>
             </div>
-            <div class="mt-2 text-red-500">{{ errors.password }}</div>
-          </div>
 
-          <div>
-            <button type="submit"
-              class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-              로그인
-            </button>
-          </div>
-        </form>
+            <div>
+              <button
+                type="submit"
+                class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                로그인
+              </button>
+            </div>
+          </form>
 
-        <p class="mt-10 text-center text-sm text-gray-500">
-          회원이 아니신가요?
-          <a href="/signup" class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">회원가입</a>
-        </p>
+          <p class="mt-10 text-center text-sm text-gray-500">
+            회원이 아니신가요?
+            <a href="/signup" class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+              >회원가입</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="showLogoutModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+    >
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">로그아웃</h2>
+        <p class="mb-4">로그아웃 되었습니다.</p>
+        <button @click="closeLogoutModal" class="w-full bg-blue-500 text-white py-2 rounded-lg">
+          확인
+        </button>
       </div>
     </div>
   </main>

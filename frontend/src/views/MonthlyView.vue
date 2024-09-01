@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+import { ChevronRightIcon, ChevronLeftIcon } from '@heroicons/vue/20/solid'
+</script>
 
 <template>
   <!-- ====== Page Title Section Start -->
@@ -16,15 +18,26 @@
   <div class="max-w-full mx-auto p-4">
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">January 2022</h2>
+      <div class="flex items-center space-x-2">
+        <button class="p-2 rounded-full font-semibold">
+          <ChevronLeftIcon class="w-6 h-6" />
+        </button>
+        <h2 class="text-xl font-semibold">January 2022</h2>
+        <button class="p-2 rounded-full font-semibold">
+          <ChevronRightIcon class="w-6 h-6" />
+        </button>
+      </div>
       <div class="flex space-x-2 text-sm font-semibold">
         <button class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center">
-          <span>Month view</span>
-          <svg class="inline-block w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M5.25 8.75L10 13.5l4.75-4.75M5 5h10V3H5v2z" />
-          </svg>
+          <span>Today</span>
         </button>
-        <button class="px-4 py-2 bg-blue-500 text-white rounded-md">Add event</button>
+        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center">
+          <span>Monthly</span>
+        </button>
+        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center">
+          <span>Daily</span>
+        </button>
+        <button class="px-4 py-2 bg-blue-500 text-white rounded-md">상담 등록</button>
       </div>
     </div>
 
@@ -78,14 +91,20 @@
       <div class="bg-white h-32 p-2">10</div>
       <div class="bg-white h-32 p-2">11</div>
       <div class="bg-white h-32 p-2">
-        <span class="block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5">12</span>
-        <p class="flex text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20">
-          <span class="inline-block">Sam's birthday party</span><span
-            class="ml-auto inline-block text-blue-700">2PM</span>
+        <span class="block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5"
+          >12</span
+        >
+        <p
+          class="flex text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20"
+        >
+          <span class="inline-block">Sam's birthday party</span
+          ><span class="ml-auto inline-block text-blue-700">2PM</span>
         </p>
-        <p class="flex text-xs text-purple-600 border border-purple-700/10 rounded-md m-1 p-1 bg-purple-400/20">
-          <span class="inline-block">Sam's birthday party</span><span
-            class="ml-auto inline-block text-purple-700">2PM</span>
+        <p
+          class="flex text-xs text-purple-600 border border-purple-700/10 rounded-md m-1 p-1 bg-purple-400/20"
+        >
+          <span class="inline-block">Sam's birthday party</span
+          ><span class="ml-auto inline-block text-purple-700">2PM</span>
         </p>
       </div>
       <div class="bg-white h-32 p-2">13</div>

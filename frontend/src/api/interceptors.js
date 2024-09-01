@@ -12,7 +12,7 @@ axios.interceptors.request.use(
     console.log('interceptors request use')
     const token = getToken()
     if (token) {
-      config.headers.Authorization = 'Bearer ${token}'
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
