@@ -30,8 +30,8 @@ class User(SQLModel, table=True):
     hp_number: str
     center_username: str
     user_type: str = "1"
-    is_active: bool = True
-    is_superuser: bool = False
+    is_active: int = 1
+    is_superuser: int = 0
 
     created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now())

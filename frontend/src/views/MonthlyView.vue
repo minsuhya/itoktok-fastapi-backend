@@ -1,5 +1,10 @@
 <script setup>
 import { ChevronRightIcon, ChevronLeftIcon } from '@heroicons/vue/20/solid'
+import { ref, reactive } from 'vue'
+const isZoomed = reactive({})
+const zoom = (index) => {
+  isZoomed[index] = !isZoomed[index]
+}
 </script>
 
 <template>
@@ -91,20 +96,21 @@ import { ChevronRightIcon, ChevronLeftIcon } from '@heroicons/vue/20/solid'
       <div class="bg-white h-32 p-2">10</div>
       <div class="bg-white h-32 p-2">11</div>
       <div class="bg-white h-32 p-2">
-        <span class="block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5"
-          >12</span
-        >
-        <p
-          class="flex text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20"
-        >
-          <span class="inline-block">Sam's birthday party</span
-          ><span class="ml-auto inline-block text-blue-700">2PM</span>
+        <span class="block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5">12</span>
+        <p class="flex-row text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20 *:scale-100 [& *]:scale-100"
+          v-for="(item, index) in ['Meeting with Sam', 'Lunch with Sarah', 'Dinner with family']" :key="index" :class="{
+            'transform transition duration-500 ease-in-out overflow-hidden': true,
+            'scale-100 h-6': !isZoomed[index],
+            'scale-150 h-auto': isZoomed[index]
+          }" @click="zoom(index)">
+        <div class="flex justify-between" v-for="i in [...new Array(index + 1).keys()]">
+          <span class="inline-block">{{ item }}</span>
+          <span class="ml-auto inline-block text-blue-700">{{ index }}PM</span>
+        </div>
         </p>
-        <p
-          class="flex text-xs text-purple-600 border border-purple-700/10 rounded-md m-1 p-1 bg-purple-400/20"
-        >
-          <span class="inline-block">Sam's birthday party</span
-          ><span class="ml-auto inline-block text-purple-700">2PM</span>
+        <p class="flex text-xs text-purple-600 border border-purple-700/10 rounded-md m-1 p-1 bg-purple-400/20">
+          <span class="inline-block">Sam's birthday party</span><span
+            class="ml-auto inline-block text-purple-700">2PM</span>
         </p>
       </div>
       <div class="bg-white h-32 p-2">13</div>

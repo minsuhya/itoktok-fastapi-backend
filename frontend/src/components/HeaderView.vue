@@ -19,13 +19,13 @@
   <!-- </header> -->
   <nav class="bg-white border-gray-200 dark:bg-gray-900">
     <div class="max-w-screen-full flex flex-wrap items-center justify-between mx-auto p-4">
-      <a href="https://flowbite.com/" class="flex items-center space-x-3 rtl:space-x-reverse">
+      <router-link to="/admin" class="flex items-center space-x-3 rtl:space-x-reverse">
         <img class="h-8 w-auto rounded-lg" src="/imgs/itoktok-sm.png" alt="Your Company" />
         <span
           class="self-center text-sm align-bottom text-gray-500 font-semibold whitespace-nowrap dark:text-white"
           >with children</span
         >
-      </a>
+      </router-link>
       <div class="w-full md:block md:w-auto text-md font-bold" id="navbar-default">
         <ul
           class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
@@ -50,22 +50,19 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { inject } from 'vue'
 import useAuth from '@/hooks/auth'
 
-const router = useRouter()
 const { logoutApp } = useAuth()
+const navigateTo = inject('$navigateTo')
 
 const logout = async () => {
   // logout
   await logoutApp()
   console.log('logout')
 
-  // rediect after logout
-  router.replace({
-    path: '/login',
-    name: 'Login',
-    replace: true
-  })
+  // navigate to login page
+  navigateTo('/login')
+  // window.location.href = '/login'
 }
 </script>

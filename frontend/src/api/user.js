@@ -12,6 +12,29 @@ export function logout() {
   return axios.post('/auth/logout')
 }
 
+export const checkUsername = async (username) => {
+  try {
+    const response = await axios.get(`/signup/check-username?username=${username}`)
+    return response.data
+  } catch (error) {
+    console.error('Error reading user:', error)
+    throw error
+  }
+}
+
+export const signup = async (values) => {
+  try {
+    if (!values.center_username) {
+      values.center_username = values.username
+    }
+    const response = await axios.post(`/signup`, values)
+    return response.data
+  } catch (error) {
+    console.error('Error reading user:', error)
+    throw error
+  }
+}
+
 export function forgot_password() {
   return axios.post('/api/forget-password')
 }

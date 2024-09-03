@@ -31,7 +31,7 @@ axios.interceptors.response.use(
       if (error.response.status === 401) {
         // Unauthorized access, redirect to login
         // authStore.logout();
-        window.location.href = '/' // Or use Vue Router to redirect
+        // window.location.href = '/' // Or use Vue Router to redirect
       } else if (error.response.status === 500) {
         alert('Server error. Please try again later.')
       }

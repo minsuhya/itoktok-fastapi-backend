@@ -1,4 +1,4 @@
-import { login, logout, readMe } from '@/api/user'
+import { login, readMe } from '@/api/user'
 import { useUserStore } from '@/stores/auth'
 import { clearToken, setToken } from '@/utils/token'
 // import { removeRouteListener } from '@/utils/routerListener'
@@ -12,13 +12,16 @@ export default function useAuth() {
     try {
       // 인증
       const res = await login(data)
-      setToken(res.access_token)
 
+      // 토큰 저장
+      setToken(res.access_token)
       // 인증 후 사용자 정보 가져오기
       const userInfo = await readMe()
       userStore.setUserInfo(userInfo)
     } catch (err) {
+      // 인증 실패 시 토큰 및 사용자 정보 삭제
       clearToken()
+      // 사용자 정보 삭제
       userStore.clearUserInfo()
       throw err
     }
@@ -26,8 +29,10 @@ export default function useAuth() {
 
   const logoutApp = async () => {
     const userStore = useUserStore()
-    userStore.clearUserInfo()
+    // 토큰 삭제
     clearToken()
+    // 사용자 정보 삭제
+    userStore.clearUserInfo()
   }
 
   return {

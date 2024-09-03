@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { getToken } from '@/utils/token'
 
 export const useUserStore = defineStore('userStore', {
   state: () => ({
@@ -15,6 +14,7 @@ export const useUserStore = defineStore('userStore', {
       this.isAuthenticated = true
       this.role = userInfo.is_superuser == 1 ? 1 : userInfo.is_superuser == 2 ? 2 : 3
       this.showLogoutModal = false
+      this.saveState()
     },
     clearUserInfo() {
       // Clear user data and token
@@ -22,20 +22,22 @@ export const useUserStore = defineStore('userStore', {
       this.isAuthenticated = false
       this.role = null
       this.showLogoutModal = true
-    },
-    checkAuth() {
-      const token = getToken()
-      if (token) {
-        this.isAuthenticated = true
-      }
+      this.clearState()
     },
     closeLogoutModal() {
       this.showLogoutModal = false
+    },
+    saveState() {
+      localStorage.setItem('userStore', JSON.stringify(this.$state))
+    },
+    loadState() {
+      const savedState = localStorage.getItem('userStore')
+      if (savedState) {
+        this.$state = JSON.parse(savedState)
+      }
+    },
+    clearState() {
+      localStorage.removeItem('userStore')
     }
-
-    // async refreshUserInfo() {
-    //   const res = await getUserInfo()
-    //   this.setUserInfo(res.data)
-    // }
   }
 })

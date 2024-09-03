@@ -39,8 +39,8 @@ class UserCreate(BaseModel):
     hp_number: str
     user_type: str
     center_username: str
-    is_active: bool = True
-    is_superuser: bool = False
+    is_active: int = 1
+    is_superuser: int = 0
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
     deleted_at: Optional[datetime] = None

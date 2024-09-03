@@ -1,9 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useUserStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
 import useAuth from '@/hooks/auth'
-import { useForm, useField } from 'vee-validate'
+import { useForm } from 'vee-validate'
 import * as yup from 'yup'
 
 // Define the validation schema
@@ -12,7 +11,6 @@ const validationSchema = yup.object({
   password: yup.string().min(8, '최소 8자 이상 입력해주세요.').required('비밀번호를 입력해주세요.')
 })
 
-const router = useRouter()
 const authStore = useUserStore()
 const { loginApp } = useAuth()
 const { errors, handleSubmit, defineField, setValues } = useForm({
@@ -31,28 +29,21 @@ setValues({
   password: ''
 })
 
+const showModal = inject('showModal')
+const navigateTo = inject('$navigateTo')
+
 const onSubmit = handleSubmit(async (values) => {
   try {
     // login
     await loginApp(values)
 
     // rediect after login
-    router.replace({
-      path: '/about',
-      name: 'About',
-      replace: true
-    })
+    navigateTo('/admin')
   } catch (err) {
     console.log(err)
-    alert('아이디와 비밀번호를 확인하세요. ') // Show alert on failure
+    showModal('아이디와 비밀번호를 확인하세요.')
   }
 })
-
-const showLogoutModal = computed(() => authStore.showLogoutModal)
-
-const closeLogoutModal = () => {
-  authStore.closeLogoutModal()
-}
 </script>
 
 <template>
@@ -89,6 +80,7 @@ const closeLogoutModal = () => {
                   type="username"
                   autocomplete="email"
                   v-bind="userNameAttrs"
+                  tabindex="1"
                   class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -115,6 +107,7 @@ const closeLogoutModal = () => {
                   type="password"
                   autocomplete="current-password"
                   v-bind="passwordAttrs"
+                  tabindex="2"
                   class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -138,18 +131,6 @@ const closeLogoutModal = () => {
             >
           </p>
         </div>
-      </div>
-    </div>
-    <div
-      v-if="showLogoutModal"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-    >
-      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">로그아웃</h2>
-        <p class="mb-4">로그아웃 되었습니다.</p>
-        <button @click="closeLogoutModal" class="w-full bg-blue-500 text-white py-2 rounded-lg">
-          확인
-        </button>
       </div>
     </div>
   </main>

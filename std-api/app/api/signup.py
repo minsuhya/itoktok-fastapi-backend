@@ -20,7 +20,15 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=UserRead)
+@router.post("", response_model=SuccessResponse)
 def create_user(user: UserCreate, *, session: Session = Depends(get_session)):
     user_data = User.model_validate(user)
-    return crud.create_user(session, user_data)
+    return SuccessResponse(data=crud.create_user(session, user_data))
+
+
+@router.get("/check-username")
+def check_username(username: str, db: Session = Depends(get_session)):
+    user = db.query(User).filter(User.username == username).first()
+    if user:
+        return SuccessResponse(data={"exists": True})
+    return SuccessResponse(data={"exists": False})

@@ -11,9 +11,26 @@ import FooterView from '@/components/FooterView.vue'
     <LeftView />
     <main class="flex-1 overflow-y-auto p-3">
       <!-- Main Content -->
-      <RouterView />
+      <router-view v-slot="{ Component, route }">
+        <Transition name="fade" mode="out-in">
+          <div :key="route.name">
+            <component :is="Component" />
+          </div>
+        </Transition>
+      </router-view>
     </main>
   </div>
   <!-- Bottom Footer -->
   <FooterView />
 </template>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

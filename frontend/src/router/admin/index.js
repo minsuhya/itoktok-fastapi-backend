@@ -6,7 +6,7 @@ export default [
     name: 'Admin',
     component: () => import('@/components/LayoutView.vue'),
     meta: {
-      requiresAuth: false
+      requiresAuth: true
     },
     children: [
       {

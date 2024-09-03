@@ -1,17 +1,18 @@
 <script setup>
-import { ref, reactive, onMounted, watch, toRefs, toRaw } from 'vue'
-import axios from 'axios'
+import { ref, reactive, onMounted, watch, toRefs, toRaw, inject } from 'vue'
 import { useForm, Field, Form, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
 import { useUserStore } from '@/stores/auth'
 import { readCenterInfo, updateCenterInfo } from '@/api/center'
 import { readUser, updateUser } from '@/api/user'
 
+const { showModal } = inject('showModal')
+
 const userStore = useUserStore()
 
 const user = reactive({
   username: '',
-  email: 'monkey@mmonstar.co.kr',
+  email: '',
   full_name: '',
   birth_date: '',
   center_username: '',
@@ -21,20 +22,18 @@ const user = reactive({
   address_extra: '',
   zip_code: '',
   user_type: '',
-  is_active: false,
-  is_superuser: false
+  is_active: '1',
+  is_superuser: '0'
 })
 
 const center = reactive({
-  center_name: '원피스',
+  center_name: '',
   center_summary: '',
-  center_introducs: '',
+  center_introduce: '',
   center_export: '',
   center_addr: '',
   center_tel: ''
 })
-
-const centers = ref([])
 
 // initial values
 Object.assign(user, {
@@ -105,19 +104,22 @@ const modifyCenterInfo = async () => {
 }
 
 const onSubmit = async (values) => {
+  console.log(values)
   try {
     // await modifyUser()
     // await modifyCenterInfo()
-    alert('User updated successfully')
+    // showModal('사용자 정보가 수정되었습니다.')
+    alert('사용자 정보가 수정되었습니다.')
   } catch (error) {
+    showModal('사용자 정보 수정 중 오류가 발생했습니다.')
     console.error('Error updating user data:', error)
   }
 }
 
 onMounted(() => {
   console.log(userStore.user)
-  // fetchUser()
-  // fetchCenterInfo()
+  // fetchUser() # store 정보를 활용하기 때문에 필요 없음
+  // fetchCenterInfo() // TODO
 })
 
 // watch(
@@ -161,13 +163,13 @@ onMounted(() => {
             <ErrorMessage name="full_name" class="text-red-500" />
           </div>
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">생년월일</label>
+            <label class="block font-semibold text-gray-700">휴대폰번호</label>
             <Field
-              name="birth_date"
-              type="date"
+              name="hp_number"
+              type="text"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
-            <ErrorMessage name="birth_date" class="text-red-500" />
+            <ErrorMessage name="hp_number" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">전화번호</label>
@@ -179,13 +181,13 @@ onMounted(() => {
             <ErrorMessage name="phone_number" class="text-red-500" />
           </div>
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">휴대폰번호</label>
+            <label class="block font-semibold text-gray-700">생년월일</label>
             <Field
-              name="hp_number"
-              type="text"
+              name="birth_date"
+              type="date"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
-            <ErrorMessage name="hp_number" class="text-red-500" />
+            <ErrorMessage name="birth_date" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">주소</label>
@@ -224,14 +226,16 @@ onMounted(() => {
               type="text"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
+            <ErrorMessage name="center_summary" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터소개</label>
             <Field
-              name="center_introducs"
+              name="center_introduce"
               as="textarea"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
+            <ErrorMessage name="center_introduce" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">전문분야</label>
@@ -241,6 +245,7 @@ onMounted(() => {
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
           </div>
+          <ErrorMessage name="center_export" class="text-red-500" />
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터주소</label>
             <Field
@@ -248,6 +253,7 @@ onMounted(() => {
               type="text"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
+            <ErrorMessage name="center_addr" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터 전화번호</label>
@@ -256,6 +262,7 @@ onMounted(() => {
               type="text"
               class="mt-1 block w-full rounded-lg border-gray-400"
             />
+            <ErrorMessage name="center_tel" class="text-red-500" />
           </div>
         </div>
         <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
