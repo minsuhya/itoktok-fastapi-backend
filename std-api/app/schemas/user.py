@@ -47,6 +47,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    password: str
     email: EmailStr = None
     full_name: str
     birth_date: Optional[str] = None
@@ -71,8 +72,8 @@ class UserRead(BaseModel):
     hp_number: str
     user_type: str
     center_username: str
-    is_active: bool = True
-    is_superuser: bool = False
+    is_active: int
+    is_superuser: int
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
     deleted_at: Optional[datetime] = None
@@ -86,18 +87,19 @@ class CenterInfoBase(BaseModel):
     username: str = Field(..., max_length=20, description="Center Username")
     center_name: str = Field(..., max_length=20, description="센터명")
     center_summary: str = Field(..., max_length=100, description="센터 한줄소개")
-    center_introducs: str = Field(..., max_length=255, description="센터 소개")
+    center_introduce: str = Field(..., max_length=255, description="센터 소개")
     center_export: str = Field(..., max_length=50, description="전문분야")
     center_addr: str = Field(..., max_length=255, description="센터주소")
     center_tel: str = Field(..., max_length=15, description="센터전화번호")
 
 
 class CenterInfoCreate(CenterInfoBase):
-    pass
+    created_at: Optional[datetime] = datetime.now()
+    updated_at: Optional[datetime] = datetime.now()
 
 
 class CenterInfoUpdate(CenterInfoBase):
-    pass
+    updated_at: Optional[datetime] = datetime.now()
 
 
 class CenterInfoRead(CenterInfoBase):

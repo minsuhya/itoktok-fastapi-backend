@@ -4,6 +4,7 @@ from .api import (
     announcement_router,
     auth_router,
     center_router,
+    client_router,
     customer_router,
     inquiry_router,
     program_router,
@@ -28,6 +29,7 @@ app.include_router(inquiry_router)
 app.include_router(announcement_router)
 app.include_router(center_router)
 app.include_router(users_router)
+app.include_router(client_router)
 
 
 @app.get("/")

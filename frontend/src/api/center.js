@@ -11,9 +11,9 @@ export const registerCenterInfo = async (info) => {
   }
 }
 
-export const readCenterInfo = async (infoId) => {
+export const readCenterInfo = async (username) => {
   try {
-    const response = await axios.get(`/center/info/${infoId}`)
+    const response = await axios.get(`/center/info/${username}`)
     return response.data
   } catch (error) {
     console.error('Error reading center info:', error)
@@ -33,9 +33,9 @@ export const readCenterInfos = async (page = 1, limit = 10) => {
   }
 }
 
-export const updateCenterInfo = async (infoId, info) => {
+export const updateCenterInfo = async (username, info) => {
   try {
-    const response = await axios.put(`/center/info/${infoId}`, info)
+    const response = await axios.put(`/center/info/${username}`, info)
     return response.data
   } catch (error) {
     console.error('Error updating center info:', error)
@@ -43,9 +43,9 @@ export const updateCenterInfo = async (infoId, info) => {
   }
 }
 
-export const deleteCenterInfo = async (infoId) => {
+export const deleteCenterInfo = async (username) => {
   try {
-    const response = await axios.delete(`/center/info/${infoId}`)
+    const response = await axios.delete(`/center/info/${username}`)
     return response.data
   } catch (error) {
     console.error('Error deleting center info:', error)

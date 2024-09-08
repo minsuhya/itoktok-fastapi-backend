@@ -22,26 +22,18 @@
       <router-link to="/admin" class="flex items-center space-x-3 rtl:space-x-reverse">
         <img class="h-8 w-auto rounded-lg" src="/imgs/itoktok-sm.png" alt="Your Company" />
         <span
-          class="self-center text-sm align-bottom text-gray-500 font-semibold whitespace-nowrap dark:text-white"
-          >with children</span
-        >
+          class="self-center text-sm align-bottom text-gray-500 font-semibold whitespace-nowrap dark:text-white">with
+          children</span>
       </router-link>
       <div class="w-full md:block md:w-auto text-md font-bold" id="navbar-default">
         <ul
-          class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
-        >
-          <router-link
-            to="/admin/myinfo"
+          class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+          <router-link to="/admin/myinfo"
             class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-            tab="li"
-            >내정보</router-link
-          >
+            tab="li">내정보</router-link>
           <li @click="logout">
-            <a
-              href="#"
-              class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              >로그아웃</a
-            >
+            <a href="#"
+              class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">로그아웃</a>
           </li>
         </ul>
       </div>

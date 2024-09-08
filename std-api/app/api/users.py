@@ -1,10 +1,12 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi_pagination import Page, add_pagination
 from passlib.context import CryptContext
 from sqlmodel import Session, desc, select
 
 from ..core import get_session, oauth2_scheme
+from ..crud.user import get_users
 from ..models.user import User
 from ..schemas import ErrorResponse, SuccessResponse
 from ..schemas.user import UserCreate  # center director; center info
@@ -39,7 +41,7 @@ def read_me(
     return SuccessResponse(data=current_user)
 
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=SuccessResponse[UserRead])
 def read_user(
     user_id: int,
     *,
@@ -48,18 +50,18 @@ def read_user(
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return SuccessResponse(data=user)
 
 
-@router.get("/", response_model=List[UserRead])
+@router.get("/", response_model=Page[UserRead])
 def read_Users(
     *,
     session: Session = Depends(get_session),
-    offset: int = 0,
-    limit: int = Query(default=100, lte=100),
+    page: int = 1,
+    size: int = Query(default=10, lte=10),
+    search_qry: str = Query(default="", max_length=50),
 ):
-    users = session.exec(select(User).offset(offset).limit(limit)).all()
-    return users
+    return get_users(session, page=page, size=size, search_qry=search_qry)
 
 
 @router.post("/", response_model=UserRead)
@@ -72,7 +74,7 @@ def create_user(user: UserCreate, *, session: Session = Depends(get_session)):
     return db_user
 
 
-@router.patch("/{user_id}", response_model=UserRead)
+@router.put("/{user_id}", response_model=UserRead)
 def update_user(
     user_id: int, *, session: Session = Depends(get_session), user: UserUpdate
 ):
@@ -80,6 +82,8 @@ def update_user(
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.password:
+        user.password = pwd_context.hash(user.password)
     user_data = user.dict(exclude_unset=True)
     for key, value in user_data.items():
         setattr(db_user, key, value)

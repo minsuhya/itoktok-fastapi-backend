@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineEmits } from 'vue'
 
 const props = defineProps({
   totalItems: Number,

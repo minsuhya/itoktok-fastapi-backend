@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineEmits } from 'vue'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 
 const props = defineProps({

@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi_pagination import add_pagination
 
 # from core.pgdb import create_db_and_tables, engine
 from .mydb import create_db_and_tables, engine
@@ -21,6 +22,8 @@ app.add_middleware(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+add_pagination(app)
 
 
 @app.on_event("startup")

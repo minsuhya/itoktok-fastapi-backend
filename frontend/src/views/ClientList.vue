@@ -1,31 +1,71 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue'
+import { ref, reactive, onBeforeMount, inject } from 'vue'
 import { CheckIcon } from '@heroicons/vue/20/solid'
-// import { list_items } from '@/api/clients'
+import { readClientInfos, updateClientConsultantStauts } from '@/api/client'
 import PaginationView from '@/components/PaginationView.vue'
+import ClientFormSliding from '@/views/ClientFormSliding.vue'
 
-const users = ref([])
+const showModal = inject('showModal')
+
 // Pagination
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const totalItems = ref(0)
+const isFormVisible = ref(false)
+const currentClientId = ref('') // str client_id
+const searchQuery = ref('') // 검색어
+const clients = ref([])
 
-// Fetch user list
-// const fetchUsers = async (page) => {
-//   const res = await list_items(page)
-//   users.value = res.data
-//   currentPage.value = res.page
-//   itemsPerPage.value = res.per_page
-//   totalItems.value = res.total
-// }
+const toggleForm = (clientId) => {
+  currentClientId.value = String(clientId)
+  isFormVisible.value = !isFormVisible.value
+  if (!isFormVisible.value) {
+    currentClientId.value = ''
+    fetchClients(currentPage.value)
+  }
+}
 
-// onBeforeMount(fetchUsers)
+// Fetch client list
+const fetchClients = async (page) => {
+  const data = await readClientInfos(page)
+  clients.value = data.items
+  currentPage.value = data.page
+  itemsPerPage.value = data.size
+  totalItems.value = data.total
+}
+
+// 검색어 기반 내담자 검색
+const searchClients = async () => {
+  try {
+    const data = await readClientInfos(1, 10, searchQuery.value)
+    clients.value = data.items
+    currentPage.value = data.page
+    itemsPerPage.value = data.size
+    totalItems.value = data.total
+  } catch (error) {
+    console.error('Error fetching clients:', error)
+  }
+}
 
 // Handle page change event
 const handlePageChange = (page) => {
-  // fetchUsers(page)
+  fetchClients(page)
   currentPage.value = page
 }
+
+// 상담상태 변경
+const handleStatusChange = async (client) => {
+  console.log('client:', client)
+  try {
+    await updateClientConsultantStauts(client.id, client.consultant_status)
+    showModal('상담상태 정보가 수정되었습니다.')
+  } catch (error) {
+    showModal('상담상태 정보 등록 중 오류가 발생했습니다.')
+    console.error('Error registering client data:', error)
+  }
+}
+
+onBeforeMount(fetchClients)
 </script>
 <template>
   <!-- ====== Page Title Section Start -->
@@ -66,8 +106,11 @@ const handlePageChange = (page) => {
         <input
           type="text"
           id="table-search-users"
+          name="search-text"
+          v-model="searchQuery"
           class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="내담자 검색"
+          @keyup.enter="searchClients"
         />
       </div>
     </div>
@@ -75,6 +118,7 @@ const handlePageChange = (page) => {
       <span class="sm:ml-3">
         <button
           type="button"
+          @click="toggleForm"
           class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           <CheckIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
@@ -88,302 +132,79 @@ const handlePageChange = (page) => {
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
         <tr>
-          <th scope="col" class="p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-all-search"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-all-search" class="sr-only">checkbox</label>
-            </div>
-          </th>
-          <th scope="col" class="px-6 py-3">Product name</th>
-          <th scope="col" class="px-6 py-3">Color</th>
-          <th scope="col" class="px-6 py-3">Category</th>
-          <th scope="col" class="px-6 py-3">Price</th>
+          <!-- <th scope="col" class="p-4"> -->
+          <!--   <div class="flex items-center"> -->
+          <!--     <input id="checkbox-all-search" type="checkbox" -->
+          <!--       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" /> -->
+          <!--     <label for="checkbox-all-search" class="sr-only">checkbox</label> -->
+          <!--   </div> -->
+          <!-- </th> -->
+          <th scope="col" class="px-6 py-3">내담자명</th>
+          <th scope="col" class="px-6 py-3">내담자 휴대전화</th>
+          <th scope="col" class="px-6 py-3">내담자 이메일</th>
+          <th scope="col" class="px-6 py-3">상담사</th>
+          <th scope="col" class="px-6 py-3">상담상태</th>
           <th scope="col" class="px-6 py-3">Action</th>
         </tr>
       </thead>
       <tbody>
+        <!-- user list -->
         <tr
+          v-for="client in clients"
+          :key="client.id"
           class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
         >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-1"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-            </div>
-          </td>
+          <!-- <td class="w-4 p-4"> -->
+          <!--   <div class="flex items-center"> -->
+          <!--     <input id="checkbox-table-search-1" type="checkbox" -->
+          <!--       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" /> -->
+          <!--     <label for="checkbox-table-search-1" class="sr-only">checkbox</label> -->
+          <!--   </div> -->
+          <!-- </td> -->
           <th
             scope="row"
             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
           >
-            Apple MacBook Pro 17"
+            {{ client.client_name }}
           </th>
-          <td class="px-6 py-4">Silver</td>
-          <td class="px-6 py-4">Laptop</td>
-          <td class="px-6 py-4">$2999</td>
+          <td class="px-6 py-4">{{ client.phone_number }}</td>
+          <td class="px-6 py-4">{{ client.email_address }}</td>
           <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-2"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-2" class="sr-only">checkbox</label>
+            <div v-if="client.consultant" class="flex items-center">
+              {{ client.consultant }}
+            </div>
+            <div v-if="!client.consultant" class="flex items-center">
+              <button
+                class="text-blue-600 dark:text-blue-500 hover:underline font-semibold border py-1 px-3 rounded-lg bg-blue-100 dark:bg-blue-800 dark:border-blue-600 dark:hover:bg-blue-700 dark:hover:border-blue-700 dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:hover:border-blue-700"
+                @click="toggleForm(client.id)"
+              >
+                상담자배정
+              </button>
             </div>
           </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Microsoft Surface Pro
-          </th>
-          <td class="px-6 py-4">White</td>
-          <td class="px-6 py-4">Laptop PC</td>
-          <td class="px-6 py-4">$1999</td>
           <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
+            <select
+              class="w-24 bg-gray-100 border border-gray-300 rounded-md px-2"
+              v-model="client.consultant_status"
+              @change="handleStatusChange(client)"
             >
+              <option value="1">상담진행</option>
+              <option value="2">상담보류</option>
+              <option value="3">상담종결</option>
+            </select>
           </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
+          <td class="px-6 py-4">
+            <div class="flex items-center space-x-2">
+              <a
+                href="#"
+                @click="toggleForm(client.id)"
+                class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                >내담자정보</a
+              >
+              <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                >상담관리</a
+              >
             </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Magic Mouse 2
-          </th>
-          <td class="px-6 py-4">Black</td>
-          <td class="px-6 py-4">Accessories</td>
-          <td class="px-6 py-4">$99</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Apple Watch
-          </th>
-          <td class="px-6 py-4">Black</td>
-          <td class="px-6 py-4">Watches</td>
-          <td class="px-6 py-4">$199</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Apple iMac
-          </th>
-          <td class="px-6 py-4">Silver</td>
-          <td class="px-6 py-4">PC</td>
-          <td class="px-6 py-4">$2999</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Apple AirPods
-          </th>
-          <td class="px-6 py-4">White</td>
-          <td class="px-6 py-4">Accessories</td>
-          <td class="px-6 py-4">$399</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            iPad Pro
-          </th>
-          <td class="px-6 py-4">Gold</td>
-          <td class="px-6 py-4">Tablet</td>
-          <td class="px-6 py-4">$699</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Magic Keyboard
-          </th>
-          <td class="px-6 py-4">Black</td>
-          <td class="px-6 py-4">Accessories</td>
-          <td class="px-6 py-4">$99</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            Smart Folio iPad Air
-          </th>
-          <td class="px-6 py-4">Blue</td>
-          <td class="px-6 py-4">Accessories</td>
-          <td class="px-6 py-4">$79</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
-          </td>
-        </tr>
-        <tr
-          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id="checkbox-table-search-3"
-                type="checkbox"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label for="checkbox-table-search-3" class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <th
-            scope="row"
-            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-          >
-            AirTag
-          </th>
-          <td class="px-6 py-4">Silver</td>
-          <td class="px-6 py-4">Accessories</td>
-          <td class="px-6 py-4">$29</td>
-          <td class="px-6 py-4">
-            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              >Edit</a
-            >
           </td>
         </tr>
       </tbody>
@@ -394,5 +215,6 @@ const handlePageChange = (page) => {
       :items-per-page="itemsPerPage"
       @page-changed="handlePageChange"
     />
+    <ClientFormSliding :isVisible="isFormVisible" :clientId="currentClientId" @close="toggleForm" />
   </div>
 </template>

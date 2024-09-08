@@ -1,6 +1,7 @@
 from .announcement import router as announcement_router
 from .auth import router as auth_router
 from .center import router as center_router
+from .client import router as client_router
 from .customer import router as customer_router
 from .inquiry import router as inquiry_router
 from .program import router as program_router
@@ -24,4 +25,5 @@ __all__ = [
     inquiry_router,
     announcement_router,
     center_router,
+    client_router,
 ]

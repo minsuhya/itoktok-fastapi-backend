@@ -11,7 +11,7 @@ from ..crud.center import (  # center director; center info
     delete_center_info,
     get_center_director_by_id,
     get_center_directors,
-    get_center_info_by_id,
+    get_center_info_by_username,
     get_center_infos,
     update_center_director,
     update_center_info,
@@ -29,7 +29,7 @@ from ..schemas.user import (  # center director; center info
 
 router = APIRouter(
     prefix="/center",
-    tags=["center"],
+    tags=["Center"],
     dependencies=[Depends(get_session)],
     responses={404: {"description": "API Not found"}},
 )
@@ -92,13 +92,13 @@ def register_center_info(
     return create_center_info(session, info_data)
 
 
-@router.get("/info/{id}", response_model=CenterInfoRead)
-def read_center_info(info_id: int, session: Session = Depends(get_session)):
-    print("read", info_id)
-    info = get_center_info_by_id(session, info_id)
+@router.get("/info/{username}", response_model=SuccessResponse[CenterInfoRead])
+def read_center_info(username: str, session: Session = Depends(get_session)):
+    print("read", username)
+    info = get_center_info_by_username(session, username)
     if not info:
         raise HTTPException(status_code=404, detail="Center Info not found")
-    return info
+    return SuccessResponse(data=info)
 
 
 @router.get("/info", response_model=List[CenterInfoRead])
@@ -108,20 +108,24 @@ def read_center_infos(
     return get_center_infos(session, skip=skip, limit=limit)
 
 
-@router.put("/{info_id}", response_model=SuccessResponse[CenterInfoRead])
+@router.put("/info/{username}", response_model=SuccessResponse[CenterInfoRead])
 def update_center_info_endpoint(
-    info_id: int,
+    username: str,
     info: CenterInfoUpdate,
     session: Session = Depends(get_session),
 ):
-    existing_info = get_center_info_by_id(session, info_id)
+    existing_info = get_center_info_by_username(session, username)
     if not existing_info:
-        raise HTTPException(status_code=404, detail="Center Info not found")
-    return SuccessResponse(data=update_center_info(session, info, existing_info))
+        new_center_info = CenterInfoCreate(**info.model_dump(exclude_unset=True))
+        info_data = CenterInfo.model_validate(new_center_info)
+        center_info = create_center_info(session, info_data)
+    else:
+        center_info = update_center_info(session, info, existing_info)
+    return SuccessResponse(data=center_info)
 
 
-@router.delete("/{info_id}", response_model=SuccessResponse[bool])
-def delete_center_info_endpoint(info_id: int, session: Session = Depends(get_session)):
-    if not delete_center_info(session, info_id):
+@router.delete("/info/{username}", response_model=SuccessResponse[bool])
+def delete_center_info_endpoint(username: str, session: Session = Depends(get_session)):
+    if not delete_center_info(session, username):
         raise HTTPException(status_code=404, detail="Center Info not found")
     return SuccessResponse(data=True)

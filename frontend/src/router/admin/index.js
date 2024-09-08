@@ -40,7 +40,7 @@ export default [
       {
         path: 'counselor',
         name: 'Counselor',
-        component: () => import('@/views/CounselorList.vue')
+        component: () => import('@/views/UserList.vue')
       },
       // 일별일정
       {

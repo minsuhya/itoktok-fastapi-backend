@@ -79,7 +79,6 @@ def delete_center_director(session: Session, director_id: int) -> bool:
 ###### Center Info CRUD #####
 # 센터 정보 생성
 def create_center_info(session: Session, info: CenterInfo) -> CenterInfo:
-    info.password = get_password_hash(info.password)
     session.add(info)
     session.commit()
     session.refresh(info)
@@ -111,18 +110,29 @@ def get_center_infos(
 def update_center_info(
     session: Session, info: CenterInfoUpdate, db_info: CenterInfo
 ) -> Optional[CenterInfo]:
+    # info 객체에서 변경된 데이터를 dict로 변환합니다.
     info_data = info.model_dump(exclude_unset=True)
-    db_info.sqlmodel_update(info_data)
+
+    # # db_info 객체를 model_validate를 사용하여 업데이트합니다.
+    # updated_db_info = db_info.model_validate(info_data)
+    # pydantic 모델을 사용하여 필드 갱신
+    db_info.__dict__.update(info_data)
+
+    # 세션을 커밋하고, 변경된 객체를 새로 고칩니다.
+    session.add(db_info)
     session.commit()
     session.refresh(db_info)
+
     return db_info
 
 
 # 센터 정보 삭제
-def delete_center_info(session: Session, info_id: int) -> bool:
-    info = session.get(CenterInfo, info_id)
-    if info:
-        session.delete(info)
+def delete_center_info(session: Session, username: str) -> bool:
+    statement = select(CenterInfo).where(CenterInfo.username == username)
+    result = session.exec(statement).first()
+
+    if result:
+        session.delete(result)
         session.commit()
         return True
     return False

@@ -52,7 +52,7 @@ class CenterInfo(SQLModel, table=True):
     center_summary: str = Field(
         max_length=100, nullable=False, description="센터 한줄소개"
     )
-    center_introducs: str = Field(
+    center_introduce: str = Field(
         max_length=255, nullable=False, description="센터 소개"
     )
     center_export: str = Field(max_length=50, nullable=False, description="전문분야")

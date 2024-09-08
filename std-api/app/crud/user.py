@@ -1,7 +1,9 @@
 from typing import List, Optional
 
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from passlib.context import CryptContext
-from sqlmodel import Session, select
+from sqlmodel import Session, desc, select
 
 from ..models.user import User
 from ..schemas.user import UserUpdate
@@ -32,9 +34,18 @@ def get_user_by_username(session: Session, username: str) -> Optional[User]:
     return session.exec(statement).first()
 
 
-def get_users(session: Session, skip: int = 0, limit: int = 10) -> List[User]:
-    statement = select(User).offset(skip).limit(limit)
-    return session.exec(statement).all()
+# 사용자(상담사)
+def get_users(
+    session: Session, page: int = 1, size: int = 10, search_qry: str = ""
+) -> Page[User]:
+    # statement = select(User).offset(skip).limit(limit)
+    # return session.exec(statement).all()
+    return paginate(
+        session,
+        select(User)
+        .where(User.full_name.like(f"%{search_qry}%"))
+        .order_by(desc(User.id)),
+    )
 
 
 def update_user(session: Session, user: UserUpdate, db_user: User) -> Optional[User]:

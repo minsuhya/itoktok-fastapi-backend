@@ -60,9 +60,9 @@ export const readMe = async () => {
   }
 }
 
-export const readUser = async (username) => {
+export const readUser = async (user_id) => {
   try {
-    const response = await axios.get(`/users/${username}`)
+    const response = await axios.get(`/users/${user_id}`)
     return response.data
   } catch (error) {
     console.error('Error reading user:', error)
@@ -70,21 +70,21 @@ export const readUser = async (username) => {
   }
 }
 
-export const readUsers = async (skip = 0, limit = 10) => {
+export const readUsers = async (page = 1, size = 10, search_qry = '') => {
   try {
     const response = await axios.get('/users', {
-      params: { skip, limit }
+      params: { page, size, search_qry }
     })
-    return response.data
+    return response
   } catch (error) {
     console.error('Error reading users:', error)
     throw error
   }
 }
 
-export const updateUser = async (username, user) => {
+export const updateUser = async (user_id, user) => {
   try {
-    const response = await axios.put(`/users/${username}`, user)
+    const response = await axios.put(`/users/${user_id}`, user)
     return response.data
   } catch (error) {
     console.error('Error updating user:', error)
@@ -92,9 +92,9 @@ export const updateUser = async (username, user) => {
   }
 }
 
-export const deleteUser = async (username) => {
+export const deleteUser = async (user_id) => {
   try {
-    const response = await axios.delete(`/users/${username}`)
+    const response = await axios.delete(`/users/${user_id}`)
     return response.data
   } catch (error) {
     console.error('Error deleting user:', error)
