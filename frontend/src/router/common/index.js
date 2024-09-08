@@ -5,7 +5,7 @@ export default [
       {
         path: '/redirect/:path',
         name: 'redirect',
-        component: () => import('@/views/redirect/index.vue')
+        component: () => import('@/views/redirect/IndexView.vue')
       }
     ]
   },
