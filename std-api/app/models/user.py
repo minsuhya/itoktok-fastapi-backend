@@ -29,9 +29,9 @@ class User(SQLModel, table=True):
     phone_number: Optional[str] = None
     hp_number: str
     center_username: str
-    user_type: str = "1"
+    user_type: str = "1"  # 사용자 타입 (1: 센터, 2: 상담사)
     is_active: int = 1
-    is_superuser: int = 0
+    is_superuser: int = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
 
     created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now())

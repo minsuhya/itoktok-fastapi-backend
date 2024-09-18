@@ -12,7 +12,8 @@ export const useUserStore = defineStore('userStore', {
     setUserInfo(userInfo) {
       this.user = userInfo
       this.isAuthenticated = true
-      this.role = userInfo.is_superuser == 1 ? 1 : userInfo.is_superuser == 2 ? 2 : 3
+      this.role =
+        userInfo.is_superuser == 1 ? 'admin' : userInfo.user_type == 1 ? 'center' : 'teacher'
       this.showLogoutModal = false
       this.saveState()
     },

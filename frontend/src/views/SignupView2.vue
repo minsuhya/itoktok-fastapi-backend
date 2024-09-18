@@ -86,87 +86,145 @@ const register = handleSubmit(async (values) => {
           Sign up to your account
         </h2>
       </div>
-      <div class="bg-white mt-10 sm:mx-auto sm:w-full sm:max-w-2xl border border-gray-400/50 p-9 rounded-lg">
+      <div
+        class="bg-white mt-10 sm:mx-auto sm:w-full sm:max-w-2xl border border-gray-400/50 p-9 rounded-lg"
+      >
         <form @submit.prevent="register">
           <div class="mb-4">
             <label
-              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">아이디</label>
-            <input v-bind="userNameAttrs" v-model="username" type="text"
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >아이디</label
+            >
+            <input
+              v-bind="userNameAttrs"
+              v-model="username"
+              type="text"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="아이디" />
+              placeholder="아이디"
+            />
             <div class="mt-1 text-red-500">{{ errors.username }}</div>
           </div>
           <div class="mb-4">
             <label
-              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">비밀번호</label>
-            <input v-bind="passwordAttrs" v-model="password" type="password"
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >비밀번호</label
+            >
+            <input
+              v-bind="passwordAttrs"
+              v-model="password"
+              type="password"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="abcd!@34" />
+              placeholder="abcd!@34"
+            />
             <div class="mt-1 text-red-500">{{ errors.password }}</div>
           </div>
           <div class="mb-4">
-            <label class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">비밀번호
-              확인</label>
-            <input v-bind="passwordConfirmAttrs" v-model="password_confirm" type="password"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            <label
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >비밀번호 확인</label
+            >
+            <input
+              v-bind="passwordConfirmAttrs"
+              v-model="password_confirm"
+              type="password"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
             <div class="mt-1 text-red-500">{{ errors.password_confirm }}</div>
           </div>
           <div class="mb-4">
             <label
-              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">이메일</label>
-            <input v-bind="emailAttrs" v-model="email" type="email"
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >이메일</label
+            >
+            <input
+              v-bind="emailAttrs"
+              v-model="email"
+              type="email"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="your@email.com" />
+              placeholder="your@email.com"
+            />
             <div class="mt-1 text-red-500">{{ errors.email }}</div>
           </div>
           <div class="mb-4">
             <label
-              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">이름</label>
-            <input v-bind="fullNameAttrs" v-model="full_name" type="text"
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >이름</label
+            >
+            <input
+              v-bind="fullNameAttrs"
+              v-model="full_name"
+              type="text"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="홍길동" />
+              placeholder="홍길동"
+            />
             <div class="mt-1 text-red-500">{{ errors.full_name }}</div>
           </div>
           <div class="mb-4">
             <label
-              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500">휴대폰번호</label>
-            <input v-bind="hpNumberAttrs" v-model="hp_number" type="text"
+              class="text-base font-semibold leading-7 text-gray-900 before:content-['*'] before:text-red-500"
+              >휴대폰번호</label
+            >
+            <input
+              v-bind="hpNumberAttrs"
+              v-model="hp_number"
+              type="text"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="000-0000-0000" />
+              placeholder="000-0000-0000"
+            />
             <div class="mt-1 text-red-500">{{ errors.hp_number }}</div>
           </div>
           <div class="mb-4">
             <label class="text-base font-semibold leading-7 text-gray-900">생년월일</label>
-            <input v-bind="birthDateAttrs" v-model="birth_date" type="date"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            <input
+              v-bind="birthDateAttrs"
+              v-model="birth_date"
+              type="date"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
           </div>
           <div class="mb-4">
             <label class="text-base font-semibold leading-7 text-gray-900">주소</label>
-            <input v-bind="addressAttrs" v-model="address" type="text"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            <input
+              v-bind="addressAttrs"
+              v-model="address"
+              type="text"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
           </div>
           <div class="mb-4">
             <label class="text-base font-semibold leading-7 text-gray-900">주소 상세</label>
-            <input v-bind="addressExtraAttrs" v-model="address_extra" type="text"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            <input
+              v-bind="addressExtraAttrs"
+              v-model="address_extra"
+              type="text"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
           </div>
           <div class="mb-4">
             <label class="text-base font-semibold leading-7 text-gray-900">전화번호</label>
-            <input v-bind="phoneNumberAttrs" v-model="phone_number" type="text"
+            <input
+              v-bind="phoneNumberAttrs"
+              v-model="phone_number"
+              type="text"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="000-0000-0000" />
+              placeholder="000-0000-0000"
+            />
           </div>
           <input v-bind="zipCodeAttrs" v-model="zip_code" type="hidden" />
           <input v-bind="userTypeAttrs" v-model="user_type" type="hidden" />
           <input v-bind="isActiveAttrs" v-model="is_active" type="hidden" />
           <input v-bind="isSuperUserAttrs" v-model="is_superuser" type="hidden" />
           <div class="flex justify-center gap-1">
-            <button type="submit"
-              class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-semibold rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+            <button
+              type="submit"
+              class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-semibold rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+            >
               회원가입
             </button>
-            <router-link to="/login"
-              class="flex focus:outline-none text-white bg-gray-400 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <router-link
+              to="/login"
+              class="flex focus:outline-none text-white bg-gray-400 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >
               로그인
             </router-link>
           </div>

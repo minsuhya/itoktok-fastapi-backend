@@ -2,10 +2,19 @@
 import HeaderView from '@/components/HeaderView.vue'
 import LeftView from '@/components/LeftView.vue'
 import FooterView from '@/components/FooterView.vue'
+import SettingsFormSliding from '@/views/SettingsFormSliding.vue'
+
+import { ref } from 'vue'
+
+const isSettingsSlide = ref(false)
+
+const onToggleSettingsSlide = () => {
+  isSettingsSlide.value = !isSettingsSlide.value
+}
 </script>
 <template>
   <!-- Top Navigaktion Bar -->
-  <HeaderView />
+  <HeaderView @toggleSettingsSlide="onToggleSettingsSlide" />
   <div class="flex flex-1 overflow-hidden">
     <!-- Left Sidebar -->
     <LeftView />
@@ -22,6 +31,7 @@ import FooterView from '@/components/FooterView.vue'
   </div>
   <!-- Bottom Footer -->
   <FooterView />
+  <SettingsFormSliding :isVisible="isSettingsSlide" @close="onToggleSettingsSlide" />
 </template>
 <style scoped>
 .fade-enter-active,
