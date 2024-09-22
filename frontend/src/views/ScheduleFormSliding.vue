@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
 import { readUser, readUserByUsername, updateUser } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
+import { createSchedule } from '@/api/schedule'
 
 const userStore = useUserStore()
 const showModal = inject('showModal')
@@ -15,7 +16,8 @@ const emit = defineEmits(['close'])
 // 상담 일정
 const props = defineProps({
   isVisible: Boolean,
-  scheduleId: String
+  scheduleId: String,
+  scheduleDate: String
 })
 const searchTerm = ref('')
 const clients = ref([])
@@ -50,6 +52,7 @@ const selectClient = async (client) => {
   // 상담사 정보 추가
   try {
     const consultant_info = await readUserByUsername(client.consultant)
+    selectedClient.value.consultant = consultant_info.username
     selectedClient.value.consultant_name = consultant_info.full_name
   } catch (error) {
     console.error('Error fetching clients:', error)
@@ -57,8 +60,8 @@ const selectClient = async (client) => {
 }
 
 // 시간 선택
-const startTime = ref(null)
-const endTime = ref(null)
+const start_time = ref(null)
+const finish_time = ref(null)
 const timeOptions = ref([])
 const endTimeOptions = ref([])
 
@@ -83,9 +86,9 @@ const formatTime = (date) => {
 }
 
 const updateEndTimeOptions = () => {
-  if (!startTime.value) return
+  if (!start_time.value) return
 
-  const [startHour, startMinute] = startTime.value.split(':').map(Number)
+  const [startHour, startMinute] = start_time.value.split(':').map(Number)
   const startDate = new Date()
   startDate.setHours(startHour, startMinute, 0, 0)
 
@@ -103,92 +106,71 @@ const updateEndTimeOptions = () => {
   }
 
   endTimeOptions.value = options
-  endTime.value = endTimeOptions.value[0] // 종료 시간을 첫 번째 옵션으로 설정
+  finish_time.value = endTimeOptions.value[0] // 종료 시간을 첫 번째 옵션으로 설정
 }
 
 // vee-validate 스키마 정의
 const schema = yup.object({
-  username: yup.string().min(8, '8자 이상 입력해주세요.').required('아이디를 입력해주세요.'),
-  password: yup.string(),
-  password_confirm: yup.string().when('password', {
-    is: (val) => val && val.length > 0,
-    then: () =>
-      yup
-        .string()
-        .oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.')
-        .required('비밀번호 확인을 입력해주세요.'),
-    otherwise: () => yup.string().notRequired()
-  }),
-  email: yup.string().required('이메일을 입력해주세요.').email('올바른 이메일을 입력하세요.'),
-  full_name: yup.string().required('이름을 입력해주세요.'),
-  hp_number: yup
-    .string()
-    .required('휴대폰번호를 입력해주세요.')
-    .test('is-valid-phone', '올바른 휴대폰번호를 입력하세요.', (values) => {
-      const phoneRegex = /^(010|011)-\d{3,4}-\d{4}$/
-      return phoneRegex.test(values)
-    }),
-  phone_number: yup
-    .string()
-    .required('전화번호를 입력해주세요.')
-    .test('is-valid-phone', '올바른 전화번호를 입력하세요.', (values) => {
-      const phoneRegex = /^\d{2,3}-\d{3,4}-\d{4}$/
-      return phoneRegex.test(values)
-    })
+  consultant_name: yup.string().required('내담자를 선택해주세요.'),
+  client_name: yup.string().required('내담자를 선택해주세요.'),
+  phone_number: yup.string().required('휴대전화번호를 입력하세요.'),
+  title: yup.string().required('일정제목을 입력해주세요.'),
+  start_date: yup.string().required('일정시작일을 선택해주세요.'),
+  finish_date: yup.string().required('일정종료일을 선택해주세요.'),
+  start_time: yup.string().required('시작시간을 선택해주세요.'),
+  finish_time: yup.string().required('종료시간을 선택해주세요.')
 })
 
 const form = reactive({
-  username: userStore.user.username,
-  password: '',
-  email: userStore.user.email,
-  full_name: userStore.user.full_name,
-  birth_date: userStore.user.birth_date,
-  center_username: userStore.user.center_username,
-  phone_number: userStore.user.phone_number,
-  hp_number: userStore.user.hp_number,
-  address: userStore.user.address,
-  address_extra: userStore.user.address_extra,
-  zip_code: userStore.user.zip_code,
-  user_type: userStore.user.user_type,
-  is_active: userStore.user.is_active,
-  is_superuser: userStore.user.is_superuser
+  id: '',
+  teacher_username: '',
+  client_id: '',
+  title: '',
+  start_date: props.scheduleDate,
+  finish_date: props.scheduleDate,
+  start_time: formatTime(new Date()),
+  finish_time: formatTime(new Date()),
+  memo: ''
 })
 
 const closeForm = () => {
   emit('close')
 }
 
-const fetchUserInfo = async () => {
-  if (!props.userId) {
+const fetchScheduleInfo = async () => {
+  if (!props.scheduleId) {
     Object.keys(form).forEach((key) => {
       form[key] = ''
     })
+    console.log('scheduleDate:', props.scheduleDate)
+    // 일정 초기화
+    form.start_date = props.scheduleDate
+    form.finish_date = props.scheduleDate
     return
   }
-  console.log('props.userId: ', props.userId)
+  console.log('scheduleId', props.scheduleId)
 
   try {
-    const userInfo = await readUser(props.userId)
-    console.log('userInfo:', userInfo)
-    Object.assign(form, userInfo)
+    const scheduleInfo = await readSchedule(pros.scheduleId)
+    console.log('scheduleInfo:', scheduleInfo)
+    Object.assign(form, scheduleInfo)
   } catch (error) {
     console.error('Error fetching user:', error)
   }
 }
 
-const saveUserInfo = async () => {
+const saveScheduleInfo = async () => {
   try {
-    await updateUser(props.userId, form)
-    showModal('내담자 정보가 등록되었습니다.')
+    await createSchedule(form)
+    showModal('상담일정 정보가 등록되었습니다.')
   } catch (error) {
-    showModal('내담자 정보 등록 중 오류가 발생했습니다.')
+    showModal('상담일정 정보 등록 중 오류가 발생했습니다.')
     console.error('Error registering client data:', error)
   }
 }
 
 onBeforeMount(() => {
-  fetchUserInfo()
-  console.log('userStore.user.center_username 1111: ', userStore.user.center_username)
+  fetchScheduleInfo()
 })
 
 onMounted(() => {
@@ -199,17 +181,25 @@ onMounted(() => {
 const onSubmit = async (values) => {
   console.log('submitting:', values)
   Object.assign(form, values)
-  await saveUserInfo()
+  await saveScheduleInfo()
   emit('close')
 }
 
 // Step 2: Watch for changes in clientId and call toggleForm
+// watch(
+//   () => props.scheduleId,
+//   (newScheduleId, oldScheduleId) => {
+//     if (newScheduleId !== oldScheduleId) {
+//       fetchScheduleInfo()
+//     }
+//   }
+// )
 watch(
-  () => props.userId,
-  (newUserId, oldUserId) => {
-    if (newUserId !== oldUserId) {
-      fetchUserInfo(newUserId)
-    }
+  () => props.scheduleDate,
+  (newScheduleDate, oldScheduleDate) => {
+    console.log('newScheduleDate:', newScheduleDate)
+    form.start_date = newScheduleDate
+    form.finish_date = newScheduleDate
   }
 )
 </script>
@@ -233,6 +223,8 @@ watch(
           </button>
         </div>
         <Form @submit="onSubmit" :validation-schema="schema" :initial-values="form" class="space-y-4 text-sm">
+          <Field type="hidden" name="teacher_username" v-model="selectedClient.consultant" />
+          <Field type="hidden" name="client_id" v-model="selectedClient.id" />
           <div class="grid gap-4">
             <div class="mb-4">
               <label for="client-search" class="block text-sm font-medium text-gray-700">내담자를 선택하세요.</label>
@@ -263,9 +255,11 @@ watch(
           </div>
           <div class="grid grid-cols-1 gap-4">
             <div class="mb-4">
-              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">상담사</label>
-              <Field type="text" name="consultant_name" v-model="selectedClient.consultant_name"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">상담사 <span
+                  class="text-red-500">*</span></label>
+              <Field type="text" name="consultant_name" readonly v-model="selectedClient.consultant_name"
+                class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <ErrorMessage name="consultant_name" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -284,21 +278,24 @@ watch(
           </div>
           <div>
             <div class="mb-4">
-              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정제목</label>
-              <Field type="text" name="schedule_title" v-model="form.schedule_title"
+              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정제목 <span
+                  class="text-red-500">*</span></label>
+              <Field type="text" name="title" v-model="form.title"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
-              <ErrorMessage name="schedule_title" class="text-red-500 text-xs italic mt-2" />
+              <ErrorMessage name="title" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
-              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정시작일</label>
+              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정시작일 <span
+                  class="text-red-500">*</span></label>
               <Field type="date" name="start_date" v-model="form.start_date"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
               <ErrorMessage name="start_date" class="text-red-500 text-xs italic mt-2" />
             </div>
             <div class="mb-4">
-              <label for="finish_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정종료일</label>
+              <label for="finish_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정종료일 <span
+                  class="text-red-500">*</span></label>
               <Field type="date" name="finish_date" v-model="form.finish_date"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
               <ErrorMessage name="finish_date" class="text-red-500 text-xs italic mt-2" />
@@ -306,8 +303,9 @@ watch(
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
-              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">시작시간</label>
-              <Field name="start_time" id="start-time" v-model="startTime" as="select" @change="updateEndTimeOptions"
+              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">시작시간 <span
+                  class="text-red-500">*</span></label>
+              <Field name="start_time" id="start_time" v-model="start_time" as="select" @change="updateEndTimeOptions"
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
                 <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
                 <!-- 상담사 옵션 추가 -->
@@ -315,8 +313,9 @@ watch(
               <ErrorMessage name="start_time" class="text-red-500 text-xs italic mt-2" />
             </div>
             <div class="mb-4">
-              <label for="finish_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">종료시간</label>
-              <Field name="finish_time" id="end-time" v-model="endTime" as="select"
+              <label for="finish_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">종료시간 <span
+                  class="text-red-500">*</span></label>
+              <Field name="finish_time" id="finish_time" v-model="finish_time" as="select"
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
                 <option v-for="time in endTimeOptions" :key="time" :value="time">{{ time }}</option>
                 <!-- 상담사 옵션 추가 -->

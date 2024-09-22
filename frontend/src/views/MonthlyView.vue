@@ -15,13 +15,27 @@ const zoom = (index, item_index, event) => {
 
 const isVisible = ref(false)
 const currentScheduleId = ref('')
-const toggleForm = (scheduleId) => {
-  currentScheduleId.value = String(scheduleId)
+const currentScheduleDate = ref('')
+const toggleForm = () => {
   isVisible.value = !isVisible.value
   if (!isVisible.value) {
     currentScheduleId.value = ''
+    currentScheduleDate.value = ''
   }
 }
+
+const clickedDate = ref('')
+const clickCalendarDay = (date) => {
+  console.log('clickedDate:', date)
+  currentScheduleDate.value = date
+  toggleForm()
+}
+
+const clickCalendarSchedule = (scheduleId) => {
+  currentScheduleId.value = scheduleId
+  toggleForm()
+}
+
 
 // 날짜 관련 Reference
 const monthNames = [
@@ -163,7 +177,8 @@ onMounted(() => {
       <div class="bg-white py-2 text-center text-sm font-medium">Sun</div>
 
       <!-- schedule data loop -->
-      <div class="bg-white h-32 p-2" v-for="(schedule, index) in schedule_data" :key="index" @click="toggleForm(index)">
+      <div class="bg-white h-32 p-2" v-for="(schedule, index) in schedule_data" :key="index"
+        @click="clickCalendarDay(index)">
         <span
           :class="{ 'block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5 text-center': index === today }">{{
             index.split("-")[2]
@@ -185,7 +200,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <ScheduleFormSliding :isVisible="isVisible" :scheduleId="currentScheduleId" @close="toggleForm" />
+    <ScheduleFormSliding :isVisible="isVisible" :scheduleId="currentScheduleId" :scheduleDate="currentScheduleDate"
+      @close="toggleForm" />
   </div>
 </template>
 
