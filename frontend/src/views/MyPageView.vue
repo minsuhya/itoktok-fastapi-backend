@@ -24,7 +24,8 @@ const user = reactive({
   zip_code: userStore.user.zip_code,
   user_type: userStore.user.user_type,
   is_active: userStore.user.is_active,
-  is_superuser: userStore.user.is_superuser
+  is_superuser: userStore.user.is_superuser,
+  usercolor: userStore.user.usercolor
 })
 
 const center = reactive({
@@ -182,105 +183,181 @@ onMounted(() => {
     <div class="container mx-auto p-4">
       <Form :validation-schema="schema" :initial-values="combined" @submit="onSubmit">
         <h1 class="text-2xl font-bold mb-4">
-          <span class="font-bold text-2xl text-sky-700">{{ userStore.user.username }} </span> 계정
-          정보
+          <span class="font-bold text-2xl text-sky-700"
+            >{{ userStore.user.full_name }}({{ userStore.user.username }})
+          </span>
+          계정 정보
         </h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="mb-4 col-span-2 w-1/2">
-            <label class="block font-semibold text-gray-700">이메일 <span class="text-red-500">*</span>
+          <div class="mb-4">
+            <label class="block font-semibold text-gray-700"
+              >이메일 <span class="text-red-500">*</span>
             </label>
             <Field name="email" type="email" class="mt-1 block w-full rounded-lg border-gray-400" />
             <ErrorMessage name="email" class="text-red-500" />
           </div>
           <div class="mb-4">
+            <label class="block font-semibold text-gray-700">색상 정보 </label>
+            <Field
+              type="color"
+              name="usercolor"
+              id="usercolor"
+              class="p-1 h-11 w-1/4 mt-1 block rounded-lg border-gray-400"
+              value="#2563eb"
+              title="Choose your color"
+            />
+            <ErrorMessage name="usercolor" class="text-red-500 text-sm" />
+          </div>
+          <div class="mb-4">
             <label class="block font-semibold text-gray-700">비밀번호 </label>
-            <Field name="password" type="password" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="password"
+              type="password"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="password" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">비밀번호 확인 </label>
-            <Field name="password_confirm" type="password" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="password_confirm"
+              type="password"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="password_confirm" class="text-red-500" />
           </div>
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">이름 <span class="text-red-500">*</span>
+            <label class="block font-semibold text-gray-700"
+              >이름 <span class="text-red-500">*</span>
             </label>
-            <Field name="full_name" type="text" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="full_name"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="full_name" class="text-red-500" />
           </div>
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">휴대폰번호 <span class="text-red-500">*</span>
+            <label class="block font-semibold text-gray-700"
+              >휴대폰번호 <span class="text-red-500">*</span>
             </label>
-            <Field name="hp_number" type="text" class="mt-1 block w-full rounded-lg border-gray-400"
-              placeholder="000-0000-0000" />
+            <Field
+              name="hp_number"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+              placeholder="000-0000-0000"
+            />
             <ErrorMessage name="hp_number" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">전화번호</label>
-            <Field name="phone_number" type="text" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="phone_number"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="phone_number" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">생년월일</label>
-            <Field name="birth_date" type="date" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="birth_date"
+              type="date"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="birth_date" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">주소</label>
-            <Field name="address" type="text" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="address"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="address" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">주소 상세</label>
-            <Field name="address_extra" type="text" class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="address_extra"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="address_extra" class="text-red-500" />
           </div>
         </div>
         <h1 class="text-2xl font-bold mb-4">센터 정보</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">센터명 <span class="text-red-500">*</span>
+            <label class="block font-semibold text-gray-700"
+              >센터명 <span class="text-red-500">*</span>
             </label>
-            <Field name="center_name" type="text" v-model="center.center_name"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_name"
+              type="text"
+              v-model="center.center_name"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="center_name" class="text-red-500" />
           </div>
           <div class="mb-4">
-            <label class="block font-semibold text-gray-700">센터 전화번호 <span class="text-red-500">*</span>
+            <label class="block font-semibold text-gray-700"
+              >센터 전화번호 <span class="text-red-500">*</span>
             </label>
-            <Field name="center_tel" type="text" v-model="center.center_tel"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_tel"
+              type="text"
+              v-model="center.center_tel"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="center_tel" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터 한줄소개</label>
-            <Field name="center_summary" type="text" v-model="center.center_summary"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_summary"
+              type="text"
+              v-model="center.center_summary"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="center_summary" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터소개</label>
-            <Field name="center_introduce" as="textarea" v-model="center.center_introduce"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_introduce"
+              as="textarea"
+              v-model="center.center_introduce"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="center_introduce" class="text-red-500" />
           </div>
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">전문분야</label>
-            <Field name="center_export" type="text" v-model="center.center_export"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_export"
+              type="text"
+              v-model="center.center_export"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
           </div>
           <ErrorMessage name="center_export" class="text-red-500" />
           <div class="mb-4">
             <label class="block font-semibold text-gray-700">센터주소</label>
-            <Field name="center_addr" type="text" v-model="center.center_addr"
-              class="mt-1 block w-full rounded-lg border-gray-400" />
+            <Field
+              name="center_addr"
+              type="text"
+              v-model="center.center_addr"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+            />
             <ErrorMessage name="center_addr" class="text-red-500" />
           </div>
         </div>
         <div class="mt-6 flex items-center justify-center gap-x-6">
           <button
-            class="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-            Save
+            class="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            저장
           </button>
         </div>
       </Form>

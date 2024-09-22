@@ -184,7 +184,7 @@ onBeforeMount(fetchClients)
           </td>
           <td class="px-6 py-4">
             <select
-              class="w-24 bg-gray-100 border border-gray-300 rounded-md px-2"
+              class="w-24 h-9 bg-gray-100 border border-gray-300 rounded-md px-2 text-sm"
               v-model="client.consultant_status"
               @change="handleStatusChange(client)"
             >
@@ -200,9 +200,6 @@ onBeforeMount(fetchClients)
                 @click="toggleForm(client.id)"
                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                 >내담자정보</a
-              >
-              <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                >상담관리</a
               >
             </div>
           </td>

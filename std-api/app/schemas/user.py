@@ -18,6 +18,7 @@ class UserBaseSchema(BaseModel):
     user_type: str  # 사용자 타입 (1: 센터, 2: 상담사)
     is_active: bool
     is_superuser: bool  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
+    usercolor: str = "#a668e3"  # 일정 색상
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
     deleted_at: Optional[datetime] = None
@@ -41,6 +42,7 @@ class UserCreate(BaseModel):
     center_username: str
     is_active: int = 1  # 사용자 활성화 여부 (0: 비활성화, 1: 활성화)
     is_superuser: int = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
+    usercolor: str = "#a668e3"  # 일정 색상
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
     deleted_at: Optional[datetime] = None
@@ -56,6 +58,7 @@ class UserUpdate(BaseModel):
     address_extra: Optional[str] = None
     phone_number: Optional[str] = None
     hp_number: str
+    usercolor: str = "#a668e3"  # 일정 색상
     updated_at: Optional[datetime] = datetime.now()
 
 
@@ -74,6 +77,7 @@ class UserRead(BaseModel):
     center_username: str
     is_active: int
     is_superuser: int  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
+    usercolor: str = "#a668e3"  # 일정 색상
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
     deleted_at: Optional[datetime] = None

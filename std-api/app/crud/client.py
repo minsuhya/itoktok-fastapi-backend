@@ -46,20 +46,34 @@ def get_client_infos(
     )
 
 
+# 클라이언트 정보 조회
+def search_client_infos(session: Session, search_qry: str = "") -> Page[ClientInfo]:
+    statement = select(ClientInfo).where(ClientInfo.client_name.like(f"%{search_qry}%"))
+    result = session.exec(statement).all()
+
+    return result
+
+
 # 클라이언트 정보 수정
 def update_client_info(
     session: Session, info: ClientInfoUpdate, db_info: ClientInfo
 ) -> Optional[ClientInfo]:
-    # info 객체에서 변경된 데이터를 dict로 변환합니다.
-    info_data = info.model_dump(exclude_unset=True)
 
-    # db_info 객체의 필드를 업데이트합니다.
-    db_info.__dict__.update(info_data)
+    # Pydantic 모델을 dict로 변환
+    info_data = info.dict(exclude_unset=True)
+    print("info_data", info_data)
+
+    # SQLModel 객체의 필드를 업데이트
+    for key, value in info_data.items():
+        setattr(db_info, key, value)
+
+    print("db_info_data", db_info)
 
     # 세션을 커밋하고, 변경된 객체를 새로 고칩니다.
     session.add(db_info)
     session.commit()
     session.refresh(db_info)
+    print("after db_info_data", db_info)
 
     return db_info
 

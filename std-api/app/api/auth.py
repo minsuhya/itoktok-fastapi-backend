@@ -83,6 +83,7 @@ async def login_for_access_token(
     session: Session = Depends(get_session),
 ):
     user = get_user_by_username(form_data.username, session)
+    print("user:", user)
 
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(

@@ -1,38 +1,85 @@
-from pydantic import BaseModel
-from typing import Optional
-from datetime import date, time
-from ..models.schedule import ScheduleType
+from datetime import date, datetime, timezone
+from typing import List, Optional
 
-class ScheduleCreate(BaseModel):
-    schedule_type: ScheduleType
-    teacher_id: int
-    user_id: int
-    program_id: int
-    date: date
-    start_time: time
-    end_time: time
-    note: Optional[str] = None
+from pydantic import BaseModel, Field
 
-class ScheduleUpdate(BaseModel):
-    schedule_type: Optional[ScheduleType] = None
-    teacher_id: Optional[int] = None
-    user_id: Optional[int] = None
-    program_id: Optional[int] = None
-    date: Optional[str] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    note: Optional[str] = None
 
-class ScheduleRead(BaseModel):
+# Schedule Padatic Model
+class ScheduleBase(BaseModel):
+    teacher_username: str
+    client_id: int
+    title: str
+    start_date: date = Field(default_factory=date.today)
+    finish_date: date = Field(default_factory=date.today)
+    start_time: str
+    finish_time: str
+    memo: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+
+
+class ScheduleCreate(ScheduleBase):
+    created_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    pass
+
+
+class ScheduleRead(ScheduleBase):
     id: int
-    schedule_type: ScheduleType
-    teacher_id: int
-    user_id: int
-    program_id: int
-    date: date
-    start_time: time
-    end_time: time
-    note: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    schedule_list: List["ScheduleListRead"] = []
 
     class Config:
         from_attributes = True
+
+
+class ScheduleUpdate(ScheduleBase):
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+# ScheduleList Padatic Model
+class ScheduleListBase(BaseModel):
+    schedule_date: date = Field(default_factory=date.today)
+    schedule_time: str
+    schedule_status: str = Field(
+        max_length=1,
+        default="1",
+        description="스케줄 상태: 1(상담예약), 2(상담완료), 3(예약취소), 4(노쇼)",
+    )
+    schedule_memo: str = Field(default="", description="상담일지")
+    deleted_at: Optional[datetime] = None
+
+
+class ScheduleListCreate(ScheduleListBase):
+    schedule_id: int
+    created_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class ScheduleListRead(ScheduleListBase):
+    id: int
+    schedule_id: int
+    created_at: datetime
+    updated_at: datetime
+    schedule: Optional[ScheduleRead] = None  # Reverse relationship
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleListUpdate(ScheduleListBase):
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )

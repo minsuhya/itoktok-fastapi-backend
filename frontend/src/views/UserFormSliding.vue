@@ -133,7 +133,7 @@ watch(
     <div className="w-full bg-neutral-50 shadow-lg rounded-lg p-6">
       <div className="border-b pb-2 mb-4">
         <div class="flex items-center justify-evenly mb-2">
-          <h2 class="font-title font-bold">상담자 등록</h2>
+          <h2 class="font-title font-bold">상담사 정보</h2>
           <button class="ml-auto" @click="closeForm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +158,7 @@ watch(
               <label
                 for="username"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Username</label
+                >상담사ID</label
               >
               <Field
                 type="text"
@@ -174,7 +174,7 @@ watch(
               <label
                 for="password"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Password</label
+                >비밀번호</label
               >
               <Field
                 type="password"
@@ -186,7 +186,7 @@ watch(
               <label
                 for="password_confirm"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Password Confirm</label
+                >비밀번호 확인</label
               >
               <Field
                 type="password"
@@ -198,7 +198,7 @@ watch(
           <div class="grid grid-cols-1 gap-4">
             <div class="mb-4">
               <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Email</label
+                >이메일</label
               >
               <Field
                 type="email"
@@ -214,7 +214,7 @@ watch(
               <label
                 for="full_name"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Full Name</label
+                >상담사명</label
               >
               <Field
                 type="text"
@@ -228,7 +228,7 @@ watch(
               <label
                 for="birth_date"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Birth Date</label
+                >생년월일</label
               >
               <Field
                 type="date"
@@ -243,7 +243,7 @@ watch(
               <label
                 for="center_username"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Center Username</label
+                >센터ID</label
               >
               <Field
                 type="text"
@@ -256,7 +256,7 @@ watch(
               <label
                 for="phone_number"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Phone Number</label
+                >전화번호</label
               >
               <Field
                 type="text"
@@ -272,7 +272,7 @@ watch(
               <label
                 for="hp_number"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >HP Number</label
+                >휴대폰번호</label
               >
               <Field
                 type="text"
@@ -286,7 +286,7 @@ watch(
               <label
                 for="zip_code"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Zip Code</label
+                >우편번호</label
               >
               <Field
                 type="text"
@@ -298,7 +298,7 @@ watch(
           </div>
           <div class="mb-4">
             <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >Address</label
+              >주소</label
             >
             <Field
               type="text"
@@ -311,7 +311,7 @@ watch(
             <label
               for="address_extra"
               class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >Address Extra</label
+              >주소 상세</label
             >
             <Field
               type="text"
@@ -325,7 +325,7 @@ watch(
               <label
                 for="user_type"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >User Type</label
+                >상담자 타입</label
               >
               <Field
                 type="text"

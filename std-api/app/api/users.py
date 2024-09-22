@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from sqlmodel import Session, desc, select
 
 from ..core import get_session, oauth2_scheme
-from ..crud.user import get_users
+from ..crud.user import get_teachers, get_users
 from ..models.user import User
 from ..schemas import ErrorResponse, SuccessResponse
 from ..schemas.user import UserCreate  # center director; center info
@@ -17,7 +17,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter(
     prefix="/users",
-    tags=["users"],
     dependencies=[Depends(get_session), Depends(oauth2_scheme)],
     # dependencies=[Depends(get_session)],
     responses={404: {"description": "API Not found"}},
@@ -39,6 +38,27 @@ def read_me(
     current_user: User = Depends(get_current_user),
 ):
     return SuccessResponse(data=current_user)
+
+
+@router.get("/teachers")
+def read_teachers(
+    *,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return SuccessResponse(data=get_teachers(session, current_user.center_username))
+
+
+@router.get("/username/{username}", response_model=SuccessResponse[UserRead])
+def read_user_by_username(
+    username: str,
+    *,
+    session: Session = Depends(get_session),
+):
+    user = session.exec(select(User).where(User.username == username)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return SuccessResponse(data=user)
 
 
 @router.get("/{user_id}", response_model=SuccessResponse[UserRead])

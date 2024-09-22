@@ -5,15 +5,11 @@ from fastapi_pagination import Page, add_pagination
 from sqlalchemy.orm import Session
 
 from ..core import get_session, oauth2_scheme
-from ..crud.client import (
-    create_client_info,
-    delete_client_info,
-    get_client_info_by_consultant,
-    get_client_info_by_id,
-    get_client_infos,
-    update_client_info,
-    update_consultant_status,
-)
+from ..crud.client import (create_client_info, delete_client_info,
+                           get_client_info_by_consultant,
+                           get_client_info_by_id, get_client_infos,
+                           search_client_infos, update_client_info,
+                           update_consultant_status)
 from ..models.client import ClientInfo
 from ..models.user import User
 from ..schemas import ErrorResponse, SuccessResponse
@@ -43,7 +39,6 @@ def create_client(
 @router.get("/{info_id}", response_model=SuccessResponse[ClientInfoRead])
 def read_client_info(info_id: int, db: Session = Depends(get_session)):
     db_info = get_client_info_by_id(db, info_id)
-    print(db_info)
     if db_info is None:
         raise HTTPException(status_code=404, detail="Client info not found")
     return SuccessResponse(data=db_info)
@@ -83,12 +78,24 @@ def read_client_infos(
     return get_client_infos(db, page=page, size=size, search_qry=search_qry)
 
 
+# 클라이언트 정보 조회
+@router.get("/search/", response_model=SuccessResponse[ClientInfoRead])
+def read_search_client_infos(
+    search_qry: str = "",
+    db: Session = Depends(get_session),
+):
+    print("search_qry", search_qry)
+    return SuccessResponse(data=search_client_infos(db, search_qry))
+
+
 # 클라이언트 정보 수정
 @router.put("/{info_id}", response_model=ClientInfoRead)
 def update_client(
     info_id: int, info: ClientInfoUpdate, db: Session = Depends(get_session)
 ):
     db_info = get_client_info_by_id(db, info_id)
+    print("info", info)
+    print("db_info", db_info)
     if db_info is None:
         raise HTTPException(status_code=404, detail="Client info not found")
     return update_client_info(db, info, db_info)

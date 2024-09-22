@@ -70,12 +70,32 @@ export const readUser = async (user_id) => {
   }
 }
 
+export const readUserByUsername = async (username) => {
+  try {
+    const response = await axios.get(`/users/username/${username}`)
+    return response.data
+  } catch (error) {
+    console.error('Error reading user:', error)
+    throw error
+  }
+}
+
 export const readUsers = async (page = 1, size = 10, search_qry = '') => {
   try {
     const response = await axios.get('/users', {
       params: { page, size, search_qry }
     })
     return response
+  } catch (error) {
+    console.error('Error reading users:', error)
+    throw error
+  }
+}
+
+export const readTeachers = async () => {
+  try {
+    const response = await axios.get('/users/teachers')
+    return response.data
   } catch (error) {
     console.error('Error reading users:', error)
     throw error

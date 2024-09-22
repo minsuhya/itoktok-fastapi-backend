@@ -63,3 +63,12 @@ def delete_user(session: Session, user_id: int) -> bool:
         session.commit()
         return True
     return False
+
+
+# 사용자(상담사) 리스트
+def get_teachers(session: Session, center_username: str = "") -> List[User]:
+    return session.exec(
+        select(User)
+        .where(User.center_username == center_username)
+        .order_by(desc(User.id))
+    ).all()

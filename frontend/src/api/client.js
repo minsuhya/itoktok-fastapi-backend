@@ -33,6 +33,18 @@ export const readClientInfos = async (page = 1, size = 10, search_qry = '') => {
   }
 }
 
+export const searchClientInfos = async (search_qry = '') => {
+  try {
+    const response = await axios.get('/client/search/', {
+      params: { search_qry }
+    })
+    return response
+  } catch (error) {
+    console.error('Error reading client infos:', error)
+    throw error
+  }
+}
+
 export const updateClientInfo = async (clientId, info) => {
   try {
     const response = await axios.put(`/client/${clientId}`, info)
