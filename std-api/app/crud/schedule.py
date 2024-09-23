@@ -115,7 +115,7 @@ def get_schedule_for_month(session: Session, year: int, month: int):
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
 
-    statement = select(Schedule).where(
+    statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(first_day, last_day)
     )
     return session.exec(statement).all()
@@ -158,17 +158,28 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 
     # Annotate the schedule with start time and event details
     for event in schedule_data:
-        event_day = event.scheduled_date.strftime("%Y-%m-%d")
-        event_time = event.scheduled_date.strftime("%H:%M")
+        event_day = event.schedule_date.strftime("%Y-%m-%d")
 
         # Add the event to the correct day in the calendar
         if event_day in calendar_data:
             calendar_data[event_day].append(
                 {
                     "id": event.id,
-                    "time": event_time,
-                    "title": event.title,
-                    "description": event.description,
+                    "schedule_id": event.schedule_id,
+                    "schedule_date": event.schedule_date,
+                    "schedule_time": event.schedule_time,
+                    "schedule_status": event.schedule_status,
+                    "schedule_memo": event.schedule_memo,
+                    "teacher_username": event.schedule.teacher_username,
+                    "client_id": event.schedule.client_id,
+                    "title": event.schedule.title,
+                    "start_date": event.schedule.start_date,
+                    "finish_date": event.schedule.finish_date,
+                    "start_time": event.schedule.start_time,
+                    "finish_time": event.schedule.finish_time,
+                    "memo": event.schedule.memo,
+                    "created_by": event.schedule.created_by,
+                    "updated_by": event.schedule.updated_by,
                 }
             )
 
@@ -203,10 +214,8 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
 
     # Populate the weekly_schedule with actual schedule data
     for event in schedule_data:
-        event_day = event.scheduled_date.strftime(
-            "%Y-%m-%d"
-        )  # Get date as 'YYYY-MM-DD'
-        event_time = event.scheduled_date.strftime(
+        event_day = event.schedule_date.strftime("%Y-%m-%d")  # Get date as 'YYYY-MM-DD'
+        event_time = event.schedule_date.strftime(
             "%H:%M"
         )  # Extract the time of the event
 
@@ -220,7 +229,7 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "id": event.id,
                 "title": event.title,
                 "description": event.description,
-                "datetime": event.scheduled_date,
+                "datetime": event.schedule_date,
             }
         )
 

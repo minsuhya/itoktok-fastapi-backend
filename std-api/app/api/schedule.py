@@ -74,6 +74,7 @@ def get_monthly_calendar(
     year: int, month: int, session: Session = Depends(get_session)
 ):
     schedule_data = get_schedule_for_month(session, year, month)
+    print("schedule_data", schedule_data)
     monthly_calendar_data = generate_monthly_calendar_without_timeslots(
         year, month, schedule_data
     )
