@@ -151,7 +151,7 @@ const fetchScheduleInfo = async () => {
   console.log('scheduleId', props.scheduleId)
 
   try {
-    const scheduleInfo = await readSchedule(pros.scheduleId)
+    const scheduleInfo = await readSchedule(props.scheduleId)
     console.log('scheduleInfo:', scheduleInfo)
     Object.assign(form, scheduleInfo)
   } catch (error) {

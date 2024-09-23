@@ -172,6 +172,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "schedule_memo": event.schedule_memo,
                     "teacher_username": event.schedule.teacher_username,
                     "client_id": event.schedule.client_id,
+                    "client_name": event.schedule.clientinfo.client_name,
                     "title": event.schedule.title,
                     "start_date": event.schedule.start_date,
                     "finish_date": event.schedule.finish_date,

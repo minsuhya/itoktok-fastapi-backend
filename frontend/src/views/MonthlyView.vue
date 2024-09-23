@@ -177,24 +177,24 @@ onMounted(() => {
       <div class="bg-white py-2 text-center text-sm font-medium">Sun</div>
 
       <!-- schedule data loop -->
-      <div class="bg-white h-32 p-2" v-for="(schedule, index) in schedule_data" :key="index"
+      <div class="bg-white h-32 p-2" v-for="(day_schedules, index) in schedule_data" :key="index"
         @click="clickCalendarDay(index)">
         <span
           :class="{ 'block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5 text-center': index === today }">{{
             index.split("-")[2]
           }}</span>
         <p class="flex-row text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20 *:scale-100 [& *]:scale-100"
-          v-for="(item, itemindex) in ['홍길동', '파이썬']" :key="itemindex" :class="{
+          v-for="(day_schedule, itemindex) in day_schedules" :key="itemindex" :class="{
             'transform transition duration-500 ease-in-out overflow-hidden': true,
             'scale-100 h-6': !isZoomed[index]?.[itemindex],
             'scale-150 h-auto': isZoomed[index]?.[itemindex]
           }" @click="zoom(index, itemindex, $event)">
-        <div class="flex justify-between" v-for="i in [...new Array(index + 1).keys()]">
-          <span class="inline-block">{{ item }}</span>
-          <span class="ml-auto inline-block text-blue-700">02:00 PM</span>
+        <div class="flex justify-between">
+          <span class="inline-block">[{{ day_schedule.client_name }}] {{ day_schedule.title }}</span>
+          <span class="ml-auto inline-block text-blue-700">{{ day_schedule.schedule_time }}</span>
         </div>
         </p>
-        <div
+        <div v-if="day_schedules.length > 2"
           class="mt-4 flex items-center justify-center text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20">
           <PlusIcon class="w-4 h-4" />
         </div>

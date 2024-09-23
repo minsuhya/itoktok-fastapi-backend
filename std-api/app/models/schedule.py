@@ -1,9 +1,12 @@
 from datetime import date, datetime, time
 from enum import Enum
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Column, DateTime, func
 from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .client import ClientInfo
 
 
 class ScheduleType(str, Enum):
@@ -14,7 +17,7 @@ class ScheduleType(str, Enum):
 
 class ScheduleBase(SQLModel):
     teacher_username: str = Field(max_length=20, nullable=False)
-    client_id: int = Field(nullable=False)
+    client_id: int = Field(foreign_key="clientinfo.id", nullable=False)
     title: str = Field(max_length=50, nullable=False)
     start_date: date = Field(default_factory=date.today)
     finish_date: date = Field(default_factory=date.today)
@@ -36,6 +39,13 @@ class ScheduleBase(SQLModel):
 class Schedule(ScheduleBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     schedule_list: List["ScheduleList"] = Relationship(back_populates="schedule")
+    clientinfo: "ClientInfo" = Relationship(
+        back_populates="schedule",
+        sa_relationship_kwargs={
+            "foreign_keys": "Schedule.client_id",
+            "primaryjoin": "Schedule.client_id == ClientInfo.id",
+        },
+    )
 
 
 class ScheduleListBase(SQLModel):

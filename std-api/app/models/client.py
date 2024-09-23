@@ -1,8 +1,11 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Column, DateTime, func, text
-from sqlmodel import JSON, Field, SQLModel
+from sqlmodel import JSON, Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .schedule import Schedule
 
 
 class ClientInfo(SQLModel, table=True):
@@ -39,3 +42,5 @@ class ClientInfo(SQLModel, table=True):
     deleted_at: Optional[datetime] = Field(
         default=None, sa_column=Column(DateTime(timezone=True))
     )
+
+    schedule: List["Schedule"] = Relationship(back_populates="clientinfo")
