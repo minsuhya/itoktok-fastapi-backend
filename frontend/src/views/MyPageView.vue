@@ -25,7 +25,8 @@ const user = reactive({
   user_type: userStore.user.user_type,
   is_active: userStore.user.is_active,
   is_superuser: userStore.user.is_superuser,
-  usercolor: userStore.user.usercolor
+  usercolor: userStore.user.usercolor,
+  expertise: userStore.user.expertise
 })
 
 const center = reactive({
@@ -70,6 +71,7 @@ const schema = yup.object({
       const phoneRegex = /^\d{2,3}-\d{3,4}-\d{4}$/
       return phoneRegex.test(values)
     }),
+  expertise: yup.string().required('전문분야를 입력해주세요.'),
   center_name: yup.string().required('센터명을 입력해주세요.'),
   center_tel: yup
     .string()
@@ -250,6 +252,18 @@ onMounted(() => {
             <ErrorMessage name="hp_number" class="text-red-500" />
           </div>
           <div class="mb-4">
+            <label class="block font-semibold text-gray-700"
+              >전문분야 <span class="text-red-500">*</span>
+            </label>
+            <Field
+              name="expertise"
+              type="text"
+              class="mt-1 block w-full rounded-lg border-gray-400"
+              placeholder="예) 미술치료, 음악치료, 무용치료"
+            />
+            <ErrorMessage name="expertise" class="text-red-500" />
+          </div>
+          <div class="mb-4">
             <label class="block font-semibold text-gray-700">전화번호</label>
             <Field
               name="phone_number"
@@ -267,7 +281,7 @@ onMounted(() => {
             />
             <ErrorMessage name="birth_date" class="text-red-500" />
           </div>
-          <div class="mb-4">
+          <div class="mb-4 col-span-2">
             <label class="block font-semibold text-gray-700">주소</label>
             <Field
               name="address"
@@ -276,7 +290,7 @@ onMounted(() => {
             />
             <ErrorMessage name="address" class="text-red-500" />
           </div>
-          <div class="mb-4">
+          <div class="mb-4 col-span-2">
             <label class="block font-semibold text-gray-700">주소 상세</label>
             <Field
               name="address_extra"

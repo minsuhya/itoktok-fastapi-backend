@@ -6,11 +6,12 @@ from sqlmodel import JSON, Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .schedule import Schedule
+    from .user import User
 
 
 class ClientInfo(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    consultant: str = Field(max_length=20, nullable=False)
+    consultant: str = Field(foreign_key="user.username", max_length=20, nullable=False)
     consultant_status: str = Field(default="1", max_length=1, nullable=False)
     client_name: str = Field(max_length=30, nullable=False)
     phone_number: str = Field(max_length=15, nullable=False)
@@ -44,3 +45,4 @@ class ClientInfo(SQLModel, table=True):
     )
 
     schedule: List["Schedule"] = Relationship(back_populates="clientinfo")
+    consultant_info: Optional["User"] = Relationship(back_populates="client_infos")

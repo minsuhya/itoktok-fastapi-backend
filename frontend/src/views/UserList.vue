@@ -16,8 +16,7 @@ const currentUserId = ref('') // str user_id
 const searchQuery = ref('') // 검색어
 const users = ref([])
 
-const toggleForm = (userId) => {
-  currentUserId.value = String(userId)
+const toggleForm = () => {
   isFormVisible.value = !isFormVisible.value
   if (!isFormVisible.value) {
     currentUserId.value = ''
@@ -51,6 +50,16 @@ const searchUsers = async () => {
 const handlePageChange = (page) => {
   fetchUsers(page)
   currentPage.value = page
+}
+
+const clickUserInfo = (userId = '') => {
+  if (!userId) {
+    currentUserId.value = ''
+  } else {
+    currentUserId.value = String(userId)
+  }
+
+  toggleForm()
 }
 
 onBeforeMount(fetchUsers)
@@ -143,13 +152,13 @@ onBeforeMount(fetchUsers)
           </th>
           <td class="px-6 py-4">{{ user.full_name }}</td>
           <td class="px-6 py-4">{{ user.email }}</td>
-          <td class="px-6 py-4">{{ user.center_username }}</td>
+          <td class="px-6 py-4">{{ user.center_info?.center_name }}({{ user.center_username }})</td>
           <td class="px-6 py-4">{{ user.hp_number }}</td>
           <td class="px-6 py-4">{{ user.phone_number }}</td>
           <td class="px-6 py-4">
             <a
               href="#"
-              @click="toggleForm(user.id)"
+              @click="clickUserInfo(user.id)"
               class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
               >상담자정보</a
             >

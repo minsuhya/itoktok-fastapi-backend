@@ -8,6 +8,7 @@ import * as yup from 'yup'
 const validationSchema = yup.object({
   username: yup
     .string()
+    .min(4, '4자 이상 입력해주세요.')
     .required('아이디를 입력해주세요.')
     .test('usernameDup', '이미 등록된 아이디입니다.', async (value) => {
       const response = await checkUsername(value)

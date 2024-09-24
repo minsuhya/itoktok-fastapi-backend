@@ -85,9 +85,16 @@ def read_Users(
 
 
 @router.post("/", response_model=UserRead)
-def create_user(user: UserCreate, *, session: Session = Depends(get_session)):
+def create_user(
+    user: UserCreate,
+    *,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     db_user = User.from_orm(user)
     db_user.password = pwd_context.hash(db_user.password)
+    if db_user.center_username == "":
+        db_user.center_username = current_user.center_username
     session.add(db_user)
     session.commit()
     session.refresh(db_user)

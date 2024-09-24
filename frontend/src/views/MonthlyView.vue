@@ -2,7 +2,7 @@
 import { ChevronRightIcon, ChevronLeftIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import ScheduleFormSliding from '@/views/ScheduleFormSliding.vue'
 import { getMonthlyCalendar } from '@/api/schedule'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onBeforeMount } from 'vue'
 
 const isZoomed = reactive({})
 const zoom = (index, item_index, event) => {
@@ -22,6 +22,8 @@ const toggleForm = () => {
     currentScheduleId.value = ''
     currentScheduleDate.value = ''
   }
+  // currentYear, currentMonth Schedule 가져오기
+  fetchSchedule(currentDateInfo.value.currentYear, currentDateInfo.value.currentMonth)
 }
 
 const clickedDate = ref('')
@@ -117,7 +119,8 @@ const setDateInfo = (year, month) => {
 }
 
 // onmounted hook
-onMounted(() => {
+// onMounted(() => {
+onBeforeMount(() => {
   const year = new Date().getFullYear();
   const month = new Date().getMonth();
 
@@ -183,13 +186,13 @@ onMounted(() => {
           :class="{ 'block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5 text-center': index === today }">{{
             index.split("-")[2]
           }}</span>
-        <p class="flex-row text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-1 bg-blue-400/20 *:scale-100 [& *]:scale-100"
-          v-for="(day_schedule, itemindex) in day_schedules" :key="itemindex" :class="{
-            'transform transition duration-500 ease-in-out overflow-hidden': true,
-            'scale-100 h-6': !isZoomed[index]?.[itemindex],
-            'scale-150 h-auto': isZoomed[index]?.[itemindex]
-          }" @click="zoom(index, itemindex, $event)">
-        <div class="flex justify-between">
+        <p class="flex-row text-xs text-blue-600 border border-blue-700/10 rounded-md m-1"
+          v-for="(day_schedule, itemindex) in day_schedules" :key="itemindex" :class="[
+            'transform transition duration-500 ease-in-out overflow-hidden',
+            !isZoomed[index]?.[itemindex] ? 'scale-100 h-6' : 'scale-150 h-auto',
+          ]" @click="zoom(index, itemindex, $event)">
+        <div class="flex justify-between items-center px-1 h-full w-full bg-opacity-20"
+          :class="day_schedule.teacher_usercolor">
           <span class="inline-block">[{{ day_schedule.client_name }}] {{ day_schedule.title }}</span>
           <span class="ml-auto inline-block text-blue-700">{{ day_schedule.schedule_time }}</span>
         </div>

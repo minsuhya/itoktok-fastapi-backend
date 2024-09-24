@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session, desc, select
 
 from ..models.client import ClientInfo
@@ -42,13 +43,18 @@ def get_client_infos(
         session,
         select(ClientInfo)
         .where(ClientInfo.client_name.like(f"%{search_qry}%"))
+        .options(joinedload(ClientInfo.consultant_info))
         .order_by(desc(ClientInfo.id)),
     )
 
 
 # 클라이언트 정보 조회
 def search_client_infos(session: Session, search_qry: str = "") -> Page[ClientInfo]:
-    statement = select(ClientInfo).where(ClientInfo.client_name.like(f"%{search_qry}%"))
+    statement = (
+        select(ClientInfo)
+        .where(ClientInfo.client_name.like(f"%{search_qry}%"))
+        .options(joinedload(ClientInfo.consultant_info))
+    )
     result = session.exec(statement).all()
 
     return result

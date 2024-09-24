@@ -1,10 +1,14 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .client import ClientInfo
+    from .schedule import Schedule
 
 
 class Token(BaseModel):
@@ -18,21 +22,30 @@ class TokenData(BaseModel):
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str
-    password: str
-    email: str
-    full_name: str
-    birth_date: str
-    zip_code: Optional[str] = None
-    address: Optional[str] = None
-    address_extra: Optional[str] = None
-    phone_number: Optional[str] = None
-    hp_number: str
-    center_username: str
-    user_type: str = "1"  # 사용자 타입 (1: 센터, 2: 상담사)
-    is_active: int = 1
-    is_superuser: int = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
-    usercolor: str = "#a668e3"  # 일정 색상
+    username: str = Field(max_length=20, nullable=False, unique=True)  # 아이디
+    password: str = Field(max_length=20, nullable=False)  # 비밀번호
+    email: str = Field(max_length=50, nullable=False)  # 이메일
+    full_name: str = Field(max_length=20, nullable=False)  # 이름
+    birth_date: str = Field(max_length=10, nullable=True)  # 생년월일
+    zip_code: str = Field(default="", nullable=True)  # 우편번호
+    address: str = Field(default="", nullable=True)  # 주소
+    address_extra: str = Field(default="", nullable=True)  # 상세주소
+    phone_number: str = Field(default="", max_length=15, nullable=True)  # 전화번호
+    hp_number: str = Field(..., max_length=15, nullable=False)  # 휴대폰번호
+    center_username: str = Field(
+        ..., foreign_key="centerinfo.username", max_length=20, nullable=False
+    )  # 센터아이디
+    user_type: str = Field(
+        default="1", max_length=1, nullable=False
+    )  # 사용자 타입 (1: 센터, 2: 상담사)
+    is_active: int = Field(
+        default=1, nullable=False
+    )  # 활성화 여부 0: 비활성화, 1: 활성화
+    is_superuser: int = Field(
+        default=0, nullable=False
+    )  # 관리자 여부 0: 일반, 1: 관리자
+    usercolor: str = Field(default="#a668e3", max_length=7, nullable=False)  # 일정 색상
+    expertise: str = Field(default="", max_length=30, nullable=False)  # 전문분야
 
     created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now())
@@ -42,6 +55,13 @@ class User(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
     deleted_at: Optional[datetime] = Field(default=None)
+
+    # 내담자 정보
+    client_infos: List["ClientInfo"] = Relationship(back_populates="consultant_info")
+    # 센터 정보
+    center_info: Optional["CenterInfo"] = Relationship(back_populates="users")
+    # 스케줄 정보
+    schedules: List["Schedule"] = Relationship(back_populates="teacher")
 
 
 class CenterInfo(SQLModel, table=True):
@@ -68,6 +88,9 @@ class CenterInfo(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
     deleted_at: Optional[datetime] = Field(default=None)
+
+    # 사용자 정보
+    users: List["User"] = Relationship(back_populates="center_info")
 
 
 class Role(str, Enum):

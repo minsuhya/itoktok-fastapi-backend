@@ -23,7 +23,7 @@ const consultant_options = ref([])
 // vee-validate 스키마 정의
 const schema = yup.object({
   consultant: yup.string().required('상담사를 선택하세요.'),
-  consultant_status: yup.string().required('상담상태를 선택하세요.'),
+  // consultant_status: yup.string().required('상담상태를 선택하세요.'),
   client_name: yup.string().required('내담자 이름을 입력하세요.'),
   phone_number: yup.string().required('내담자 휴대전화번호를 입력하세요.'),
   tags: yup.string(),
@@ -57,17 +57,17 @@ const form = reactive({
   center_username: userStore.user.center_username
 })
 
-// const { handleSubmit, resetForm } = useForm({
-//   validationSchema: schema,
-//   initialValues: form
-// })
-
 const closeForm = () => {
   emit('close')
 }
 
 const fetchClientInfo = async () => {
-  if (!props.clientId) return
+  if (!props.clientId) {
+    Object.keys(form).forEach((key) => {
+      form[key] = ''
+    })
+    return
+  }
   console.log('props.clientId: ', props.clientId)
 
   try {

@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 
 
 class Role(str, Enum):
@@ -13,23 +13,7 @@ class Role(str, Enum):
 # User Schema
 class UserBaseSchema(BaseModel):
     username: str
-    full_name: str
-    email: EmailStr
-    user_type: str  # 사용자 타입 (1: 센터, 2: 상담사)
-    is_active: bool
-    is_superuser: bool  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
-    usercolor: str = "#a668e3"  # 일정 색상
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
-    deleted_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
+    password: str = Field(default="", max_length=15)
     email: EmailStr
     full_name: str
     birth_date: Optional[str] = None
@@ -41,46 +25,46 @@ class UserCreate(BaseModel):
     user_type: str  # 사용자 타입 (1: 센터, 2: 상담사)
     center_username: str
     is_active: int = 1  # 사용자 활성화 여부 (0: 비활성화, 1: 활성화)
-    is_superuser: int = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
+    is_superuser: Optional[int] = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
     usercolor: str = "#a668e3"  # 일정 색상
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
+    expertise: str  # 전문분야
     deleted_at: Optional[datetime] = None
 
-
-class UserUpdate(BaseModel):
-    password: str
-    email: EmailStr = None
-    full_name: str
-    birth_date: Optional[str] = None
-    zip_code: Optional[str] = None
-    address: Optional[str] = None
-    address_extra: Optional[str] = None
-    phone_number: Optional[str] = None
-    hp_number: str
-    usercolor: str = "#a668e3"  # 일정 색상
-    updated_at: Optional[datetime] = datetime.now()
+    @validator("is_superuser", pre=True, always=True)
+    def validate_is_superuser(cls, v):
+        if v == "":
+            return 0
+        if isinstance(v, str) and v.isdigit():
+            return int(v)
+        if isinstance(v, int):
+            return v
+        raise ValueError(
+            "Input should be a valid integer or a string that can be parsed as an integer"
+        )
 
 
-class UserRead(BaseModel):
+class UserCreate(UserBaseSchema):
+    created_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class UserUpdate(UserBaseSchema):
+    password: Optional[str | None] = None
+    updated_at: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class UserRead(UserBaseSchema):
     id: int
-    username: str
-    email: EmailStr
-    full_name: str
-    birth_date: Optional[str] = None
-    zip_code: Optional[str] = None
-    address: Optional[str] = None
-    address_extra: Optional[str] = None
-    phone_number: Optional[str] = None
-    hp_number: str
-    user_type: str  # 사용자 타입 (1: 센터, 2: 상담사)
-    center_username: str
-    is_active: int
-    is_superuser: int  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
-    usercolor: str = "#a668e3"  # 일정 색상
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
-    deleted_at: Optional[datetime] = None
+    password: Optional[str | None] = None
+    created_at: datetime
+    updated_at: datetime
+    center_info: Optional["CenterInfoRead"] = None
 
     class Config:
         from_attributes = True

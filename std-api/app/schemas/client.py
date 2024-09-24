@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from .user import UserRead
+
 
 # ClientInfo Base Schema
 class ClientInfoBase(BaseModel):
@@ -46,6 +48,7 @@ class ClientInfoRead(ClientInfoBase):
     created_at: datetime
     updated_at: Optional[datetime]
     deleted_at: Optional[datetime]
+    consultant_info: Optional["UserRead"] = None
 
     class Config:
         from_attributes = True

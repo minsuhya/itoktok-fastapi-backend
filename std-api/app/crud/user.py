@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from passlib.context import CryptContext
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session, desc, select
 
 from ..models.user import User
@@ -44,6 +45,7 @@ def get_users(
         session,
         select(User)
         .where(User.full_name.like(f"%{search_qry}%"))
+        .options(joinedload(User.center_info))
         .order_by(desc(User.id)),
     )
 

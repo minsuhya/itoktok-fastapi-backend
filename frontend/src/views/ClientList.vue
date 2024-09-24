@@ -16,8 +16,7 @@ const currentClientId = ref('') // str client_id
 const searchQuery = ref('') // 검색어
 const clients = ref([])
 
-const toggleForm = (clientId) => {
-  currentClientId.value = String(clientId)
+const toggleForm = () => {
   isFormVisible.value = !isFormVisible.value
   if (!isFormVisible.value) {
     currentClientId.value = ''
@@ -32,6 +31,7 @@ const fetchClients = async (page) => {
   currentPage.value = data.page
   itemsPerPage.value = data.size
   totalItems.value = data.total
+  console.log('clients:', clients.value)
 }
 
 // 검색어 기반 내담자 검색
@@ -63,6 +63,15 @@ const handleStatusChange = async (client) => {
     showModal('상담상태 정보 등록 중 오류가 발생했습니다.')
     console.error('Error registering client data:', error)
   }
+}
+
+const clickClientInfo = (clientId = '') => {
+  if (!clientId) {
+    currentClientId.value = ''
+  } else {
+    currentClientId.value = String(clientId)
+  }
+  toggleForm()
 }
 
 onBeforeMount(fetchClients)
@@ -171,7 +180,7 @@ onBeforeMount(fetchClients)
           <td class="px-6 py-4">{{ client.email_address }}</td>
           <td class="px-6 py-4">
             <div v-if="client.consultant" class="flex items-center">
-              {{ client.consultant }}
+              {{ client.consultant_info?.full_name }}({{ client.consultant }})
             </div>
             <div v-if="!client.consultant" class="flex items-center">
               <button
@@ -197,7 +206,7 @@ onBeforeMount(fetchClients)
             <div class="flex items-center space-x-2">
               <a
                 href="#"
-                @click="toggleForm(client.id)"
+                @click="clickClientInfo(client.id)"
                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                 >내담자정보</a
               >

@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .client import ClientInfo
+    from .User import User
 
 
 class ScheduleType(str, Enum):
@@ -16,7 +17,9 @@ class ScheduleType(str, Enum):
 
 
 class ScheduleBase(SQLModel):
-    teacher_username: str = Field(max_length=20, nullable=False)
+    teacher_username: str = Field(
+        foreign_key="user.username", max_length=20, nullable=False
+    )
     client_id: int = Field(foreign_key="clientinfo.id", nullable=False)
     title: str = Field(max_length=50, nullable=False)
     start_date: date = Field(default_factory=date.today)
@@ -44,6 +47,14 @@ class Schedule(ScheduleBase, table=True):
         sa_relationship_kwargs={
             "foreign_keys": "Schedule.client_id",
             "primaryjoin": "Schedule.client_id == ClientInfo.id",
+        },
+    )
+    # 상담사 정보
+    teacher: "User" = Relationship(
+        back_populates="schedules",
+        sa_relationship_kwargs={
+            "foreign_keys": "Schedule.teacher_username",
+            "primaryjoin": "Schedule.teacher_username == User.username",
         },
     )
 

@@ -25,7 +25,7 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=ScheduleRead)
+@router.post("", response_model=Schedule)
 def create_schedule(
     schedule_create: ScheduleCreate, session: Session = Depends(get_session)
 ):

@@ -10,29 +10,6 @@ const open_schedule_menu = ref(false)
     <!--   <span class="text-xl font-bold text-white">Monkey</span> -->
     <!-- </div> -->
     <nav class="flex-grow p-4">
-      <router-link
-        to="/admin"
-        class="block py-2.5 px-4 rounded hover:bg-gray-800 transition-colors duration-200"
-      >
-        <div class="flex items-center">
-          <svg
-            class="w-5 h-5 mr-3 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 7h18M3 12h18M3 17h18"
-            ></path>
-          </svg>
-          Dashboard
-        </div>
-      </router-link>
-
       <!-- Users section with submenu -->
       <div>
         <button
@@ -142,29 +119,6 @@ const open_schedule_menu = ref(false)
           >
         </div>
       </div>
-
-      <a
-        href="#"
-        class="block py-2.5 px-4 rounded mt-4 hover:bg-gray-800 transition-colors duration-200"
-      >
-        <div class="flex items-center">
-          <svg
-            class="w-5 h-5 mr-3 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 15a4 4 0 104 4H3v-4zm12-4v8m-4-4h8"
-            ></path>
-          </svg>
-          Reports
-        </div>
-      </a>
     </nav>
   </aside>
 </template>

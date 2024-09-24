@@ -26,14 +26,13 @@ class ScheduleCreate(ScheduleBase):
     updated_at: Optional[datetime] = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
-    pass
 
 
 class ScheduleRead(ScheduleBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    schedule_list: List["ScheduleListRead"] = []
+    # schedule_list: List["ScheduleListRead"] = []
 
     class Config:
         from_attributes = True
@@ -73,7 +72,7 @@ class ScheduleListRead(ScheduleListBase):
     schedule_id: int
     created_at: datetime
     updated_at: datetime
-    schedule: Optional[ScheduleRead] = None  # Reverse relationship
+    schedule: Optional["ScheduleRead"] = None  # Reverse relationship
 
     class Config:
         from_attributes = True
@@ -83,3 +82,8 @@ class ScheduleListUpdate(ScheduleListBase):
     updated_at: Optional[datetime] = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+
+
+# Forward reference 해결
+ScheduleRead.update_forward_refs()
+ScheduleListRead.update_forward_refs()
