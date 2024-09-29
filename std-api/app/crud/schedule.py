@@ -2,6 +2,7 @@ import calendar
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
 
 from ..models.schedule import Schedule, ScheduleList
@@ -33,7 +34,12 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
 
 
 def get_schedule(session: Session, schedule_id: int) -> Optional[Schedule]:
-    return session.get(Schedule, schedule_id)
+    return session.exec(
+        select(Schedule)
+        .options(joinedload(Schedule.teacher))
+        .options(joinedload(Schedule.clientinfo))
+        .where(Schedule.id == schedule_id)
+    ).first()
 
 
 def get_schedules(session: Session, skip: int = 0, limit: int = 10) -> List[Schedule]:
@@ -171,6 +177,8 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "schedule_status": event.schedule_status,
                     "schedule_memo": event.schedule_memo,
                     "teacher_username": event.schedule.teacher_username,
+                    "teacher_fullname": event.schedule.teacher.full_name,
+                    "teacher_expertise": event.schedule.teacher.expertise,
                     "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                     # "teacher_usercolor": "bg-[#b77334]/50",
                     "client_id": event.schedule.client_id,
@@ -194,7 +202,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 def get_schedule_for_week(session: Session, start_date: date):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)
 
-    statement = select(Schedule).where(
+    statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(start_date, end_date)
     )
     return session.exec(statement).all()
@@ -231,9 +239,66 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
             {
                 "id": event.id,
                 "title": event.title,
-                "description": event.description,
                 "datetime": event.schedule_date,
             }
         )
 
     return weekly_schedule
+
+
+# 일별 스케줄 조회
+# Function to get the schedule for a specific day from the database
+def get_schedule_for_day(session: Session, target_date: date):
+    statement = select(ScheduleList).where(ScheduleList.schedule_date == target_date)
+    return session.exec(statement).all()
+
+
+# 일별 캘린더 스케줄 생성
+# Function to generate the daily schedule data structure
+def generate_daily_schedule_with_empty_times(target_date: date, schedule_data):
+    # Dictionary to hold the daily schedule with hours as keys and minutes as sub-keys
+    daily_schedule = {}
+
+    # Create a list of times from 00:00 to 23:59 for the given day
+    for hour in range(8, 19):
+        daily_schedule[f"{hour:d}"] = {f"{minute:d}": [] for minute in range(0, 60, 10)}
+
+    print("daily_schedule", daily_schedule)
+
+    # Populate the daily_schedule with actual schedule data
+    for event in schedule_data:
+        event_hour = str(
+            int(event.schedule_time.split(":")[0])
+        )  # Extract the minute of the event
+        event_minute = str(
+            int(event.schedule_time.split(":")[1])
+        )  # Extract the minute of the event
+
+        # Append the event information to the corresponding hour and minute
+        daily_schedule[event_hour][event_minute].append(
+            {
+                "id": event.id,
+                "schedule_id": event.schedule_id,
+                "schedule_date": event.schedule_date,
+                "schedule_time": event.schedule_time,
+                "schedule_status": event.schedule_status,
+                "schedule_memo": event.schedule_memo,
+                "teacher_username": event.schedule.teacher_username,
+                "teacher_fullname": event.schedule.teacher.full_name,
+                "teacher_expertise": event.schedule.teacher.expertise,
+                "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
+                # "teacher_usercolor": "bg-[#b77334]/50",
+                "client_id": event.schedule.client_id,
+                "client_name": event.schedule.clientinfo.client_name,
+                "title": event.schedule.title,
+                "start_date": event.schedule.start_date,
+                "finish_date": event.schedule.finish_date,
+                "start_time": event.schedule.start_time,
+                "finish_time": event.schedule.finish_time,
+                "memo": event.schedule.memo,
+                "created_by": event.schedule.created_by,
+                "updated_by": event.schedule.updated_by,
+            }
+        )
+
+    return daily_schedule

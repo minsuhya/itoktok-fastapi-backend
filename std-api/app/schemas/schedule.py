@@ -3,6 +3,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from .client import ClientInfoRead
+from .user import UserRead
+
 
 # Schedule Padatic Model
 class ScheduleBase(BaseModel):
@@ -33,6 +36,8 @@ class ScheduleRead(ScheduleBase):
     created_at: datetime
     updated_at: datetime
     # schedule_list: List["ScheduleListRead"] = []
+    teacher: Optional["UserRead"] = None  # Reverse relationship
+    clientinfo: Optional["ClientInfoRead"] = None  # Reverse relationship
 
     class Config:
         from_attributes = True

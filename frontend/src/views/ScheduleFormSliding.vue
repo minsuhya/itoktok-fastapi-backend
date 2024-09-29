@@ -4,9 +4,9 @@ import { watch, ref, reactive, onBeforeMount, onMounted, inject } from 'vue'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
-import { readUser, readUserByUsername, updateUser } from '@/api/user'
+import { readUserByUsername } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
-import { createSchedule } from '@/api/schedule'
+import { createSchedule, readSchedule } from '@/api/schedule'
 
 const userStore = useUserStore()
 const showModal = inject('showModal')
@@ -125,12 +125,14 @@ const form = reactive({
   id: '',
   teacher_username: '',
   client_id: '',
+  client_name: '',
   title: '',
   start_date: props.scheduleDate,
   finish_date: props.scheduleDate,
   start_time: formatTime(new Date()),
   finish_time: formatTime(new Date()),
-  memo: ''
+  memo: '',
+  teacher: {}
 })
 
 const closeForm = () => {
@@ -154,6 +156,16 @@ const fetchScheduleInfo = async () => {
     const scheduleInfo = await readSchedule(props.scheduleId)
     console.log('scheduleInfo:', scheduleInfo)
     Object.assign(form, scheduleInfo)
+
+    // 상담사 정보 추가
+    selectedClient.value.consultant_name = form.teacher?.full_name
+    selectedClient.value.client_id = form.client_id
+
+    form.client_name = form.clientinfo?.client_name
+    form.phone_number = form.clientinfo?.phone_number
+    start_time.value = form.start_time
+    updateEndTimeOptions()
+    finish_time.value = form.finish_time
   } catch (error) {
     console.error('Error fetching user:', error)
   }
@@ -185,15 +197,16 @@ const onSubmit = async (values) => {
   emit('close')
 }
 
-// Step 2: Watch for changes in clientId and call toggleForm
-// watch(
-//   () => props.scheduleId,
-//   (newScheduleId, oldScheduleId) => {
-//     if (newScheduleId !== oldScheduleId) {
-//       fetchScheduleInfo()
-//     }
-//   }
-// )
+// Watch for changes in clientId and call toggleForm
+watch(
+  () => props.scheduleId,
+  (newScheduleId, oldScheduleId) => {
+    if (newScheduleId !== oldScheduleId) {
+      fetchScheduleInfo()
+    }
+  }
+)
+
 watch(
   () => props.scheduleDate,
   (newScheduleDate, oldScheduleDate) => {
@@ -206,33 +219,55 @@ watch(
 
 <template>
   <!-- Background overlay -->
-  <div @click="closeForm" class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000"
-    :class="{ 'opacity-100 block': isVisible, 'opacity-0 hidden': !isVisible }"></div>
+  <div
+    @click="closeForm"
+    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000"
+    :class="{ 'opacity-100 block': isVisible, 'opacity-0 hidden': !isVisible }"
+  ></div>
   <div
     class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-4 overflow-auto z-50 transition-transform duration-1000 ease-in-out"
-    :class="{ 'translate-x-full': !isVisible, 'translate-x-0': isVisible }">
+    :class="{ 'translate-x-full': !isVisible, 'translate-x-0': isVisible }"
+  >
     <div className="w-full bg-neutral-50 shadow-lg rounded-lg p-6">
       <div className="border-b pb-2 mb-4">
         <div class="flex items-center justify-evenly mb-2">
           <h2 class="font-title font-bold">상담일정</h2>
           <button class="ml-auto" @click="closeForm">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-              stroke="currentColor" class="size-6">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <Form @submit="onSubmit" :validation-schema="schema" :initial-values="form" class="space-y-4 text-sm">
+        <Form
+          @submit="onSubmit"
+          :validation-schema="schema"
+          :initial-values="form"
+          class="space-y-4 text-sm"
+        >
           <Field type="hidden" name="teacher_username" v-model="selectedClient.consultant" />
           <Field type="hidden" name="client_id" v-model="selectedClient.id" />
           <div class="grid gap-4">
             <div class="mb-4">
-              <label for="client-search" class="block text-sm font-medium text-gray-700">내담자를 선택하세요.</label>
+              <label for="client-search" class="block text-sm font-medium text-gray-700"
+                >내담자를 선택하세요.</label
+              >
               <div class="relative mt-1">
                 <!-- 검색 입력 필드 -->
-                <input v-model="searchTerm" @input="filterClients" type="text" id="client-search"
+                <input
+                  v-model="searchTerm"
+                  @input="filterClients"
+                  type="text"
+                  id="client-search"
                   placeholder="내담자 검색..."
-                  class="block w-full py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                  class="block w-full py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
 
                 <!-- Heroicons 돋보기 아이콘 -->
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -241,10 +276,16 @@ watch(
 
                 <!-- 필터링된 내담자 리스트 -->
                 <div>
-                  <ul v-if="filteredClients.length > 0"
-                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    <li v-for="client in filteredClients" :key="client.id" @click="selectClient(client)"
-                      class="cursor-pointer px-3 py-2 hover:bg-indigo-600 hover:text-white">
+                  <ul
+                    v-if="filteredClients.length > 0"
+                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                  >
+                    <li
+                      v-for="client in filteredClients"
+                      :key="client.id"
+                      @click="selectClient(client)"
+                      class="cursor-pointer px-3 py-2 hover:bg-indigo-600 hover:text-white"
+                    >
                       {{ client.client_name }}
                     </li>
                   </ul>
@@ -255,68 +296,128 @@ watch(
           </div>
           <div class="grid grid-cols-1 gap-4">
             <div class="mb-4">
-              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">상담사 <span
-                  class="text-red-500">*</span></label>
-              <Field type="text" name="consultant_name" readonly v-model="selectedClient.consultant_name"
-                class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <label
+                for="password"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >상담사 <span class="text-red-500">*</span></label
+              >
+              <Field
+                type="text"
+                name="consultant_name"
+                readonly
+                v-model="selectedClient.consultant_name"
+                class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              />
               <ErrorMessage name="consultant_name" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block mb-1 text-gray-700">내담자 이름 <span class="text-red-500">*</span></label>
-              <Field name="client_name" as="input" type="text" v-model="form.client_name"
-                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2" placeholder="내담자 이름을 입력하세요." />
+              <label class="block mb-1 text-gray-700"
+                >내담자 이름 <span class="text-red-500">*</span></label
+              >
+              <Field
+                name="client_name"
+                as="input"
+                type="text"
+                v-model="form.client_name"
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+                placeholder="내담자 이름을 입력하세요."
+              />
               <ErrorMessage name="client_name" class="text-red-500 text-xs italic mt-2" />
             </div>
             <div>
-              <label class="block mb-1 text-gray-700">내담자 휴대전화번호 <span class="text-red-500">*</span></label>
-              <Field name="phone_number" as="input" type="text" v-model="form.phone_number"
-                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2" placeholder="내담자 휴대전화번호를 입력하세요." />
+              <label class="block mb-1 text-gray-700"
+                >내담자 휴대전화번호 <span class="text-red-500">*</span></label
+              >
+              <Field
+                name="phone_number"
+                as="input"
+                type="text"
+                v-model="form.phone_number"
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+                placeholder="내담자 휴대전화번호를 입력하세요."
+              />
               <ErrorMessage name="phone_number" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div>
             <div class="mb-4">
-              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정제목 <span
-                  class="text-red-500">*</span></label>
-              <Field type="text" name="title" v-model="form.title"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >일정제목 <span class="text-red-500">*</span></label
+              >
+              <Field
+                type="text"
+                name="title"
+                v-model="form.title"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              />
               <ErrorMessage name="title" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
-              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정시작일 <span
-                  class="text-red-500">*</span></label>
-              <Field type="date" name="start_date" v-model="form.start_date"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <label
+                for="start_date"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >일정시작일 <span class="text-red-500">*</span></label
+              >
+              <Field
+                type="date"
+                name="start_date"
+                v-model="form.start_date"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              />
               <ErrorMessage name="start_date" class="text-red-500 text-xs italic mt-2" />
             </div>
             <div class="mb-4">
-              <label for="finish_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정종료일 <span
-                  class="text-red-500">*</span></label>
-              <Field type="date" name="finish_date" v-model="form.finish_date"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+              <label
+                for="finish_date"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >일정종료일 <span class="text-red-500">*</span></label
+              >
+              <Field
+                type="date"
+                name="finish_date"
+                v-model="form.finish_date"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              />
               <ErrorMessage name="finish_date" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
-              <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">시작시간 <span
-                  class="text-red-500">*</span></label>
-              <Field name="start_time" id="start_time" v-model="start_time" as="select" @change="updateEndTimeOptions"
-                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
+              <label
+                for="start_date"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >시작시간 <span class="text-red-500">*</span></label
+              >
+              <Field
+                name="start_time"
+                id="start_time"
+                v-model="start_time"
+                as="select"
+                @change="updateEndTimeOptions"
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+              >
                 <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
                 <!-- 상담사 옵션 추가 -->
               </Field>
               <ErrorMessage name="start_time" class="text-red-500 text-xs italic mt-2" />
             </div>
             <div class="mb-4">
-              <label for="finish_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">종료시간 <span
-                  class="text-red-500">*</span></label>
-              <Field name="finish_time" id="finish_time" v-model="finish_time" as="select"
-                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
+              <label
+                for="finish_time"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >종료시간 <span class="text-red-500">*</span></label
+              >
+              <Field
+                name="finish_time"
+                id="finish_time"
+                v-model="finish_time"
+                as="select"
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+              >
                 <option v-for="time in endTimeOptions" :key="time" :value="time">{{ time }}</option>
                 <!-- 상담사 옵션 추가 -->
               </Field>
@@ -325,13 +426,23 @@ watch(
           </div>
           <div>
             <label class="block mb-1 text-gray-700">메모</label>
-            <Field name="memo" as="textarea" class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2" rows="3"
-              v-model="form.memo" placeholder="내담자의 상담정보를 메모해보세요. 최대 100자 까지 입력하실 수 있습니다." />
+            <Field
+              name="memo"
+              as="textarea"
+              class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+              rows="3"
+              v-model="form.memo"
+              placeholder="내담자의 상담정보를 메모해보세요. 최대 100자 까지 입력하실 수 있습니다."
+            />
             <ErrorMessage name="memo" class="text-red-500 text-xs italic mt-2" />
             <div class="text-right text-gray-500 text-sm">0 / 100</div>
           </div>
           <div class="flex justify-between mt-4">
-            <button type="button" @click="closeForm" class="bg-gray-400 text-white rounded-md p-2 w-[80px]">
+            <button
+              type="button"
+              @click="closeForm"
+              class="bg-gray-400 text-white rounded-md p-2 w-[80px]"
+            >
               취소
             </button>
             <button type="submit" class="bg-green-600 text-white rounded-md p-2 w-[80px]">

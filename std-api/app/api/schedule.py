@@ -5,17 +5,29 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, desc, select
 
 from ..core import get_session
-from ..crud.schedule import (create_schedule_info, delete_schedule_info,
-                             generate_monthly_calendar_without_timeslots,
-                             generate_weekly_schedule_with_empty_days,
-                             get_schedule, get_schedule_for_month,
-                             get_schedule_for_week, get_schedules,
-                             update_schedule_info)
+from ..crud.schedule import (
+    create_schedule_info,
+    delete_schedule_info,
+    generate_daily_schedule_with_empty_times,
+    generate_monthly_calendar_without_timeslots,
+    generate_weekly_schedule_with_empty_days,
+    get_schedule,
+    get_schedule_for_day,
+    get_schedule_for_month,
+    get_schedule_for_week,
+    get_schedules,
+    update_schedule_info,
+)
 from ..models.schedule import Schedule
 from ..schemas import ErrorResponse, SuccessResponse
-from ..schemas.schedule import (ScheduleCreate, ScheduleListCreate,
-                                ScheduleListRead, ScheduleListUpdate,
-                                ScheduleRead, ScheduleUpdate)
+from ..schemas.schedule import (
+    ScheduleCreate,
+    ScheduleListCreate,
+    ScheduleListRead,
+    ScheduleListUpdate,
+    ScheduleRead,
+    ScheduleUpdate,
+)
 
 router = APIRouter(
     prefix="/schedules",
@@ -99,3 +111,18 @@ def get_weekly_calendar(
     )
 
     return SuccessResponse(data=weekly_calendar_data)
+
+
+# get daily calendar
+@router.get("/calendar/daily/{year}/{month}/{day}")
+def get_daily_calendar(
+    year: int, month: int, day: int, session: Session = Depends(get_session)
+):
+    target_date = date(year, month, day)
+
+    schedule_data = get_schedule_for_day(session, target_date)
+    daily_calendar_data = generate_daily_schedule_with_empty_times(
+        target_date, schedule_data
+    )
+
+    return SuccessResponse(data=daily_calendar_data)

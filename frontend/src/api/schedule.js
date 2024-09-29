@@ -34,3 +34,8 @@ export const getMonthlyCalendar = async (year, month) => {
 export const getWeeklyCalendar = async (year, month, day) => {
   return axios.get(`/schedules/calendar/${year}/${month}/${day}`)
 }
+
+// 일별 일정 조회
+export const getDailyCalendar = async (year, month, day) => {
+  return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`)
+}
