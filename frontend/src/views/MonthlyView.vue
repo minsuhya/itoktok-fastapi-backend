@@ -288,11 +288,14 @@ onBeforeMount(() => {
       :scheduleId="currentScheduleId"
       :scheduleDate="currentScheduleDate"
       @close="toggleForm"
+      class="z-20"
     />
     <DailyViewSliding
       :isDailyViewSlidingVisible="isDailyViewSlidingVisible"
       :scheduleDate="currentScheduleDate"
       @close="toggleDailyViewSliding"
+      @clickCalendarSchedule="clickCalendarSchedule"
+      class="z-10"
     />
   </div>
 </template>

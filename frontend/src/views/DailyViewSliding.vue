@@ -5,13 +5,17 @@ import { getDailyCalendar } from '@/api/schedule'
 
 const showModal = inject('showModal')
 
-const emit = defineEmits(['close'])
-
 // 상담 일정
 const props = defineProps({
   isDailyViewSlidingVisible: Boolean,
   scheduleDate: String
 })
+
+const emit = defineEmits(['close', 'clickCalendarSchedule'])
+
+const handleMoreClick = (schedule_id, schedule_date) => {
+  emit('clickCalendarSchedule', schedule_id, schedule_date)
+}
 
 // Array of time slots
 const timeSlots = ref([
@@ -85,7 +89,7 @@ const zoom = (index, item_index, event) => {
     }"
   ></div>
   <div
-    class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-4 overflow-auto z-50 transition-transform duration-1000 ease-in-out"
+    class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-4 overflow-auto z-40 transition-transform duration-1000 ease-in-out"
     :class="{
       'translate-x-full': !isDailyViewSlidingVisible,
       'translate-x-0': isDailyViewSlidingVisible
@@ -139,7 +143,7 @@ const zoom = (index, item_index, event) => {
                       ? 'scale-100 h-6 bg-blue-400/20'
                       : 'scale-105 h-auto min-h-6 w-full pt-1 bg-white/100 border-blue-700'
                   ]"
-                  @click="zoom(day_schedule.schedule_time, itemindex, $event)"
+                  @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)"
                 >
                   <div class="flex justify-between items-center px-1 h-full w-full">
                     <span class="inline-block">{{ day_schedule.schedule_time }}</span>
@@ -165,8 +169,8 @@ const zoom = (index, item_index, event) => {
                     <!-- 수정 버튼 -->
                     <button
                       class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-                      @click="
-                        clickCalendarSchedule(day_schedule.schedule_id, day_schedule.schedule_date)
+                      @click.stop="
+                        handleMoreClick(day_schedule.schedule_id, day_schedule.schedule_date)
                       "
                     >
                       <PencilSquareIcon class="w-4 h-4" />
