@@ -221,7 +221,7 @@ watch(
   <!-- Background overlay -->
   <div
     @click="closeForm"
-    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000"
+    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000 z-49"
     :class="{ 'opacity-100 block': isVisible, 'opacity-0 hidden': !isVisible }"
   ></div>
   <div

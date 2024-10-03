@@ -82,7 +82,7 @@ const zoom = (index, item_index, event) => {
   <!-- Background overlay -->
   <div
     @click="closeForm"
-    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000"
+    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000 z-39"
     :class="{
       'opacity-100 block': isDailyViewSlidingVisible,
       'opacity-0 hidden': !isDailyViewSlidingVisible
