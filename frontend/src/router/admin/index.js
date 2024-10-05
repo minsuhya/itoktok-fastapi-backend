@@ -44,9 +44,9 @@ export default [
       },
       // 일별일정
       {
-        path: 'daily',
-        name: 'Daily',
-        component: () => import('@/views/DailyView.vue')
+        path: 'weekly',
+        name: 'Weekly',
+        component: () => import('@/views/WeeklyView.vue')
       },
       // 월별일정
       {

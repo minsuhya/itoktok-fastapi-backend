@@ -110,12 +110,12 @@ const open_schedule_menu = ref(false)
           <router-link
             to="/admin/monthly"
             class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200"
-            >Monthly</router-link
+            >월간일정</router-link
           >
           <router-link
-            to="/admin/daily"
+            to="/admin/weekly"
             class="block py-2.5 px-4 rounded hover:bg-gray-800 hover:text-white transition-colors duration-200"
-            >Daily</router-link
+            >주간일정</router-link
           >
         </div>
       </div>

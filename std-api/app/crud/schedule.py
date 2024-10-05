@@ -1,4 +1,5 @@
 import calendar
+from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
@@ -219,16 +220,19 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
         (start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)
     ]
 
-    # Initialize the weekly_schedule with empty days
+    # Initialize the weekly_schedule with empty days and times
     for day in week_days:
-        weekly_schedule[day] = {}  # Each day starts with an empty dictionary for times
+        weekly_schedule[day] = OrderedDict(
+            sorted({f"{hour:d}": [] for hour in range(9, 19)}.items())
+        )  # Each day starts with an empty dictionary for times from 09:00 to 18:00
 
     # Populate the weekly_schedule with actual schedule data
     for event in schedule_data:
         event_day = event.schedule_date.strftime("%Y-%m-%d")  # Get date as 'YYYY-MM-DD'
-        event_time = event.schedule_date.strftime(
-            "%H:%M"
-        )  # Extract the time of the event
+        event_time = event.schedule_time.split(":")[0]  # Extract the time of the event
+        # event_time = event.schedule_date.strftime(
+        #     "%H:%M"
+        # )  # Extract the time of the event
 
         # If the time is not in the day's dictionary, initialize it
         if event_time not in weekly_schedule[event_day]:
@@ -238,8 +242,26 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
         weekly_schedule[event_day][event_time].append(
             {
                 "id": event.id,
-                "title": event.title,
-                "datetime": event.schedule_date,
+                "schedule_id": event.schedule_id,
+                "schedule_date": event.schedule_date,
+                "schedule_time": event.schedule_time,
+                "schedule_status": event.schedule_status,
+                "schedule_memo": event.schedule_memo,
+                "teacher_username": event.schedule.teacher_username,
+                "teacher_fullname": event.schedule.teacher.full_name,
+                "teacher_expertise": event.schedule.teacher.expertise,
+                "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
+                # "teacher_usercolor": "bg-[#b77334]/50",
+                "client_id": event.schedule.client_id,
+                "client_name": event.schedule.clientinfo.client_name,
+                "title": event.schedule.title,
+                "start_date": event.schedule.start_date,
+                "finish_date": event.schedule.finish_date,
+                "start_time": event.schedule.start_time,
+                "finish_time": event.schedule.finish_time,
+                "memo": event.schedule.memo,
+                "created_by": event.schedule.created_by,
+                "updated_by": event.schedule.updated_by,
             }
         )
 

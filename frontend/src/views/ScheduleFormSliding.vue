@@ -443,7 +443,7 @@ watch(
               @click="closeForm"
               class="bg-gray-400 text-white rounded-md p-2 w-[80px]"
             >
-              취소
+              ���소
             </button>
             <button type="submit" class="bg-green-600 text-white rounded-md p-2 w-[80px]">
               확인
