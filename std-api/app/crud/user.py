@@ -37,17 +37,23 @@ def get_user_by_username(session: Session, username: str) -> Optional[User]:
 
 # 사용자(상담사)
 def get_users(
-    session: Session, page: int = 1, size: int = 10, search_qry: str = ""
+    session: Session,
+    login_user: User,
+    page: int = 1,
+    size: int = 10,
+    search_qry: str = "",
 ) -> Page[User]:
     # statement = select(User).offset(skip).limit(limit)
     # return session.exec(statement).all()
-    return paginate(
-        session,
-        select(User)
-        .where(User.full_name.like(f"%{search_qry}%"))
-        .options(joinedload(User.center_info))
-        .order_by(desc(User.id)),
-    )
+    query = select(User).options(joinedload(User.center_info)).order_by(desc(User.id))
+
+    if search_qry:
+        query = query.where(User.full_name.like(f"%{search_qry}%"))
+
+    if login_user.is_superuser != 1:  # 최고관리자일경우 - 센터 정보만
+        query = query.where(User.center_username == login_user.center_username)
+
+    return paginate(session, query)
 
 
 def update_user(session: Session, user: UserUpdate, db_user: User) -> Optional[User]:

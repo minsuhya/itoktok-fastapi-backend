@@ -4,9 +4,9 @@ import { watch, ref, reactive, onBeforeMount, onMounted, inject } from 'vue'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
-import { readUserByUsername } from '@/api/user'
+import { readUserByUsername, readTeachers } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
-import { createSchedule, readSchedule } from '@/api/schedule'
+import { createSchedule, updateSchedule, readSchedule } from '@/api/schedule'
 
 const userStore = useUserStore()
 const showModal = inject('showModal')
@@ -17,15 +17,15 @@ const emit = defineEmits(['close'])
 const props = defineProps({
   isVisible: Boolean,
   scheduleId: String,
-  scheduleDate: String
+  scheduleDate: String,
+  scheduleTime: String
 })
 const searchTerm = ref('')
 const clients = ref([])
 const filteredClients = ref([])
-const selectedClient = ref({
-  id: '',
-  name: ''
-})
+const selectedClient = ref({})
+// 상담사 목록
+const consultant_options = ref([])
 
 const filterClients = async () => {
   const search = searchTerm.value.toLowerCase()
@@ -52,8 +52,9 @@ const selectClient = async (client) => {
   // 상담사 정보 추가
   try {
     const consultant_info = await readUserByUsername(client.consultant)
-    selectedClient.value.consultant = consultant_info.username
-    selectedClient.value.consultant_name = consultant_info.full_name
+    form.teacher_username = consultant_info.username
+    form.consultant = consultant_info.username
+    form.consultant_name = consultant_info.full_name
   } catch (error) {
     console.error('Error fetching clients:', error)
   }
@@ -85,10 +86,17 @@ const formatTime = (date) => {
   return `${hours}:${minutes}`
 }
 
-const updateEndTimeOptions = () => {
-  if (!start_time.value) return
+function formatHour(hour) {
+  if (hour < 10) {
+    return `0${hour}:00`
+  }
+  return `${hour}:00`
+}
 
-  const [startHour, startMinute] = start_time.value.split(':').map(Number)
+const updateEndTimeOptions = () => {
+  if (!form.start_time) return
+
+  const [startHour, startMinute] = form.start_time.split(':').map(Number)
   const startDate = new Date()
   startDate.setHours(startHour, startMinute, 0, 0)
 
@@ -106,7 +114,7 @@ const updateEndTimeOptions = () => {
   }
 
   endTimeOptions.value = options
-  finish_time.value = endTimeOptions.value[0] // 종료 시간을 첫 번째 옵션으로 설정
+  form.finish_time = endTimeOptions.value[0] // 종료 시간을 첫 번째 옵션으로 설정
 }
 
 // vee-validate 스키마 정의
@@ -124,13 +132,14 @@ const schema = yup.object({
 const form = reactive({
   id: '',
   teacher_username: '',
+  consultant_name: '',
   client_id: '',
   client_name: '',
   title: '',
   start_date: props.scheduleDate,
   finish_date: props.scheduleDate,
-  start_time: formatTime(new Date()),
-  finish_time: formatTime(new Date()),
+  start_time: formatHour(props.scheduleTime),
+  finish_time: formatHour(props.scheduleTime),
   memo: '',
   teacher: {}
 })
@@ -157,12 +166,10 @@ const fetchScheduleInfo = async () => {
     console.log('scheduleInfo:', scheduleInfo)
     Object.assign(form, scheduleInfo)
 
-    // 상담사 정보 추가
-    selectedClient.value.consultant_name = form.teacher?.full_name
-    selectedClient.value.client_id = form.client_id
-
     form.client_name = form.clientinfo?.client_name
     form.phone_number = form.clientinfo?.phone_number
+    form.consultant = form.teacher?.username
+    form.consultant_name = form.teacher?.full_name
     start_time.value = form.start_time
     updateEndTimeOptions()
     finish_time.value = form.finish_time
@@ -171,18 +178,22 @@ const fetchScheduleInfo = async () => {
   }
 }
 
-const saveScheduleInfo = async () => {
+const fetchTeacherList = async () => {
   try {
-    await createSchedule(form)
-    showModal('상담일정 정보가 등록되었습니다.')
+    const teacherList = await readTeachers()
+    console.log('teacherList:', teacherList)
+    consultant_options.value = teacherList.map((item) => ({
+      value: item.username,
+      text: item.full_name
+    }))
   } catch (error) {
-    showModal('상담일정 정보 등록 중 오류가 발생했습니다.')
-    console.error('Error registering client data:', error)
+    console.error('Error fetching client:', error)
   }
 }
 
 onBeforeMount(() => {
   fetchScheduleInfo()
+  fetchTeacherList()
 })
 
 onMounted(() => {
@@ -193,7 +204,18 @@ onMounted(() => {
 const onSubmit = async (values) => {
   console.log('submitting:', values)
   Object.assign(form, values)
-  await saveScheduleInfo()
+  try {
+    if (form.id) {
+      await updateSchedule(form.id, form)
+      showModal('상담일정 정보가 수정되었습니다.')
+    } else {
+      await createSchedule(form)
+      showModal('상담일정 정보가 등록되었습니다.')
+    }
+  } catch (error) {
+    showModal('상담일정 정보 저장 중 오류가 발생했습니다.')
+    console.error('Error registering schedule data:', error)
+  }
   emit('close')
 }
 
@@ -215,16 +237,28 @@ watch(
     form.finish_date = newScheduleDate
   }
 )
+
+watch(
+  () => props.scheduleTime,
+  (newScheduleTime, oldScheduleTime) => {
+    console.log('newScheduleTime:', formatHour(newScheduleTime))
+    form.start_time = formatHour(newScheduleTime)
+    // form.finish_time = newScheduleTime
+    updateEndTimeOptions()
+  }
+)
 </script>
 
 <template>
   <!-- Background overlay -->
   <div
     @click="closeForm"
+    v-bind="$attrs"
     class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-1000 z-49"
     :class="{ 'opacity-100 block': isVisible, 'opacity-0 hidden': !isVisible }"
   ></div>
   <div
+    v-bind="$attrs"
     class="fixed top-0 right-0 w-1/3 h-full bg-white shadow-lg p-4 overflow-auto z-50 transition-transform duration-1000 ease-in-out"
     :class="{ 'translate-x-full': !isVisible, 'translate-x-0': isVisible }"
   >
@@ -251,8 +285,9 @@ watch(
           :initial-values="form"
           class="space-y-4 text-sm"
         >
-          <Field type="hidden" name="teacher_username" v-model="selectedClient.consultant" />
-          <Field type="hidden" name="client_id" v-model="selectedClient.id" />
+          <Field type="hidden" name="id" v-model="form.id" />
+          <Field type="hidden" name="teacher_username" v-model="form.teacher_username" />
+          <Field type="hidden" name="client_id" v-model="form.client_id" />
           <div class="grid gap-4">
             <div class="mb-4">
               <label for="client-search" class="block text-sm font-medium text-gray-700"
@@ -302,13 +337,22 @@ watch(
                 >상담사 <span class="text-red-500">*</span></label
               >
               <Field
-                type="text"
-                name="consultant_name"
-                readonly
-                v-model="selectedClient.consultant_name"
-                class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-              />
-              <ErrorMessage name="consultant_name" class="text-red-500 text-xs italic mt-2" />
+                name="consultant"
+                v-model="form.consultant"
+                as="select"
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+              >
+                <option value="">상담사를 선택하세요.</option>
+                <option
+                  v-for="option in consultant_options"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.text }}
+                </option>
+                <!-- 상담사 옵션 추가 -->
+              </Field>
+              <ErrorMessage name="consultant_options" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -395,7 +439,7 @@ watch(
               <Field
                 name="start_time"
                 id="start_time"
-                v-model="start_time"
+                v-model="form.start_time"
                 as="select"
                 @change="updateEndTimeOptions"
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
@@ -414,7 +458,7 @@ watch(
               <Field
                 name="finish_time"
                 id="finish_time"
-                v-model="finish_time"
+                v-model="form.finish_time"
                 as="select"
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
               >
@@ -443,7 +487,7 @@ watch(
               @click="closeForm"
               class="bg-gray-400 text-white rounded-md p-2 w-[80px]"
             >
-              ���소
+              취소
             </button>
             <button type="submit" class="bg-green-600 text-white rounded-md p-2 w-[80px]">
               확인

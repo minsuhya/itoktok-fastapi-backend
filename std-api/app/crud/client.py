@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 from sqlmodel import Session, desc, select
 
 from ..models.client import ClientInfo
+from ..models.user import User
 from ..schemas.client import ClientInfoCreate, ClientInfoRead, ClientInfoUpdate
 
 
@@ -34,28 +35,36 @@ def get_client_info_by_consultant(
 
 # 클라이언트 정보 조회
 def get_client_infos(
-    session: Session, page: int = 1, size: int = 10, search_qry: str = ""
+    session: Session,
+    login_user: User,
+    page: int = 1,
+    size: int = 10,
+    search_qry: str = "",
 ) -> Page[ClientInfo]:
     # offset = (page - 1) * size
     # statement = select(ClientInfo).offset(offset).limit(size)
     # result = session.exec(statement).all()
+    query = (
+        select(ClientInfo)
+        .options(joinedload(ClientInfo.consultant_info))
+        .order_by(desc(ClientInfo.id))
+    )
+    if search_qry:
+        query = query.where(ClientInfo.client_name.like(f"%{search_qry}%"))
+    if login_user.is_superuser != 1:  # 최고관리자일경우 - 센터 정보만
+        query = query.where(ClientInfo.center_username == login_user.username)
     return paginate(
         session,
-        select(ClientInfo)
-        .where(ClientInfo.client_name.like(f"%{search_qry}%"))
-        .options(joinedload(ClientInfo.consultant_info))
-        .order_by(desc(ClientInfo.id)),
+        query,
     )
 
 
 # 클라이언트 정보 조회
 def search_client_infos(session: Session, search_qry: str = "") -> Page[ClientInfo]:
-    statement = (
-        select(ClientInfo)
-        .where(ClientInfo.client_name.like(f"%{search_qry}%"))
-        .options(joinedload(ClientInfo.consultant_info))
-    )
-    result = session.exec(statement).all()
+    query = select(ClientInfo).options(joinedload(ClientInfo.consultant_info))
+    if search_qry:
+        query = query.where(ClientInfo.client_name.like(f"%{search_qry}%"))
+    result = session.exec(query).all()
 
     return result
 

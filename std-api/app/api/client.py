@@ -74,8 +74,12 @@ def read_client_infos(
     size: int = 10,
     search_qry: str = "",
     db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    return get_client_infos(db, page=page, size=size, search_qry=search_qry)
+    print("current_user", current_user)
+    return get_client_infos(
+        db, page=page, size=size, search_qry=search_qry, login_user=current_user
+    )
 
 
 # 클라이언트 정보 조회

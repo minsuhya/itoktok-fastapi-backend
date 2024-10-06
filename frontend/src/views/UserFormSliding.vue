@@ -223,7 +223,6 @@ watch(
               <Field
                 type="color"
                 name="usercolor"
-                id="usercolor"
                 class="p-1 h-11 w-full mt-1 block rounded-lg border-gray-400"
                 v-model="form.usercolor"
                 title="Choose your color"

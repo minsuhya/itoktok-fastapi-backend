@@ -151,6 +151,7 @@ onBeforeMount(fetchClients)
           <th scope="col" class="px-6 py-3">내담자명</th>
           <th scope="col" class="px-6 py-3">내담자 휴대전화</th>
           <th scope="col" class="px-6 py-3">내담자 이메일</th>
+          <th scope="col" class="px-6 py-3">센터명</th>
           <th scope="col" class="px-6 py-3">상담사</th>
           <th scope="col" class="px-6 py-3">상담상태</th>
           <th scope="col" class="px-6 py-3">Action</th>
@@ -178,6 +179,7 @@ onBeforeMount(fetchClients)
           </th>
           <td class="px-6 py-4">{{ client.phone_number }}</td>
           <td class="px-6 py-4">{{ client.email_address }}</td>
+          <td class="px-6 py-4">{{ client.consultant_info?.center_info?.center_name }}</td>
           <td class="px-6 py-4">
             <div v-if="client.consultant" class="flex items-center">
               {{ client.consultant_info?.full_name }}({{ client.consultant }})

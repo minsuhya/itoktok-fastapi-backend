@@ -3,10 +3,12 @@ from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
+from sqlalchemy import inspect
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
 
 from ..models.schedule import Schedule, ScheduleList
+from ..models.user import User
 from ..schemas.schedule import ScheduleCreate, ScheduleUpdate
 
 
@@ -52,6 +54,9 @@ def update_schedule_info(
     session: Session, schedule_id: int, schedule_update: ScheduleUpdate
 ) -> Optional[Schedule]:
 
+    # 갱신 범위 정의
+    new_schedule_create = False
+
     # schedule 업데이트
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
@@ -61,31 +66,60 @@ def update_schedule_info(
     for key, value in update_data.items():
         setattr(schedule, key, value)
 
+    state = inspect(schedule)
+    if "start_date" in state.attrs and state.attrs.start_date.history.has_changes():
+        new_schedule_create = True
+    if "finish_date" in state.attrs and state.attrs.finish_date.history.has_changes():
+        new_schedule_create = True
+    if "start_time" in state.attrs and state.attrs.start_time.history.has_changes():
+        new_schedule_create = True
+    if "finish_time" in state.attrs and state.attrs.finish_time.history.has_changes():
+        new_schedule_create = True
+
+    if not new_schedule_create:  # 기존 schedule 업데이트
+        schedule.updated_at = datetime.now(timezone.utc)
+        session.commit()
+        session.refresh(schedule)
+        return schedule
+
+    # 현재 날짜
+    today = datetime.now()
+
+    # 기존 schedule 종료일자 업데이트
+    schedule.finish_date = today.date()
     schedule.updated_at = datetime.now(timezone.utc)
     session.commit()
     session.refresh(schedule)
 
-    # 오늘 날짜 이후의 schedule_list 항목 업데이트
-    today = datetime.now().date()
-    if schedule.start_date <= today <= schedule.finish_date:
-        current_date = today
+    # 오늘 날짜 이후의 schedule_list 항목 삭제
+    if schedule.start_date <= today.date() <= schedule.finish_date:
+        current_date = today.date()
     else:
         current_date = schedule.start_date
 
-    # SQLModel 쿼리로 schedule_list 항목 삭제
     session.exec(
-        select(ScheduleList)
+        delete(ScheduleList)
         .where(ScheduleList.schedule_id == schedule.id)
         .where(ScheduleList.schedule_date >= current_date)
-        .delete()
     )
+    session.commit()
+
+    # 신규 schedule 생성
+    new_schedule = Schedule(**update_data)
+    new_schedule.id = None
+    new_schedule.start_date = today.date()
+    session.add(new_schedule)
+    session.commit()
+    session.refresh(new_schedule)
+
+    print("new_schedule", new_schedule)
 
     # schedule_list 항목 재생성
-    while current_date <= schedule.finish_date:
+    while current_date <= new_schedule.finish_date:
         schedule_list = ScheduleList(
-            schedule_id=schedule.id,
+            schedule_id=new_schedule.id,
             schedule_date=current_date,
-            schedule_time=schedule.start_time,
+            schedule_time=new_schedule.start_time,
             schedule_status="1",
             schedule_memo="",
         )
@@ -93,7 +127,7 @@ def update_schedule_info(
         current_date += timedelta(days=1)
 
     session.commit()
-    return schedule
+    return new_schedule
 
 
 def delete_schedule_info(session: Session, schedule_id: int) -> Optional[Schedule]:
@@ -118,13 +152,31 @@ def delete_schedule_info(session: Session, schedule_id: int) -> Optional[Schedul
 
 
 # 월별 스케줄 조회
-def get_schedule_for_month(session: Session, year: int, month: int):
+def get_schedule_for_month(session: Session, year: int, month: int, login_user):
+    print("login_user", login_user)
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
 
     statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(first_day, last_day)
     )
+
+    if login_user.is_superuser != "1":
+        # schedule_liut 테이블의 schedule_id 필드와 schedule 테이블의 id 필드를 조인하고 schedule 테리블의 teacher_username 필드와 User 테이블의 center_username이 login_user.username
+        statement = statement.join(Schedule).where(
+            ScheduleList.schedule_id == Schedule.id
+        )
+        if login_user.user_type == "1":  # 센터 관리자일 경우
+            statement = (
+                statement.join(User)
+                .where(Schedule.teacher_username == User.username)
+                .where(User.center_username == login_user.center_username)
+            )
+        elif login_user.user_type == "2":  # 상담사일 경우
+            statement = statement.join(User).where(
+                Schedule.teacher_username == login_user.username
+            )
+
     return session.exec(statement).all()
 
 
@@ -200,12 +252,29 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 
 # 주별 스케줄 조회
 # Function to get the schedule for the week from the database
-def get_schedule_for_week(session: Session, start_date: date):
+def get_schedule_for_week(session: Session, start_date: date, login_user):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)
 
     statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(start_date, end_date)
     )
+
+    if login_user.is_superuser != "1":
+        # schedule_liut 테이블의 schedule_id 필드와 schedule 테이블의 id 필드를 조인하고 schedule 테리블의 teacher_username 필드와 User 테이블의 center_username이 login_user.username
+        statement = statement.join(Schedule).where(
+            ScheduleList.schedule_id == Schedule.id
+        )
+        if login_user.user_type == "1":  # 센터 관리자일 경우
+            statement = (
+                statement.join(User)
+                .where(Schedule.teacher_username == User.username)
+                .where(User.center_username == login_user.center_username)
+            )
+        elif login_user.user_type == "2":  # 상담사일 경우
+            statement = statement.join(User).where(
+                Schedule.teacher_username == login_user.username
+            )
+
     return session.exec(statement).all()
 
 
@@ -213,7 +282,7 @@ def get_schedule_for_week(session: Session, start_date: date):
 # Function to generate the weekly schedule data structure with empty days included
 def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
     # Dictionary to hold the weekly schedule with dates as keys
-    weekly_schedule = {}
+    weekly_schedule_by_day = {}
 
     # Create a list of days from Monday to Sunday for the given week
     week_days = [
@@ -222,8 +291,8 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
 
     # Initialize the weekly_schedule with empty days and times
     for day in week_days:
-        weekly_schedule[day] = OrderedDict(
-            sorted({f"{hour:d}": [] for hour in range(9, 19)}.items())
+        weekly_schedule_by_day[day] = OrderedDict(
+            sorted({f"{hour:d}": [] for hour in range(8, 19)}.items())
         )  # Each day starts with an empty dictionary for times from 09:00 to 18:00
 
     # Populate the weekly_schedule with actual schedule data
@@ -235,11 +304,11 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
         # )  # Extract the time of the event
 
         # If the time is not in the day's dictionary, initialize it
-        if event_time not in weekly_schedule[event_day]:
-            weekly_schedule[event_day][event_time] = []
+        if event_time not in weekly_schedule_by_day[event_day]:
+            weekly_schedule_by_day[event_day][event_time] = []
 
         # Append the event information to the corresponding date and time
-        weekly_schedule[event_day][event_time].append(
+        weekly_schedule_by_day[event_day][event_time].append(
             {
                 "id": event.id,
                 "schedule_id": event.schedule_id,
@@ -264,8 +333,32 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "updated_by": event.schedule.updated_by,
             }
         )
+        # # 기존 weekly_schedule 구조
+        # weekly_schedule = {
+        #     "Monday": {
+        #         "09:00": [{"id": 1, "title": "Math Class"}],
+        #         "10:00": [{"id": 2, "title": "Science Class"}]
+        #     },
+        #     "Tuesday": {
+        #         "09:00": [{"id": 3, "title": "History Class"}],
+        #         "11:00": [{"id": 4, "title": "Art Class"}]
+        #     }
+        # }
 
-    return weekly_schedule
+        # 새로운 구조를 저장할 딕셔너리
+        # weekly_schedule_by_time = {}
+        #
+        # # 기존 구조를 순회하며 새로운 구조로 변환
+        # for event_day, times in weekly_schedule_by_day.items():
+        #     for event_time, events in times.items():
+        #         if event_time not in weekly_schedule_by_time:
+        #             weekly_schedule_by_time[event_time] = {}
+        #         weekly_schedule_by_time[event_time][event_day] = events
+        #
+        # # 변환된 구조 출력
+        # # print(weekly_schedule_by_time)
+
+    return weekly_schedule_by_day
 
 
 # 일별 스케줄 조회

@@ -77,11 +77,14 @@ def read_user(
 def read_Users(
     *,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
     page: int = 1,
     size: int = Query(default=10, lte=10),
     search_qry: str = Query(default="", max_length=50),
 ):
-    return get_users(session, page=page, size=size, search_qry=search_qry)
+    return get_users(
+        session, page=page, size=size, search_qry=search_qry, login_user=current_user
+    )
 
 
 @router.post("/", response_model=UserRead)
