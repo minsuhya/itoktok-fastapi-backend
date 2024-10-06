@@ -1,1 +1,0 @@
-import{l as a,r as c}from"./user-DP4TU0cU.js";import{u as r,K as u,L as t}from"./index-DGgoadmK.js";function g(){return{loginApp:async o=>{const e=r();try{const s=await a(o);u(s.access_token);const n=await c();e.setUserInfo(n)}catch(s){throw t(),e.clearUserInfo(),s}},logoutApp:async()=>{const o=r();t(),o.clearUserInfo()}}}export{g as u};
