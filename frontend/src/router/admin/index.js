@@ -22,7 +22,7 @@ export default [
       {
         path: '',
         name: 'Dashboard',
-        component: () => import('@/views/DashboardView.vue')
+        component: () => import('@/views/MonthlyView.vue')
       },
       // 내정보
       {

@@ -1,11 +1,12 @@
 from datetime import date, datetime, timedelta
-from typing import List, Union
+from typing import List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, desc, select
 
 from ..core import get_session
 from ..crud.schedule import (create_schedule_info, delete_schedule_info,
+                             delete_schedule_list_info,
                              generate_daily_schedule_with_empty_times,
                              generate_monthly_calendar_without_timeslots,
                              generate_weekly_schedule_with_empty_days,
@@ -51,13 +52,18 @@ def read_schedules(
     return get_schedules(session, skip=skip, limit=limit)
 
 
-@router.put("/{schedule_id}", response_model=SuccessResponse[ScheduleRead])
+@router.put(
+    "/{schedule_id}/{schedule_list_id}", response_model=SuccessResponse[ScheduleRead]
+)
 def update_schedule(
     schedule_id: int,
     schedule_update: ScheduleUpdate,
+    schedule_list_id: Optional[int] = None,
     session: Session = Depends(get_session),
 ):
-    schedule = update_schedule_info(session, schedule_id, schedule_update)
+    schedule = update_schedule_info(
+        session, schedule_id, schedule_update, schedule_list_id=schedule_list_id
+    )
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     return SuccessResponse(data=schedule)
@@ -69,6 +75,14 @@ def delete_schedule(schedule_id: int, session: Session = Depends(get_session)):
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     return SuccessResponse(data=schedule)
+
+
+@router.delete("/list/{schedule_list_id}", response_model=SuccessResponse[ScheduleRead])
+def delete_schedule_list(
+    schedule_list_id: int, session: Session = Depends(get_session)
+):
+    delete_schedule_list_info(session, schedule_list_id)
+    return SuccessResponse(data={})
 
 
 # get monthly calendar

@@ -5,7 +5,6 @@ import { getToken } from '@/utils/token'
 import useAuth from '@/hooks/auth'
 
 const { logoutApp } = useAuth()
-const navigateTo = inject('$navigateTo')
 
 // InternalAxiosRequestConfig
 if (import.meta.env.VITE_API_BASE_URL) {
@@ -39,8 +38,8 @@ axios.interceptors.response.use(
         // window.location.href = '/' // Or use Vue Router to redirect
         logoutApp()
         // navigate to login page
-        navigateTo('/login')
-        // window.location.href = '/login'
+        // navigateTo('/login')
+        window.location.href = '/login'
       } else if (error.response.status === 500) {
         alert('Server error. Please try again later.')
       }

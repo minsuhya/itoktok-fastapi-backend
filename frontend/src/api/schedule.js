@@ -17,12 +17,16 @@ export const readSchedules = async (skip = 0, limit = 10) => {
   })
 }
 
-export const updateSchedule = async (scheduleId, scheduleUpdate) => {
-  return axios.put(`/schedules/${scheduleId}`, scheduleUpdate)
+export const updateSchedule = async (scheduleId, scheduleListId, scheduleUpdate) => {
+  return axios.put(`/schedules/${scheduleId}/${scheduleListId}`, scheduleUpdate)
 }
 
 export const deleteSchedule = async (scheduleId) => {
   return axios.delete(`/schedules/${scheduleId}`)
+}
+
+export const deleteScheduleList = async (scheduleListId) => {
+  return axios.delete(`/schedules/list/${scheduleListId}`)
 }
 
 // 월간 일정 조회

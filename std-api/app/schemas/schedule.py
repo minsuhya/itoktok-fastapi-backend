@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,7 @@ from .user import UserRead
 # Schedule Padatic Model
 class ScheduleBase(BaseModel):
     teacher_username: str
-    client_id: int
+    client_id: Union[int, str]
     title: str
     start_date: date = Field(default_factory=date.today)
     finish_date: date = Field(default_factory=date.today)
@@ -44,6 +44,7 @@ class ScheduleRead(ScheduleBase):
 
 
 class ScheduleUpdate(ScheduleBase):
+    list_id: Optional[Union[int, str]] = None
     updated_at: Optional[datetime] = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )

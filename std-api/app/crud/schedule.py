@@ -1,7 +1,7 @@
 import calendar
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from sqlalchemy import inspect
 from sqlalchemy.orm import joinedload
@@ -10,6 +10,18 @@ from sqlmodel import Session, delete, select
 from ..models.schedule import Schedule, ScheduleList
 from ..models.user import User
 from ..schemas.schedule import ScheduleCreate, ScheduleUpdate
+
+
+def hex_to_rgba(hex_color, alpha=1.0):
+    hex_color = hex_color.lstrip("#")
+    if len(hex_color) != 6:
+        raise ValueError("Input #{} is not in #RRGGBB format".format(hex_color))
+
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+
+    return f"rgba({r}, {g}, {b}, {alpha})"
 
 
 def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> Schedule:
@@ -51,63 +63,46 @@ def get_schedules(session: Session, skip: int = 0, limit: int = 10) -> List[Sche
 
 
 def update_schedule_info(
-    session: Session, schedule_id: int, schedule_update: ScheduleUpdate
+    session: Session,
+    schedule_id: int,
+    schedule_update: ScheduleUpdate,
+    schedule_list_id: Union[int, None] = None,
 ) -> Optional[Schedule]:
 
-    # 갱신 범위 정의
-    new_schedule_create = False
-
-    # schedule 업데이트
+    # schedule
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
         return None
 
-    update_data = schedule_update.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(schedule, key, value)
+    # 현재 선택된 schedule_list
+    schedule_list = session.get(ScheduleList, schedule_list_id)
 
-    state = inspect(schedule)
-    if "start_date" in state.attrs and state.attrs.start_date.history.has_changes():
-        new_schedule_create = True
-    if "finish_date" in state.attrs and state.attrs.finish_date.history.has_changes():
-        new_schedule_create = True
-    if "start_time" in state.attrs and state.attrs.start_time.history.has_changes():
-        new_schedule_create = True
-    if "finish_time" in state.attrs and state.attrs.finish_time.history.has_changes():
-        new_schedule_create = True
-
-    if not new_schedule_create:  # 기존 schedule 업데이트
-        schedule.updated_at = datetime.now(timezone.utc)
-        session.commit()
-        session.refresh(schedule)
-        return schedule
-
-    # 현재 날짜
-    today = datetime.now()
-
-    # 기존 schedule 종료일자 업데이트
-    schedule.finish_date = today.date()
-    schedule.updated_at = datetime.now(timezone.utc)
+    # 현재 schedule의 finish_date 업데이트
+    schedule.finish_date = schedule_list.schedule_date
+    session.add(schedule)
     session.commit()
-    session.refresh(schedule)
 
-    # 오늘 날짜 이후의 schedule_list 항목 삭제
-    if schedule.start_date <= today.date() <= schedule.finish_date:
-        current_date = today.date()
-    else:
-        current_date = schedule.start_date
-
-    session.exec(
+    # 현재 이후 schedule_list 항목 삭제
+    delete_query = (
         delete(ScheduleList)
         .where(ScheduleList.schedule_id == schedule.id)
-        .where(ScheduleList.schedule_date >= current_date)
+        .where(ScheduleList.schedule_date >= schedule_list.schedule_date)
+        .where(ScheduleList.schedule_time >= schedule_list.schedule_time)
     )
+    if schedule_list_id:
+        delete_query = delete_query.where(ScheduleList.id >= schedule_list_id)
+
+    session.exec(delete_query)
     session.commit()
 
+    today = datetime.now()  # 현재 날짜
+
     # 신규 schedule 생성
+    update_data = schedule_update.dict(exclude_unset=True)
     new_schedule = Schedule(**update_data)
     new_schedule.id = None
-    new_schedule.start_date = today.date()
+    if new_schedule.start_date < today.date():
+        new_schedule.start_date = today.date()
     session.add(new_schedule)
     session.commit()
     session.refresh(new_schedule)
@@ -115,6 +110,7 @@ def update_schedule_info(
     print("new_schedule", new_schedule)
 
     # schedule_list 항목 재생성
+    current_date = schedule_list.schedule_date
     while current_date <= new_schedule.finish_date:
         schedule_list = ScheduleList(
             schedule_id=new_schedule.id,
@@ -149,6 +145,14 @@ def delete_schedule_info(session: Session, schedule_id: int) -> Optional[Schedul
     session.commit()
 
     return schedule
+
+
+def delete_schedule_list_info(session: Session, schedule_list_id: int):
+    # schedule 삭제
+    session.exec(delete(ScheduleList).where(ScheduleList.id == schedule_list_id))
+    session.commit()
+
+    return
 
 
 # 월별 스케줄 조회
@@ -232,7 +236,10 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "teacher_username": event.schedule.teacher_username,
                     "teacher_fullname": event.schedule.teacher.full_name,
                     "teacher_expertise": event.schedule.teacher.expertise,
-                    "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
+                    "teacher_usercolor": hex_to_rgba(
+                        event.schedule.teacher.usercolor, 0.2
+                    ),
+                    # "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                     # "teacher_usercolor": "bg-[#b77334]/50",
                     "client_id": event.schedule.client_id,
                     "client_name": event.schedule.clientinfo.client_name,
@@ -319,7 +326,8 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "teacher_username": event.schedule.teacher_username,
                 "teacher_fullname": event.schedule.teacher.full_name,
                 "teacher_expertise": event.schedule.teacher.expertise,
-                "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
+                "teacher_usercolor": hex_to_rgba(event.schedule.teacher.usercolor, 0.2),
+                # "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                 # "teacher_usercolor": "bg-[#b77334]/50",
                 "client_id": event.schedule.client_id,
                 "client_name": event.schedule.clientinfo.client_name,
