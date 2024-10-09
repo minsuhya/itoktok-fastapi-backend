@@ -237,7 +237,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "teacher_fullname": event.schedule.teacher.full_name,
                     "teacher_expertise": event.schedule.teacher.expertise,
                     "teacher_usercolor": hex_to_rgba(
-                        event.schedule.teacher.usercolor, 0.2
+                        event.schedule.teacher.usercolor, 0.4
                     ),
                     # "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                     # "teacher_usercolor": "bg-[#b77334]/50",
@@ -326,7 +326,7 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "teacher_username": event.schedule.teacher_username,
                 "teacher_fullname": event.schedule.teacher.full_name,
                 "teacher_expertise": event.schedule.teacher.expertise,
-                "teacher_usercolor": hex_to_rgba(event.schedule.teacher.usercolor, 0.2),
+                "teacher_usercolor": hex_to_rgba(event.schedule.teacher.usercolor, 0.4),
                 # "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                 # "teacher_usercolor": "bg-[#b77334]/50",
                 "client_id": event.schedule.client_id,
