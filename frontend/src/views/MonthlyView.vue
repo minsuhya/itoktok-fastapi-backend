@@ -24,6 +24,17 @@ const zoom = (index, item_index, event) => {
     isZoomed[index] = {}
   }
   isZoomed[index][item_index] = !isZoomed[index][item_index]
+
+  // Sibling 요소 hidden 처리
+  const parentElement = event.target.closest('.relative')
+  if (parentElement) {
+    const siblings = parentElement.parentElement.children
+    for (let sibling of siblings) {
+      if (sibling !== parentElement) {
+        sibling.style.display = isZoomed[index][item_index] ? 'none' : ''
+      }
+    }
+  }
 }
 
 // 일정 상세 등록/수정 Form 토글
@@ -195,20 +206,27 @@ onBeforeMount(() => {
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
       <div class="flex items-center space-x-2">
-        <button class="p-2 rounded-full font-semibold"
-          @click="fetchSchedule(currentDateInfo.prevYear, currentDateInfo.prevMonth)">
+        <button
+          class="p-2 rounded-full font-semibold"
+          @click="fetchSchedule(currentDateInfo.prevYear, currentDateInfo.prevMonth)"
+        >
           <ChevronLeftIcon class="w-6 h-6" />
         </button>
         <h2 class="text-xl font-semibold">
           {{ currentDateInfo.currentMonthName }} {{ currentDateInfo.currentYear }}
         </h2>
-        <button class="p-2 rounded-full font-semibold"
-          @click="fetchSchedule(currentDateInfo.nextYear, currentDateInfo.nextMonth)">
+        <button
+          class="p-2 rounded-full font-semibold"
+          @click="fetchSchedule(currentDateInfo.nextYear, currentDateInfo.nextMonth)"
+        >
           <ChevronRightIcon class="w-6 h-6" />
         </button>
       </div>
       <div class="flex space-x-2 text-sm font-semibold">
-        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center" @click="fetchSchedule()">
+        <button
+          class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center"
+          @click="fetchSchedule()"
+        >
           <span>Today</span>
         </button>
         <button class="px-4 py-2 bg-blue-500 text-white rounded-md" @click="toggleForm">
@@ -229,23 +247,38 @@ onBeforeMount(() => {
       <div class="bg-white py-2 text-center text-sm font-medium">Sun</div>
 
       <!-- schedule data loop -->
-      <div class="bg-white h-32 p-2" v-for="(day_schedules, index) in schedule_data" :key="index"
-        @click="clickCalendarDay(index)">
-        <span :class="{
-          'block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5 text-center':
-            index === today
-        }">{{ index.split('-')[2] }}</span>
-        <div class="flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
-          v-for="(day_schedule, itemindex) in day_schedules.slice(0, 2)" :key="itemindex" :class="[
+      <div
+        class="bg-white h-32 p-2"
+        v-for="(day_schedules, index) in schedule_data"
+        :key="index"
+        @click="clickCalendarDay(index)"
+      >
+        <span
+          :class="{
+            'block text-sm bg-sky-500 text-white ring rounded-full font-semibold w-5 text-center':
+              index === today
+          }"
+          >{{ index.split('-')[2] }}</span
+        >
+        <div
+          class="relative flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
+          v-for="(day_schedule, itemindex) in day_schedules.slice(0, 2)"
+          :key="itemindex"
+          :class="[
             'transform transition duration-500 ease-in-out overflow-hidden',
             !isZoomed[index]?.[itemindex] ? 'scale-100 h-6' : 'scale-105 h-auto min-h-6 w-full pt-1'
-          ]" :style="{
+          ]"
+          :style="{
             backgroundColor: !isZoomed[index]?.[itemindex]
               ? day_schedule.teacher_usercolor
               : 'rgba(255, 255, 255, 1)'
-          }" @click="zoom(index, itemindex, $event)">
+          }"
+          @click="zoom(index, itemindex, $event)"
+        >
           <div class="flex justify-between items-center px-1 h-full w-full">
-            <span class="inline-block">[{{ day_schedule.client_name }}] {{ day_schedule.teacher_expertise }}</span>
+            <span class="inline-block"
+              >[{{ day_schedule.client_name }}] {{ day_schedule.teacher_expertise }}</span
+            >
             <span class="ml-auto inline-block">{{ day_schedule.schedule_time }}</span>
           </div>
           <div class="flex justify-between items-center px-1 h-full w-full">
@@ -254,37 +287,57 @@ onBeforeMount(() => {
           </div>
           <div class="flex justify-between items-center px-1 h-full w-full">
             <span class="inline-block">상담시간</span>
-            <span class="ml-auto inline-block">{{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}</span>
+            <span class="ml-auto inline-block"
+              >{{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}</span
+            >
           </div>
           <div class="flex justify-center items-center px-1 h-full w-full">
             <!-- 수정 버튼 -->
-            <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20" @click="
-              clickCalendarSchedule(
-                day_schedule.schedule_id,
-                day_schedule.id,
-                day_schedule.schedule_date
-              )
-              ">
+            <button
+              class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
+              @click.stop="
+                clickCalendarSchedule(
+                  day_schedule.schedule_id,
+                  day_schedule.id,
+                  day_schedule.schedule_date
+                )
+              "
+            >
               <PencilSquareIcon class="w-4 h-4" />
             </button>
             <!-- 삭제버튼 -->
-            <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-              @click="deleteCalendarSchedule(day_schedule.id)">
+            <button
+              class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
+              @click.stop="deleteCalendarSchedule(day_schedule.id)"
+            >
               <TrashIcon class="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div v-if="day_schedules.length > 2"
+        <div
+          v-if="day_schedules.length > 2"
           class="mt-4 flex items-center justify-center text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-          @click.stop="clickMoreDailyView(index)">
+          @click.stop="clickMoreDailyView(index)"
+        >
           <PlusIcon class="w-4 h-4" /> {{ day_schedules.length - 2 }} more
         </div>
       </div>
     </div>
-    <ScheduleFormSliding :isVisible="isVisible" :scheduleId="currentScheduleId" :scheduleListId="currentScheduleListId"
-      :scheduleDate="currentScheduleDate" @close="toggleForm" class="z-20" />
-    <DailyViewSliding :isDailyViewSlidingVisible="isDailyViewSlidingVisible" :scheduleDate="currentScheduleDate"
-      @close="toggleDailyViewSliding" @clickCalendarSchedule="clickCalendarSchedule" class="z-10" />
+    <ScheduleFormSliding
+      :isVisible="isVisible"
+      :scheduleId="currentScheduleId"
+      :scheduleListId="currentScheduleListId"
+      :scheduleDate="currentScheduleDate"
+      @close="toggleForm"
+      class="z-20"
+    />
+    <DailyViewSliding
+      :isDailyViewSlidingVisible="isDailyViewSlidingVisible"
+      :scheduleDate="currentScheduleDate"
+      @close="toggleDailyViewSliding"
+      @clickCalendarSchedule="clickCalendarSchedule"
+      class="z-10"
+    />
   </div>
 </template>
 
