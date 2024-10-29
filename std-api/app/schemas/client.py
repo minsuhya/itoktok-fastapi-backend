@@ -24,11 +24,11 @@ class ClientInfoBase(BaseModel):
     )
     address_city: Optional[str] = Field(None, max_length=50, description="Address City")
     family_members: Optional[str] = Field(None, description="Family Members")
-    consultation_path: str = Field(
-        defatul="", max_length=20, description="Consultation Reason"
+    consultation_path: Optional[str] = Field(
+        default="", max_length=20, description="Consultation Path"
     )
     center_username: str = Field(..., max_length=15, description="center_username")
-    register: str = Field(None, max_length=15, description="Register")
+    register: Optional[str] = Field(default=None, max_length=15, description="Register")
 
 
 # ClientInfo Create Schema

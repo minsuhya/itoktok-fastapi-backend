@@ -26,6 +26,12 @@ class ScheduleBase(SQLModel):
     finish_date: date = Field(default_factory=date.today)
     start_time: str = Field(max_length=5, nullable=False)
     finish_time: str = Field(max_length=5, nullable=False)
+    # ALTER TABLE schedule ADD COLUMN repeat_type INT NOT NULL DEFAULT 1 COMMENT '반복 유형: 1(매일), 2(매주), 3(매월)';
+    repeat_type: int = Field(
+        default=1,
+        nullable=False,
+        description="반복 유형: 1(매일), 2(매주), 3(매월)"
+    )
     memo: Optional[str] = Field(max_length=255, default=None)
     created_by: Optional[str] = Field(max_length=20, default=None)
     updated_by: Optional[str] = Field(max_length=20, default=None)

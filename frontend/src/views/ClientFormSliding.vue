@@ -101,11 +101,14 @@ onBeforeMount(() => {
 const onSubmit = async (values) => {
   console.log('submitting:', values)
   Object.assign(form, values)
+  if (!form.consultant_status) {
+    form.consultant_status = '1'
+  }
   if (form.id) {
     await updateClientInfo(form.id, form)
     showModal('내담자 정보가 수정되었습니다.')
   } else {
-    await registerClientInfo()
+    await registerClientInfo(form)
     showModal('내담자 정보가 등록되었습니다.')
   }
   emit('close')

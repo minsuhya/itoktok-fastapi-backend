@@ -125,7 +125,8 @@ const schema = yup.object({
   start_date: yup.string().required('일정시작일을 선택해주세요.'),
   finish_date: yup.string().required('일정종료일을 선택해주세요.'),
   start_time: yup.string().required('시작시간을 선택해주세요.'),
-  finish_time: yup.string().required('종료시간을 선택해주세요.')
+  finish_time: yup.string().required('종료시간을 선택해주세요.'),
+  repeat_type: yup.string().required("반복 타입을 선택해주세요.")
 })
 
 const form = reactive({
@@ -134,6 +135,7 @@ const form = reactive({
   client_id: '',
   client_name: '',
   title: '',
+  repeat_type: '1', // 매일:1, 매주:2, 매월:3 기본값(매일)
   start_date: props.scheduleDate,
   finish_date: props.scheduleDate,
   start_time: formatHour(props.scheduleTime),
@@ -223,13 +225,32 @@ const onSubmit = async (values) => {
   console.log('submitting:', values)
   Object.assign(form, values)
   try {
+    const formData = { ...form }
+    delete formData.created_at
+    delete formData.updated_at 
+    delete formData.deleted_at
+
     if (form.id) {
-      await updateSchedule(form.id, props.scheduleListId, form)
+      await updateSchedule(form.id, props.scheduleListId, formData)
       showModal('상담일정 정보가 수정되었습니다.')
     } else {
-      await createSchedule(form)
+      await createSchedule(formData)
       showModal('상담일정 정보가 등록되었습니다.')
     }
+    // 폼 초기화
+    form.id = null
+    form.client_id = null 
+    form.client_name = ''
+    form.phone_number = ''
+    form.teacher_username = ''
+    form.title = ''
+    form.start_date = new Date().toISOString().split('T')[0]
+    form.finish_date = form.start_date
+    form.start_time = formatHour(new Date().getHours())
+    form.finish_time = ''
+    form.repeat_type = 1
+    form.memo = ''
+
   } catch (error) {
     showModal('상담일정 정보 저장 중 오류가 발생했습니다.')
     console.error('Error registering schedule data:', error)
@@ -354,6 +375,16 @@ watch(
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
               <ErrorMessage name="title" class="text-red-500 text-xs italic mt-2" />
             </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정 반복 타입</label>
+            <Field name="repeat_type" v-model="form.repeat_type" as="select" 
+              class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
+              <option value="1">매일</option>
+              <option value="2">매주</option>
+              <option value="3">매월</option>
+            </Field>
+            <ErrorMessage name="repeat_type" class="text-red-500 text-xs italic mt-2" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">

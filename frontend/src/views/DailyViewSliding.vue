@@ -127,10 +127,13 @@ watch(
                     !isZoomed[day_schedule.schedule_time]?.[itemindex]
                       ? 'scale-100 h-6'
                       : 'scale-105 h-auto min-h-6 w-full pt-1',
-                    !isZoomed[day_schedule.schedule_time]?.[itemindex]
-                      ? day_schedule.teacher_usercolor
-                      : 'bg-white/100'
-                  ]" @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
+                  ]"
+                  :style="{
+                  backgroundColor: !isZoomed[day_schedule.schedule_time]?.[itemindex]
+                    ? day_schedule.teacher_usercolor
+                    : 'rgba(255, 255, 255, 1)'
+                  }" 
+                    @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
                   <div class="flex justify-between items-center px-1 h-full w-full">
                     <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
                     <span class="ml-auto inline-block">[{{ day_schedule.client_name }}] {{

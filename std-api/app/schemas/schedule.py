@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -16,19 +16,27 @@ class ScheduleBase(BaseModel):
     finish_date: date = Field(default_factory=date.today)
     start_time: str
     finish_time: str
+    repeat_type: int = Field(
+        default=1,
+        description="반복 유형: 1(매일), 2(매주), 3(매월)"
+    )
     memo: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
-    deleted_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = Field(default=None)
 
 
 class ScheduleCreate(ScheduleBase):
-    created_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
-    updated_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
+    class Config:
+        # None 값을 제외하고 실제 값만 포함하도록 설정
+        exclude_unset = True
+        exclude_none = True
 
 
 class ScheduleRead(ScheduleBase):
@@ -45,8 +53,8 @@ class ScheduleRead(ScheduleBase):
 
 class ScheduleUpdate(ScheduleBase):
     list_id: Optional[Union[int, str]] = None
-    updated_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
 
 
@@ -65,11 +73,11 @@ class ScheduleListBase(BaseModel):
 
 class ScheduleListCreate(ScheduleListBase):
     schedule_id: int
-    created_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
-    updated_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
 
 
@@ -85,8 +93,8 @@ class ScheduleListRead(ScheduleListBase):
 
 
 class ScheduleListUpdate(ScheduleListBase):
-    updated_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
 
 

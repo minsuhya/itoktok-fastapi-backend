@@ -33,15 +33,35 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
 
     # schedule_list 생성
     current_date = schedule.start_date
+    
     while current_date <= schedule.finish_date:
-        schedule_list = ScheduleList(
-            schedule_id=schedule.id,
-            schedule_date=current_date,
-            schedule_time=schedule.start_time,
-            schedule_status="1",
-            schedule_memo="",
-        )
-        session.add(schedule_list)
+        # 반복 유형에 따른 일정 생성
+        create_schedule = False
+        print("repeat_type: ", schedule.repeat_type) 
+        if schedule.repeat_type == 1:  # 매일
+            create_schedule = True
+        elif schedule.repeat_type == 2:  # 매주
+            print("current_date.weekday(): ", current_date.weekday())
+            print("schedule.start_date.weekday(): ", schedule.start_date.weekday())
+            if current_date.weekday() == schedule.start_date.weekday():
+                create_schedule = True
+        elif schedule.repeat_type == 3:  # 매월
+            if current_date.day == schedule.start_date.day:
+                create_schedule = True
+        else:  # 반복 없음
+            create_schedule = True
+            
+        if create_schedule:
+            schedule_list = ScheduleList(
+                schedule_id=schedule.id,
+                schedule_date=current_date,
+                schedule_time=schedule.start_time,
+                schedule_status="1",
+                schedule_memo="",
+            )
+            session.add(schedule_list)
+            print("create schedule_list: ", schedule_list)
+            
         current_date += timedelta(days=1)
 
     session.commit()
@@ -68,58 +88,81 @@ def update_schedule_info(
     schedule_update: ScheduleUpdate,
     schedule_list_id: Union[int, None] = None,
 ) -> Optional[Schedule]:
-
-    # schedule
+    # 기존 schedule 조회
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
         return None
 
-    # 현재 선택된 schedule_list
+    # 현재 선택된 schedule_list 조회
     schedule_list = session.get(ScheduleList, schedule_list_id)
+    if not schedule_list:
+        return None
 
-    # 현재 schedule의 finish_date 업데이트
+    # 기존 schedule의 finish_date를 선택된 일정의 날짜로 업데이트
     schedule.finish_date = schedule_list.schedule_date
     session.add(schedule)
     session.commit()
 
-    # 현재 이후 schedule_list 항목 삭제
-    delete_query = (
-        delete(ScheduleList)
-        .where(ScheduleList.schedule_id == schedule.id)
-        .where(ScheduleList.schedule_date >= schedule_list.schedule_date)
-        .where(ScheduleList.schedule_time >= schedule_list.schedule_time)
-    )
+    # 선택된 일정 이후의 schedule_list 항목 삭제
     if schedule_list_id:
         delete_query = delete_query.where(ScheduleList.id >= schedule_list_id)
+    else:
+        delete_query = (
+        delete(ScheduleList)
+        .where(ScheduleList.schedule_id == schedule.id)
+        .where(
+            (ScheduleList.schedule_date > schedule_list.schedule_date) |
+            (
+                (ScheduleList.schedule_date == schedule_list.schedule_date) &
+                (ScheduleList.schedule_time >= schedule_list.schedule_time)
+            )
+        )
+    )
 
     session.exec(delete_query)
     session.commit()
 
-    today = datetime.now()  # 현재 날짜
-
-    # 신규 schedule 생성
+    # 현재 시간 기준으로 새로운 일정 생성
+    now = datetime.now()
     update_data = schedule_update.dict(exclude_unset=True)
     new_schedule = Schedule(**update_data)
     new_schedule.id = None
-    if new_schedule.start_date < today.date():
-        new_schedule.start_date = today.date()
+
+    # 시작일이 현재보다 이전이면 현재 날짜로 조정
+    if new_schedule.start_date < now.date():
+        new_schedule.start_date = now.date()
+
     session.add(new_schedule)
     session.commit()
     session.refresh(new_schedule)
 
-    print("new_schedule", new_schedule)
-
-    # schedule_list 항목 재생성
-    current_date = schedule_list.schedule_date
+    # 새로운 schedule_list 항목 생성
+    current_date = new_schedule.start_date
     while current_date <= new_schedule.finish_date:
-        schedule_list = ScheduleList(
-            schedule_id=new_schedule.id,
-            schedule_date=current_date,
-            schedule_time=new_schedule.start_time,
-            schedule_status="1",
-            schedule_memo="",
-        )
-        session.add(schedule_list)
+        # 반복 유형에 따른 일정 생성
+        create_schedule = False
+        
+        if new_schedule.repeat_type == "1":  # 매일
+            create_schedule = True
+        elif new_schedule.repeat_type == "2":  # 매주
+            if current_date.weekday() == new_schedule.start_date.weekday():
+                create_schedule = True
+        elif new_schedule.repeat_type == "3":  # 매월
+            if current_date.day == new_schedule.start_date.day:
+                create_schedule = True
+        else:  # 반복 없음
+            create_schedule = True
+            
+        if create_schedule:
+            schedule_list = ScheduleList(
+                schedule_id=new_schedule.id,
+                schedule_date=current_date,
+                schedule_time=new_schedule.start_time,
+                schedule_status="1",
+                schedule_memo="",
+            )
+            session.add(schedule_list)
+            
         current_date += timedelta(days=1)
 
     session.commit()
@@ -257,7 +300,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
     return calendar_data
 
 
-# 주별 스케줄 조회
+# 주별 스케��� 조회
 # Function to get the schedule for the week from the database
 def get_schedule_for_week(session: Session, start_date: date, login_user):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)

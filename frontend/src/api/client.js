@@ -3,6 +3,7 @@ import axios from 'axios'
 // Client Info CRUD API 함수
 export const registerClientInfo = async (info) => {
   try {
+    console.log(info)
     const response = await axios.post('/client', info)
     return response.data
   } catch (error) {

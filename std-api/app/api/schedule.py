@@ -33,7 +33,9 @@ router = APIRouter(
 def create_schedule(
     schedule_create: ScheduleCreate, session: Session = Depends(get_session)
 ):
-    schedule = create_schedule_info(session, schedule_create)
+    # exclude_unset=True 옵션을 사용하여 세팅되지 않은 필드 제외
+    schedule_data = schedule_create.dict(exclude_unset=True)
+    schedule = create_schedule_info(session, ScheduleCreate(**schedule_data))
     return schedule
 
 
