@@ -313,8 +313,10 @@ onBeforeMount(() => {
               v-for="(time_schedules, timeIndex) in day_schedule"
               :key="timeIndex"
               @click="clickCalendarTime(dayIndex, timeIndex)"
-              class="h-[90px] text-xs text-slate-400 font-medium p-1.5"
+              class="h-[90px] text-xs text-slate-400 font-medium p-1.5 relative"
             >
+              <div class="absolute left-0 w-full border-t border-slate-100 top-[30px]"></div>
+              <div class="absolute left-0 w-full border-t border-slate-100 top-[60px]"></div>
               <!-- 시간 대 개별일정들 -->
               <div
                 class="relative flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"

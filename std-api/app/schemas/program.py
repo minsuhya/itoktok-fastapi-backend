@@ -1,40 +1,56 @@
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
-from ..models.program import ProgramCategory, ProgramMethod, ProgramLocation, ProgramStatus
+from pydantic import BaseModel, Field
+from zoneinfo import ZoneInfo
 
-class ProgramCreate(BaseModel):
-    category: ProgramCategory
-    program_type: str
-    program_name: str
-    method: ProgramMethod
-    location: ProgramLocation
-    teacher_id: Optional[int] = None
-    price: Optional[float] = None
-    base_price: Optional[float] = None
-    status: ProgramStatus
+from .user import UserRead
+
+SEOUL_TZ = ZoneInfo("Asia/Seoul")
+
+class ProgramBase(BaseModel):
+    program_name: str = Field(..., max_length=50)
+    program_type: str = Field(..., max_length=50)
+    category: Optional[str] = Field(default='', max_length=50)
+    teacher_username: Optional[str] = Field(default=None, max_length=25)
+    description: Optional[str] = Field(default='')
+    duration: Optional[int] = Field(default=60)
+    max_participants: Optional[int] = Field(default=1)
+    price: Optional[float] = Field(default=0.00)
+    is_all_teachers: bool = Field(default=False)
+    is_active: Optional[bool] = Field(default=True)
+    deleted_at: Optional[datetime] = None
+
+class ProgramCreate(ProgramBase):
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(SEOUL_TZ)
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(SEOUL_TZ)
+    )
 
 class ProgramUpdate(BaseModel):
-    category: Optional[ProgramCategory] = None
-    program_type: Optional[str] = None
-    program_name: Optional[str] = None
-    method: Optional[ProgramMethod] = None
-    location: Optional[ProgramLocation] = None
-    teacher_id: Optional[int] = None
+    program_name: Optional[str] = Field(default=None, max_length=50)
+    program_type: Optional[str] = Field(default=None, max_length=50)
+    category: Optional[str] = Field(default=None, max_length=50)
+    teacher_username: Optional[str] = Field(default=None, max_length=25)
+    description: Optional[str] = None
+    duration: Optional[int] = None
+    max_participants: Optional[int] = None
     price: Optional[float] = None
-    base_price: Optional[float] = None
-    status: Optional[ProgramStatus] = None
+    is_all_teachers: Optional[bool] = None
+    is_active: Optional[bool] = None
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(SEOUL_TZ)
+    )
 
-class ProgramRead(BaseModel):
+    class Config:
+        exclude_unset = True
+
+class ProgramRead(ProgramBase):
     id: int
-    category: ProgramCategory
-    program_type: str
-    program_name: str
-    method: ProgramMethod
-    location: ProgramLocation
-    teacher_id: Optional[int] = None
-    price: Optional[float] = None
-    base_price: Optional[float] = None
-    status: ProgramStatus
+    created_at: datetime
+    updated_at: datetime
+    teacher: Optional["UserRead"] = None
 
     class Config:
         from_attributes = True

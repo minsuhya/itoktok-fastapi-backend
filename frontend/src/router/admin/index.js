@@ -53,6 +53,11 @@ export default [
         path: 'monthly',
         name: 'Monthly',
         component: () => import('@/views/MonthlyView.vue')
+      },
+      {
+        path: '/admin/program',
+        name: 'program',
+        component: () => import('@/views/ProgramView.vue')
       }
     ]
   }

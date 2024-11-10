@@ -9,6 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 if TYPE_CHECKING:
     from .client import ClientInfo
     from .schedule import Schedule
+    from .program import Program
 
 
 class Token(BaseModel):
@@ -62,6 +63,8 @@ class User(SQLModel, table=True):
     center_info: Optional["CenterInfo"] = Relationship(back_populates="users")
     # 스케줄 정보
     schedules: List["Schedule"] = Relationship(back_populates="teacher")
+    # 프로그램 정보
+    programs: List["Program"] = Relationship(back_populates="teacher")
 
 
 class CenterInfo(SQLModel, table=True):
@@ -91,6 +94,8 @@ class CenterInfo(SQLModel, table=True):
 
     # 사용자 정보
     users: List["User"] = Relationship(back_populates="center_info")
+    # 프로그램 정보
+    programs: List["Program"] = Relationship(back_populates="center_info")
 
 
 class Role(str, Enum):

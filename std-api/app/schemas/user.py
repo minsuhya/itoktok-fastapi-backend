@@ -13,7 +13,6 @@ class Role(str, Enum):
 # User Schema
 class UserBaseSchema(BaseModel):
     username: str
-    password: str = Field(default="", max_length=15)
     email: EmailStr
     full_name: str
     birth_date: Optional[str] = None
@@ -44,6 +43,7 @@ class UserBaseSchema(BaseModel):
 
 
 class UserCreate(UserBaseSchema):
+    password: str = Field(default="", max_length=15)
     created_at: Optional[datetime] = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
@@ -61,7 +61,6 @@ class UserUpdate(UserBaseSchema):
 
 class UserRead(UserBaseSchema):
     id: int
-    password: Optional[str | None] = None
     created_at: datetime
     updated_at: datetime
     center_info: Optional["CenterInfoRead"] = None

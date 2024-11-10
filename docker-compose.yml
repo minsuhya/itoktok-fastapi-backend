@@ -18,6 +18,10 @@ services:
       - api
     networks:
       - std-net
+    logging:
+      options:
+        max-size: "20m"  
+        max-file: "1"
 
   api:
     image: python:3.12-alpine
@@ -33,6 +37,10 @@ services:
       - ./data:/data
     networks:
       - std-net
+    logging:
+      options:
+        max-size: "20m"  
+        max-file: "1"
 
   # mariadb
   # db:

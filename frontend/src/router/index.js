@@ -3,6 +3,7 @@ import { isLogin } from '@/utils/token'
 import testRoutes from './test'
 import commonRoutes from './common'
 import adminRoutes from './admin'
+import ProgramView from '../views/ProgramView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,7 +38,7 @@ const router = createRouter({
     },
     ...testRoutes,
     ...commonRoutes,
-    ...adminRoutes
+    ...adminRoutes,
   ]
 })
 

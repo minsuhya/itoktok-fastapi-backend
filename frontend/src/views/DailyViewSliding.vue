@@ -18,11 +18,25 @@ const schedule_data = ref([])
 
 const isZoomed = reactive({})
 const zoom = (index, item_index, event) => {
+  console.log('zoom index:', index, 'item_index:', item_index)
   event.stopPropagation() // 이벤트 전파 중지
   if (!isZoomed[index]) {
     isZoomed[index] = {}
   }
+
   isZoomed[index][item_index] = !isZoomed[index][item_index]
+  console.log('isZoomed:', isZoomed[index][item_index])
+
+  // 모든 아이템의 zoom 상태를 false로 초기화
+  Object.keys(isZoomed).forEach(dateKey => {
+    Object.keys(isZoomed[dateKey]).forEach(itemKey => {
+      if (dateKey !== index && itemKey !== item_index) {
+        isZoomed[dateKey][itemKey] = false
+      }
+    })
+  })
+
+  console.log('isZoomed:', isZoomed[index][item_index])
 }
 
 const handleMoreClick = (schedule_id, schedule_list_id, schedule_date) => {
@@ -111,55 +125,72 @@ watch(
             <span>{{ scheduleDate }}({{ getDayOfWeek(scheduleDate) }})</span>
           </div>
         </div>
-        <div class="grid grid-cols-1 gap-y-6">
+        <div class="grid grid-cols-1">
           <!-- Iterate over time slots -->
           <div v-for="(hour_schedule, hour) in schedule_data" :key="hour"
-            class="flex text-gray-500 border-b min-h-10 h-auto flex items-center pl-2 divide-x divide-gray-300 w-full">
+            class="flex text-gray-500 border-b min-h-24 flex items-center pl-2 divide-x divide-gray-300 w-full">
             <div class="w-12 text-xs font-semibold">
               {{ convertTo12HourFormat(hour) }}
             </div>
-            <div class="w-full">
+            <!-- 시간 구분선 -->
+            <div class="w-full min-h-24 relative">
+              <div class="absolute left-0 w-full border-t border-gray-200 top-1/3"></div>
+              <div class="absolute left-0 w-full border-t border-gray-200 top-2/3"></div>
               <div v-for="(minute_schedule, minute) in hour_schedule" :key="minute"
                 class="flex-row items-center justify-between w-full">
-                <div class="flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1 w-full"
-                  v-for="(day_schedule, itemindex) in minute_schedule" :key="itemindex" :class="[
-                    'transform transition duration-500 ease-in-out overflow-hidden',
-                    !isZoomed[day_schedule.schedule_time]?.[itemindex]
-                      ? 'scale-100 h-6'
-                      : 'scale-105 h-auto min-h-6 w-full pt-1',
-                  ]"
-                  :style="{
-                  backgroundColor: !isZoomed[day_schedule.schedule_time]?.[itemindex]
-                    ? day_schedule.teacher_usercolor
-                    : 'rgba(255, 255, 255, 1)'
-                  }" 
+
+                <div class="relative">
+                  <div v-for="(day_schedule, itemindex) in minute_schedule" :key="itemindex"
+                    class="flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
+                    :class="[
+                      `item-${itemindex}`,
+                      'transform transition-all duration-300 ease-in-out',
+                      isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'z-50' : 'z-0',
+                    ]"
+                    :style="{
+                      backgroundColor: !isZoomed[day_schedule.schedule_time]?.[itemindex]
+                        ? day_schedule.teacher_usercolor
+                        : 'rgba(255, 255, 255, 1)',
+                      position: isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'absolute' : 'relative',
+                      width: isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'calc(100% - 0.5rem)' : 'auto',
+                      transform: isZoomed[day_schedule.schedule_time]?.[itemindex] 
+                        ? 'scale(1.05)' 
+                        : 'scale(1)',
+                    }"
                     @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                  <div class="flex justify-between items-center px-1 h-full w-full">
-                    <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
-                    <span class="ml-auto inline-block">[{{ day_schedule.client_name }}] {{
-                      day_schedule.teacher_expertise }}</span>
-                  </div>
-                  <div class="flex justify-between items-center px-1 h-full w-full">
-                    <span class="inline-block">상담사</span>
-                    <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
-                  </div>
-                  <div class="flex justify-between items-center px-1 h-full w-full">
-                    <span class="inline-block">상담시간</span>
-                    <span class="ml-auto inline-block font-semibold">{{ day_schedule.start_time }} ~ {{
-                      day_schedule.finish_time }}</span>
-                  </div>
-                  <div class="flex justify-center items-center px-1 h-full w-full">
-                    <!-- 수정 버튼 -->
-                    <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-                      @click.stop="
-                        handleMoreClick(
-                          day_schedule.schedule_id,
-                          day_schedule.id,
-                          day_schedule.schedule_date
-                        )
-                        ">
-                      <PencilSquareIcon class="w-4 h-4" />
-                    </button>
+                    <!-- 기존 내용 -->
+                    <div class="flex justify-between items-center px-1 h-6"
+                         @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
+                      <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
+                      <span class="ml-auto inline-block">[{{ day_schedule.client_name }}] {{
+                        day_schedule.teacher_expertise }}</span>
+                    </div>
+                    <!-- 확장시 보이는 내용 -->
+                    <div v-show="isZoomed[day_schedule.schedule_time]?.[itemindex]"
+                      class="transition-all duration-300 ease-in-out">
+                      <div class="flex justify-between items-center px-1 h-6"
+                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
+                        <span class="inline-block">상담사</span>
+                        <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
+                      </div>
+                      <div class="flex justify-between items-center px-1 h-6"
+                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
+                        <span class="inline-block">상담시간</span>
+                        <span class="ml-auto inline-block font-semibold">{{ day_schedule.start_time }} ~ {{
+                          day_schedule.finish_time }}</span>
+                      </div>
+                      <div class="flex justify-center items-center px-1 h-8"
+                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
+                        <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
+                          @click.stop="handleMoreClick(
+                            day_schedule.schedule_id,
+                            day_schedule.id,
+                            day_schedule.schedule_date
+                          )">
+                          <PencilSquareIcon class="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

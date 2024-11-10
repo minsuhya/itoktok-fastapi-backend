@@ -23,8 +23,20 @@ const zoom = (index, item_index, event) => {
   if (!isZoomed[index]) {
     isZoomed[index] = {}
   }
-  isZoomed[index][item_index] = !isZoomed[index][item_index]
 
+  // 선택된 아이템만 zoom 상태 토글
+  isZoomed[index][item_index] = !isZoomed[index][item_index]
+  
+  // 모든 아이템의 zoom 상태를 false로 초기화
+  Object.keys(isZoomed).forEach(dateKey => {
+    Object.keys(isZoomed[dateKey]).forEach(itemKey => {
+      if (dateKey !== index && itemKey !== item_index) {
+        isZoomed[dateKey][itemKey] = false
+      }
+    })
+  })
+
+  
   // Sibling 요소 hidden 처리
   const parentElement = event.target.closest('.relative')
   if (parentElement) {
@@ -273,25 +285,25 @@ onBeforeMount(() => {
               ? day_schedule.teacher_usercolor
               : 'rgba(255, 255, 255, 1)'
           }"
-          @click="zoom(index, itemindex, $event)"
+          @click.stop="zoom(index, itemindex, $event)"
         >
-          <div class="flex justify-between items-center px-1 h-full w-full">
+          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block"
               >[{{ day_schedule.client_name }}] {{ day_schedule.teacher_expertise }}</span
             >
             <span class="ml-auto inline-block">{{ day_schedule.schedule_time }}</span>
           </div>
-          <div class="flex justify-between items-center px-1 h-full w-full">
+          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담사</span>
             <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
           </div>
-          <div class="flex justify-between items-center px-1 h-full w-full">
+          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담시간</span>
             <span class="ml-auto inline-block"
               >{{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}</span
             >
           </div>
-          <div class="flex justify-center items-center px-1 h-full w-full">
+          <div class="flex justify-center items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
             <!-- 수정 버튼 -->
             <button
               class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
