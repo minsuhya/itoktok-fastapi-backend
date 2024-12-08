@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime, func, String, Text, Integer, DECIMAL, Boolean
 from zoneinfo import ZoneInfo
 
 if TYPE_CHECKING:
     from .user import CenterInfo, User
+    from .schedule import Schedule
 
 SEOUL_TZ = ZoneInfo("Asia/Seoul")
 
@@ -56,6 +57,9 @@ class Program(ProgramBase, table=True):
 
     # 담당선생님 정보
     teacher: Optional["User"] = Relationship(back_populates="programs")
+
+    # 스케줄 정보
+    schedules: List["Schedule"] = Relationship(back_populates="program")
 
     @staticmethod
     def get_current_time():

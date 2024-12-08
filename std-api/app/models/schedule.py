@@ -8,6 +8,7 @@ from sqlmodel import Field, Relationship, SQLModel
 if TYPE_CHECKING:
     from .client import ClientInfo
     from .User import User
+    from .program import Program
 
 
 class ScheduleType(str, Enum):
@@ -21,7 +22,8 @@ class ScheduleBase(SQLModel):
         foreign_key="user.username", max_length=20, nullable=False
     )
     client_id: int = Field(foreign_key="clientinfo.id", nullable=False)
-    title: str = Field(max_length=50, nullable=False)
+    title: str = Field(default='', max_length=50, nullable=False)
+    program_id: int = Field(foreign_key="program.id", nullable=False)
     start_date: date = Field(default_factory=date.today)
     finish_date: date = Field(default_factory=date.today)
     start_time: str = Field(max_length=5, nullable=False)
@@ -31,6 +33,10 @@ class ScheduleBase(SQLModel):
         default=1,
         nullable=False,
         description="반복 유형: 1(매일), 2(매주), 3(매월)"
+    )
+    repeat_days: Optional[str] = Field(
+        default='{"mon":false,"tue":false,"wed":false,"thu":false,"fri":false,"sat":false,"sun":false}',
+        description="반복 요일 지정: 매주 반복일 경우 사용"
     )
     memo: Optional[str] = Field(max_length=255, default=None)
     created_by: Optional[str] = Field(max_length=20, default=None)
@@ -61,6 +67,13 @@ class Schedule(ScheduleBase, table=True):
         sa_relationship_kwargs={
             "foreign_keys": "Schedule.teacher_username",
             "primaryjoin": "Schedule.teacher_username == User.username",
+        },
+    )
+    program: "Program" = Relationship(
+        back_populates="schedules",
+        sa_relationship_kwargs={
+            "foreign_keys": "Schedule.program_id",
+            "primaryjoin": "Schedule.program_id == Program.id",
         },
     )
 

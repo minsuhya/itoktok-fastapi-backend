@@ -61,6 +61,7 @@ def read_programs_endpoint(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
     search_qry: str = "",
+    teacher_username: Optional[str] = None,
     program_type: Optional[str] = None,
     is_active: Optional[bool] = None,
 ):
@@ -70,6 +71,7 @@ def read_programs_endpoint(
         page=page,
         size=size,
         search_qry=search_qry,
+        teacher_username=teacher_username,
         program_type=program_type,
         is_active=is_active
     )
@@ -106,3 +108,13 @@ def delete_program_endpoint(
         raise HTTPException(status_code=403, detail="Not authorized to delete this program")
     
     return SuccessResponse(data=delete_program(session, program_id))
+
+@router.get("/my", response_model=Page[ProgramRead])
+def get_my_programs_endpoint(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    return get_programs(
+        session,
+        login_user=current_user
+    )

@@ -25,8 +25,13 @@ def hex_to_rgba(hex_color, alpha=1.0):
 
 
 def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> Schedule:
-    # schedule 생성
-    schedule = Schedule(**schedule_create.dict())
+
+    # repeat_days가 dict 타입인 경우 string으로 변환
+    schedule_data = schedule_create.dict()
+    if isinstance(schedule_data.get('repeat_days'), dict):
+        schedule_data['repeat_days'] = str(schedule_data['repeat_days'])
+    # schedule 생성 
+    schedule = Schedule(**schedule_data)
     session.add(schedule)
     session.commit()
     session.refresh(schedule)
@@ -287,6 +292,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "client_id": event.schedule.client_id,
                     "client_name": event.schedule.clientinfo.client_name,
                     "title": event.schedule.title,
+                    "program_name": event.schedule.program.program_name,
                     "start_date": event.schedule.start_date,
                     "finish_date": event.schedule.finish_date,
                     "start_time": event.schedule.start_time,
@@ -300,7 +306,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
     return calendar_data
 
 
-# 주별 스케��� 조회
+# 주별 스케줄 조회
 # Function to get the schedule for the week from the database
 def get_schedule_for_week(session: Session, start_date: date, login_user):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)
@@ -348,7 +354,7 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
     # Populate the weekly_schedule with actual schedule data
     for event in schedule_data:
         event_day = event.schedule_date.strftime("%Y-%m-%d")  # Get date as 'YYYY-MM-DD'
-        event_time = event.schedule_time.split(":")[0]  # Extract the time of the event
+        event_time = int(event.schedule_time.split(":")[0])  # Extract the time of the event
         # event_time = event.schedule_date.strftime(
         #     "%H:%M"
         # )  # Extract the time of the event
@@ -375,6 +381,7 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "client_id": event.schedule.client_id,
                 "client_name": event.schedule.clientinfo.client_name,
                 "title": event.schedule.title,
+                "program_name": event.schedule.program.program_name,
                 "start_date": event.schedule.start_date,
                 "finish_date": event.schedule.finish_date,
                 "start_time": event.schedule.start_time,
@@ -457,6 +464,7 @@ def generate_daily_schedule_with_empty_times(target_date: date, schedule_data):
                 "client_id": event.schedule.client_id,
                 "client_name": event.schedule.clientinfo.client_name,
                 "title": event.schedule.title,
+                "program_name": event.schedule.program.program_name,
                 "start_date": event.schedule.start_date,
                 "finish_date": event.schedule.finish_date,
                 "start_time": event.schedule.start_time,
