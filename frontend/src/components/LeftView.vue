@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue'
+import CalendarView from '@/components/Calendar.vue'
+import TeacherList from '@/components/TeacherList.vue'
 
 const open_user_menu = ref(false)
 const open_schedule_menu = ref(false)
@@ -180,7 +182,8 @@ const open_program_menu = ref(false)
           >
         </div>
       </div>
-
+      <CalendarView />
+      <TeacherList />
     </nav>
   </aside>
 </template>

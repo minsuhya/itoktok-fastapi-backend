@@ -7,6 +7,7 @@ import * as yup from 'yup'
 import { readUserByUsername, readTeachers } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
 import { createSchedule, updateSchedule, readSchedule } from '@/api/schedule'
+import { readPrograms } from '@/api/program'
 
 const userStore = useUserStore()
 const showModal = inject('showModal')
@@ -18,8 +19,20 @@ const props = defineProps({
   isVisible: Boolean,
   scheduleId: String,
   scheduleListId: String,
-  scheduleDate: String,
-  scheduleTime: String
+  scheduleDate: {
+    type: String,
+    default: () => {
+      const now = new Date()
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    }
+  },
+  scheduleTime: {
+    type: String,
+    default: () => {
+      const now = new Date()
+      return `${now.getHours().toString().padStart(2, '0')}:00}`
+    }
+  }
 })
 const searchTerm = ref('')
 const clients = ref([])
@@ -27,6 +40,8 @@ const filteredClients = ref([])
 const selectedClient = ref({})
 // 상담사 목록
 const teacher_options = ref([])
+// 프로그램 목록
+const program_options = ref([])
 const today = new Date()
 
 const filterClients = async () => {
@@ -56,6 +71,7 @@ const selectClient = async (client) => {
   try {
     const consultant_info = await readUserByUsername(client.consultant)
     form.teacher_username = consultant_info.username
+    fetchProgramList()
   } catch (error) {
     console.error('Error fetching clients:', error)
   }
@@ -72,24 +88,49 @@ const generateTimeOptions = () => {
   while (currentTime.getHours() < 18) {
     options.push(formatTime(currentTime))
     currentTime.setMinutes(currentTime.getMinutes() + 10) // 10분 단위 추가
-    // console.log('currentTime:', currentTime.getHours())
-    // console.log('currentTime:', currentTime.getMinutes())
   }
   return options
 }
 const formatTime = (date) => {
   const hours = date.getHours().toString().padStart(2, '0')
   const minutes = date.getMinutes().toString().padStart(2, '0')
-  // console.log('hours:', hours)
-  // console.log('minutes:', minutes)
   return `${hours}:${minutes}`
 }
 
-function formatHour(hour) {
-  if (hour < 10) {
-    return `0${hour}:00`
+function formatHour(hm) {
+  if (!hm) {
+    const now = new Date()
+    const hours = now.getHours().toString().padStart(2, '0')
+    const currentMinutes = now.getMinutes()
+    let minutes
+    if (currentMinutes >= 40) {
+      minutes = '40'
+    } else if (currentMinutes >= 20) {
+      minutes = '20'
+    } else {
+      minutes = '00'
+    }
+    return `${hours}:${minutes}`
   }
-  return `${hour}:00`
+
+  // string으로 변환
+  const hmString = String(hm)
+
+  // 시간 문자열에 ':' 포함 여부 확인 
+  if (!hmString.includes(':')) {
+    const hourNum = parseInt(hmString)
+    if (hourNum < 10) {
+      return `0${hourNum}:00`
+    }
+    return `${hmString}:00`
+  }
+
+  const [hour, minute] = hmString.split(':')
+  const hourNum = parseInt(hour)
+  if (hourNum < 10) {
+    return `0${hourNum}:${minute}`
+  }
+  return `${hour}:${minute}`
 }
 
 const updateEndTimeOptions = () => {
@@ -113,7 +154,11 @@ const updateEndTimeOptions = () => {
   }
 
   endTimeOptions.value = options
-  form.finish_time = endTimeOptions.value[0] // 종료 시간을 첫 번째 옵션으로 설정
+  // 시작시간 + 50분을 종료시간으로 설정
+  const [sh, sm] = form.start_time.split(':').map(Number)
+  const endTime = new Date()
+  endTime.setHours(sh, sm + 50)
+  form.finish_time = formatTime(endTime)
 }
 
 // vee-validate 스키마 정의
@@ -121,7 +166,11 @@ const schema = yup.object({
   teacher_username: yup.string().required('상담사를 선택해주세요.'),
   client_name: yup.string().required('내담자를 선택해주세요.'),
   phone_number: yup.string().required('휴대전화번호를 입력하세요.'),
-  title: yup.string().required('일정제목을 입력해주세요.'),
+  program_id: yup.string().when('teacher_username', {
+    is: (value) => value && value.length > 0,
+    then: () => yup.string().required('프로그램을 선택해주세요.'),
+    otherwise: () => yup.string()
+  }),
   start_date: yup.string().required('일정시작일을 선택해주세요.'),
   finish_date: yup.string().required('일정종료일을 선택해주세요.'),
   start_time: yup.string().required('시작시간을 선택해주세요.'),
@@ -134,8 +183,17 @@ const form = reactive({
   teacher_username: '',
   client_id: '',
   client_name: '',
-  title: '',
+  program_id: '',
   repeat_type: '1', // 매일:1, 매주:2, 매월:3 기본값(매일)
+  repeat_days: {
+    mon: false,
+    tue: false,
+    wed: false,
+    thu: false,
+    fri: false,
+    sat: false,
+    sun: false
+  },
   start_date: props.scheduleDate,
   finish_date: props.scheduleDate,
   start_time: formatHour(props.scheduleTime),
@@ -161,20 +219,65 @@ const fetchScheduleInfo = async () => {
       form.start_time = formatHour(today.getHours())
     }
     updateEndTimeOptions()
+    // repeat_days가 문자열인 경우 객체로 초기화
+    form.repeat_days = {
+      mon: false,
+      tue: false,
+      wed: false,
+      thu: false,
+      fri: false,
+      sat: false,
+      sun: false
+    }
     return
   }
 
   try {
     const scheduleInfo = await readSchedule(props.scheduleId)
-    Object.assign(form, scheduleInfo)
+    
+    // 기본 필드 복사
+    const { clientinfo, teacher, ...basicInfo } = scheduleInfo
+    Object.assign(form, basicInfo)
 
-    form.client_name = form.clientinfo?.client_name
-    form.phone_number = form.clientinfo?.phone_number
-    form.teacher_username = form.teacher?.username
-    if (!form.start_time) {
-      form.start_time = formatHour(today.getHours())
-    }
+    // 관계 필드 처리
+    form.client_name = clientinfo?.client_name || ''
+    form.phone_number = clientinfo?.phone_number || ''
+    form.teacher_username = teacher?.username || ''
+
+    // 시간 처리
+    form.start_time = form.start_time || formatHour(today.getHours())
     updateEndTimeOptions()
+
+    form.repeat_days = (() => {
+      try {
+        return typeof form.repeat_days === 'string' 
+          ? JSON.parse(form.repeat_days
+            .replace(/'/g, '"')  // 작은따옴표를 큰따옴표로 변환
+            .replace(/True/g, 'true')  // Python True를 JavaScript true로 변환 
+            .replace(/False/g, 'false') // Python False를 JavaScript false로 변환form.repeat_days
+          )
+          : form.repeat_days || {
+              mon: false,
+              tue: false, 
+              wed: false,
+              thu: false,
+              fri: false,
+              sat: false,
+              sun: false
+            }
+      } catch {
+        return {
+          mon: false,
+          tue: false,
+          wed: false, 
+          thu: false,
+          fri: false,
+          sat: false,
+          sun: false
+        }
+      }
+    })()
+    console.log('form.repeat_days:', form.repeat_days)
   } catch (error) {
     console.error('Error fetching user:', error)
   }
@@ -183,7 +286,6 @@ const fetchScheduleInfo = async () => {
 const fetchTeacherList = async () => {
   try {
     const teacherList = await readTeachers()
-    console.log('teacherList:', teacherList)
     teacher_options.value = teacherList.map((item) => ({
       value: item.username,
       text: item.full_name
@@ -193,13 +295,26 @@ const fetchTeacherList = async () => {
   }
 }
 
+const fetchProgramList = async () => {
+  try {
+    const response = await readPrograms(1, 100, '', form.teacher_username)
+    console.log('response:', response)
+    program_options.value = response.items.map((item) => ({
+      value: item.id,
+      text: item.program_name
+    }))
+  } catch (error) {
+    console.error('프로그램 목록 조회 중 오류:', error)
+  }
+}
+
+
 onBeforeMount(() => {
   fetchScheduleInfo()
   fetchTeacherList()
 })
 
 onUpdated(() => {
-  console.log('상담일정 form:', form)
   searchTerm.value = ''
   if (!form.start_date) {
     // 현재 날짜로 초기화, Asia/Seoul 기준
@@ -218,14 +333,14 @@ onUpdated(() => {
 
 onMounted(() => {
   timeOptions.value = generateTimeOptions()
-  console.log(timeOptions.value)
 })
 
 const onSubmit = async (values) => {
-  console.log('submitting:', values)
-  Object.assign(form, values)
   try {
-    const formData = { ...form }
+    const formData = {
+      ...values,
+      repeat_days: form.repeat_days  // form의 repeat_days 상태를 직접 사용
+    }
     delete formData.created_at
     delete formData.updated_at 
     delete formData.deleted_at
@@ -243,7 +358,7 @@ const onSubmit = async (values) => {
     form.client_name = ''
     form.phone_number = ''
     form.teacher_username = ''
-    form.title = ''
+    form.program_id = ''
     form.start_date = new Date().toISOString().split('T')[0]
     form.finish_date = form.start_date
     form.start_time = formatHour(new Date().getHours())
@@ -271,7 +386,6 @@ watch(
 watch(
   () => props.scheduleDate,
   (newScheduleDate, oldScheduleDate) => {
-    console.log('newScheduleDate:', newScheduleDate)
     form.start_date = newScheduleDate
     form.finish_date = newScheduleDate
   }
@@ -280,7 +394,6 @@ watch(
 watch(
   () => props.scheduleTime,
   (newScheduleTime, oldScheduleTime) => {
-    console.log('newScheduleTime:', formatHour(newScheduleTime))
     form.start_time = formatHour(newScheduleTime)
     // form.finish_time = newScheduleTime
     updateEndTimeOptions()
@@ -343,12 +456,12 @@ watch(
               <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">상담사 <span
                   class="text-red-500">*</span></label>
               <Field name="teacher_username" v-model="form.teacher_username" as="select"
-                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
+                class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2"
+                @change="fetchProgramList">
                 <option value="">상담사를 선택하세요.</option>
                 <option v-for="option in teacher_options" :key="option.value" :value="option.value">
                   {{ option.text }}
                 </option>
-                <!-- 상담사 옵션 추가 -->
               </Field>
               <ErrorMessage name="teacher_username" class="text-red-500 text-xs italic mt-2" />
             </div>
@@ -369,11 +482,16 @@ watch(
           </div>
           <div>
             <div class="mb-4">
-              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정제목 <span
+              <label for="program_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">프로그램 <span
                   class="text-red-500">*</span></label>
-              <Field type="text" name="title" v-model="form.title"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
-              <ErrorMessage name="title" class="text-red-500 text-xs italic mt-2" />
+              <Field name="program_id" v-model="form.program_id" as="select"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                <option value="">프로그램을 선택하세요</option>
+                <option v-for="program in program_options" :key="program.value" :value="program.value">
+                  {{ program.text }}
+                </option>
+              </Field>
+              <ErrorMessage name="program_id" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
           <div class="mb-4">
@@ -385,6 +503,39 @@ watch(
               <option value="3">매월</option>
             </Field>
             <ErrorMessage name="repeat_type" class="text-red-500 text-xs italic mt-2" />
+          </div>
+          <div class="mb-4" v-if="form.repeat_type == '2'">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">반복 요일</label>
+            <div class="flex gap-4 mt-2">
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.mon" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">월</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.tue" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">화</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.wed" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">수</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.thu" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">목</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.fri" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">금</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.sat" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">토</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" v-model="form.repeat_days.sun" class="form-checkbox h-4 w-4 text-blue-600">
+                <span class="ml-2">일</span>
+              </label>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">

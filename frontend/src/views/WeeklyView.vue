@@ -122,11 +122,26 @@ const clickMoreDailyView = (schedule_date) => {
   toggleDailyViewSliding()
 }
 
-const clickCalendarTime = (selected_date, selected_time) => {
-  console.log('clickCalendarTime:', selected_date, selected_time)
+const clickCalendarTime = (selected_date, selected_time, event) => {
+  // 클릭한 위치의 Y 좌표를 구함
+  const rect = event.target.getBoundingClientRect()
+  const clickY = event.clientY - rect.top
+  const cellHeight = rect.height
+  
+  // 시간 구간 계산 (3등분)
+  let minutes = 0
+  if (clickY < cellHeight / 3) {
+    minutes = 0 // 첫 번째 구간: 1분
+  } else if (clickY < (cellHeight * 2) / 3) {
+    minutes = 20 // 두 번째 구간: 20분
+  } else {
+    minutes = 40 // 세 번째 구간: 40분
+  }
+
   currentScheduleDate.value = selected_date
-  currentScheduleTime.value = selected_time
+  currentScheduleTime.value = `${selected_time}:${minutes.toString().padStart(2, '0')}`
   toggleForm()
+  console.log('currentScheduleTime:', currentScheduleTime.value)
 }
 
 const clickCalendarSchedule = (scheduleId, scheduleListId, scheduleDate) => {
@@ -245,28 +260,52 @@ onBeforeMount(() => {
       </div>
     </div>
   </section>
-  <!-- ====== Page Title Section End -->
-  <div class="flex justify-between items-center mb-4">
-    <div class="flex items-center space-x-2">
-      <button @click.stop="clickBeforeWeek()" class="p-2 rounded-full font-semibold">
-        <ChevronLeftIcon class="w-6 h-6" />
-      </button>
-      <h2 class="text-xl font-semibold">
-        {{ formatDate(currentDateInfo.weekStartDate) }} ~
-        {{ formatDate(currentDateInfo.weekEndDate) }}
-      </h2>
-      <button @click.stop="clickNextWeek()" class="p-2 rounded-full font-semibold">
-        <ChevronRightIcon class="w-6 h-6" />
-      </button>
-    </div>
-    <div class="flex space-x-2 text-sm font-semibold">
-      <button
-        @click="fetchSchedule(today.getFullYear(), today.getMonth() + 1, today.getDate())"
-        class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center"
-      >
-        <span>Today</span>
-      </button>
-      <button class="px-4 py-2 bg-blue-500 text-white rounded-md">상담 등록</button>
+  <div class="max-w-full mx-auto p-4">
+    <!-- ====== Page Title Section End -->
+    <div class="flex justify-between items-center">
+      <div class="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+        <router-link
+          to="/admin/weekly"
+          class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/weekly' }"
+        >
+          <span class="text-sm font-medium"> 주간 </span>
+        </router-link>
+
+        <router-link
+          to="/admin/monthly"
+          class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/monthly' }"
+        >
+          <span class="text-sm font-medium"> 월간 </span>
+        </router-link>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button @click.stop="clickBeforeWeek()" class="p-2 rounded-full font-semibold">
+          <ChevronLeftIcon class="w-6 h-6" />
+        </button>
+        <h2 class="text-xl font-semibold">
+          {{ formatDate(currentDateInfo.weekStartDate) }} ~
+          {{ formatDate(currentDateInfo.weekEndDate) }}
+        </h2>
+        <button @click.stop="clickNextWeek()" class="p-2 rounded-full font-semibold">
+          <ChevronRightIcon class="w-6 h-6" />
+        </button>
+      </div>
+      <div class="flex space-x-2 text-sm font-semibold">
+        <button
+          @click="fetchSchedule(today.getFullYear(), today.getMonth() + 1, today.getDate())"
+          class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center"
+        >
+          <span>Today</span>
+        </button>
+        <button 
+          @click="toggleForm"
+          class="px-4 py-2 bg-blue-500 text-white rounded-md"
+        >
+          상담 등록
+        </button>
+      </div>
     </div>
   </div>
   <div
@@ -281,9 +320,12 @@ onBeforeMount(() => {
             class="row-start-[1] col-start-[1] sticky top-0 bg-white dark:bg-gradient-to-b dark:from-slate-600 dark:to-slate-700 border-slate-100 dark:border-black/10 bg-clip-padding text-slate-900 dark:text-slate-200 border-b text-sm font-medium py-2"
           ></div>
           <div
-            v-for="(week_days, index) in currentDateInfo.weekDates"
+            v-for="(week_days, index) in currentDateInfo.weekDates" 
             :key="index"
-            class="row-start-[1] col-start-[{{ index + 2 }}] sticky top-0 bg-white dark:bg-gradient-to-b dark:from-slate-600 dark:to-slate-700 border-slate-100 dark:border-black/10 bg-clip-padding text-slate-900 dark:text-slate-200 border-b text-sm font-medium py-2 text-center"
+            :class="[
+              'row-start-[1] col-start-[{{ index + 2 }}] sticky top-0 dark:bg-gradient-to-b dark:from-slate-600 dark:to-slate-700 border-slate-100 dark:border-black/10 bg-clip-padding text-slate-900 dark:text-slate-200 border-b text-sm font-medium py-2 text-center',
+              week_days.date === today.toISOString().split('T')[0] ? 'bg-yellow-100' : 'bg-white'
+            ]"
           >
             <span
               class="sm:inline-block rounded-full bg-slate-400 w-5 h-5 text-white font-semibold"
@@ -312,8 +354,11 @@ onBeforeMount(() => {
             <div
               v-for="(time_schedules, timeIndex) in day_schedule"
               :key="timeIndex"
-              @click="clickCalendarTime(dayIndex, timeIndex)"
-              class="h-[90px] text-xs text-slate-400 font-medium p-1.5 relative"
+              @click="clickCalendarTime(dayIndex, timeIndex, $event)"
+              :class="[
+                'h-[90px] text-xs text-slate-400 font-medium p-[1px] relative',
+                dayIndex === new Date().toISOString().split('T')[0] ? 'bg-yellow-100' : ''
+              ]"
             >
               <div class="absolute left-0 w-full border-t border-slate-100 top-[30px]"></div>
               <div class="absolute left-0 w-full border-t border-slate-100 top-[60px]"></div>
@@ -337,10 +382,10 @@ onBeforeMount(() => {
                 @click.stop="zoom(dayIndex, timeIndex, itemindex, $event)"
               >
                 <div class="flex justify-between items-center px-1 h-full w-full">
-                  <span class="inline-block whitespace-nowrap overflow-hidden text-ellipsis"
-                    >[{{ time_schedule.client_name }}] {{ time_schedule.teacher_expertise }}</span
+                  <span class="inline-block">{{ time_schedule.schedule_time }}</span>
+                  <span class="ml-auto inline-block whitespace-nowrap overflow-hidden text-ellipsis"
+                    >[{{ time_schedule.client_name }}] {{ time_schedule.program_name.length > 10 ? time_schedule.program_name.slice(0,10) + '...' : time_schedule.program_name }}</span
                   >
-                  <span class="ml-auto inline-block">{{ time_schedule.schedule_time }}</span>
                 </div>
                 <div class="flex justify-between items-center px-1 h-full w-full">
                   <span class="inline-block">상담사</span>

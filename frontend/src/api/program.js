@@ -21,10 +21,10 @@ export const readProgram = async (programId) => {
   }
 }
 
-export const readPrograms = async (page = 1, size = 10, search_qry = '') => {
+export const readPrograms = async (page = 1, size = 10, search_qry = '', teacher_username = '') => {
   try {
     const response = await axios.get('/programs', {
-      params: { page, size, search_qry }
+      params: { page, size, search_qry, teacher_username }
     })
     return response
   } catch (error) {

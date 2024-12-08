@@ -47,6 +47,7 @@
           <th scope="col" class="px-6 py-3">프로그램 유형</th>
           <th scope="col" class="px-6 py-3">프로그램명</th>
           <th scope="col" class="px-6 py-3">담당 선생님</th>
+          <th scope="col" class="px-6 py-3">등록일</th>
           <th scope="col" class="px-6 py-3">Action</th>
         </tr>
       </thead>
@@ -55,6 +56,7 @@
           <td class="px-6 py-4">{{ program.program_type }}</td>
           <td class="px-6 py-4">{{ program.program_name }}</td>
           <td class="px-6 py-4">{{ program.is_all_teachers ? '전체' : program.teacher?.full_name }}</td>
+          <td class="px-6 py-4">{{ program.created_at }}</td>
           <td class="px-6 py-4">
             <div class="flex items-center space-x-2">
               <a 

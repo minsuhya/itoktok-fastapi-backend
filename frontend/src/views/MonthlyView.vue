@@ -217,6 +217,24 @@ onBeforeMount(() => {
   <div class="max-w-full mx-auto p-4">
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
+      <div class="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+        <router-link
+          to="/admin/weekly"
+          class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/weekly' }"
+        >
+          <span class="text-sm font-medium"> 주간 </span>
+        </router-link>
+
+        <router-link
+          to="/admin/monthly"
+          class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/monthly' }"
+        >
+          <span class="text-sm font-medium"> 월간 </span>
+        </router-link>
+      </div>
+
       <div class="flex items-center space-x-2">
         <button
           class="p-2 rounded-full font-semibold"
@@ -234,6 +252,7 @@ onBeforeMount(() => {
           <ChevronRightIcon class="w-6 h-6" />
         </button>
       </div>
+
       <div class="flex space-x-2 text-sm font-semibold">
         <button
           class="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center"
@@ -260,7 +279,10 @@ onBeforeMount(() => {
 
       <!-- schedule data loop -->
       <div
-        class="bg-white h-32 p-2"
+        :class="[
+          'h-32 p-2',
+          index === today ? 'bg-yellow-100' : 'bg-white'
+        ]"
         v-for="(day_schedules, index) in schedule_data"
         :key="index"
         @click="clickCalendarDay(index)"
@@ -288,10 +310,10 @@ onBeforeMount(() => {
           @click.stop="zoom(index, itemindex, $event)"
         >
           <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
-            <span class="inline-block"
-              >[{{ day_schedule.client_name }}] {{ day_schedule.teacher_expertise }}</span
+            <span class="inline-block">{{ day_schedule.schedule_time }}</span>
+            <span class="ml-auto inline-block"
+              >[{{ day_schedule.client_name }}] {{ day_schedule.program_name.length > 10 ? day_schedule.program_name.slice(0,10) + '...' : day_schedule.program_name }}</span
             >
-            <span class="ml-auto inline-block">{{ day_schedule.schedule_time }}</span>
           </div>
           <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담사</span>
