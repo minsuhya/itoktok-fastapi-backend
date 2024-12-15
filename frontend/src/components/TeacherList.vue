@@ -1,48 +1,42 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useTeacherStore } from '@/stores/teacherStore'
+import { readTeachers } from '@/api/user'
 
-const counselors = ref([
-  { 
-    id: 1, 
-    name: '(예시)김상담', 
-    role: '치료사',
-    checked: false,
-    color: 'blue' // 체크박스 색상
-  },
-  { 
-    id: 2, 
-    name: '(예시)이열람', 
-    role: '치료사',
-    checked: true,
-    color: 'yellow'
-  },
-  { 
-    id: 3, 
-    name: '박경근', 
-    role: '센터장님',
-    checked: true,
-    color: 'black'
-  },
-  { 
-    id: 4, 
-    name: '오상혁', 
-    role: '치료사',
-    checked: true,
-    color: 'yellow'
-  },
-  { 
-    id: 5, 
-    name: '주창은', 
-    role: '미술치료사',
-    checked: true,
-    color: 'green'
+const teacherStore = useTeacherStore()
+const counselors = ref([])
+
+onMounted(async () => {
+  try {
+    const teachers = await readTeachers()
+    console.log('teachers:', teachers)
+    counselors.value = teachers.map(teacher => ({
+      id: teacher.id,
+      username: teacher.username,
+      name: teacher.full_name,
+      role: teacher.user_type === 'center' ? '센터' : '상담사',
+      checked: true,
+      color: teacher.usercolor
+    }))
+    
+    // 초기 선택된 상담사 목록 저장
+    const selectedTeachers = counselors.value
+      .filter(c => c.checked)
+      .map(c => c.username)
+    teacherStore.setSelectedTeachers(selectedTeachers)
+  } catch (error) {
+    console.error('Error fetching teachers:', error)
   }
-])
+})
 
 const toggleCounselor = (counselor) => {
   counselor.checked = !counselor.checked
-  // 여기서 체크 상태 변경 이벤트를 발생시킬 수 있습니다
-  // emit('counselor-toggle', counselor)
+  
+  // 체크된 상담사들의 username 목록을 store에 저장
+  const selectedTeachers = counselors.value
+    .filter(c => c.checked)
+    .map(c => c.username)
+  teacherStore.setSelectedTeachers(selectedTeachers)
 }
 </script>
 
@@ -61,17 +55,14 @@ const toggleCounselor = (counselor) => {
             type="checkbox"
             :checked="counselor.checked"
             class="form-checkbox h-4 w-4 cursor-pointer"
-            :class="{
-              'text-blue-500': counselor.color === 'blue',
-              'text-yellow-500': counselor.color === 'yellow',
-              'text-black': counselor.color === 'black',
-              'text-green-500': counselor.color === 'green'
+            :style="{
+              color: counselor.color + '80'
             }"
           />
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-row items-center">
           <span class="text-sm font-medium text-gray-700">{{ counselor.name }}</span>
-          <span class="text-xs text-gray-500">{{ counselor.role }}</span>
+          <span class="ml-2 text-xs text-gray-500">{{ counselor.role }}</span>
         </div>
       </div>
     </div>

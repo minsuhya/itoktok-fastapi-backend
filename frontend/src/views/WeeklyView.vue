@@ -8,9 +8,13 @@ import {
 } from '@heroicons/vue/20/solid'
 import ScheduleFormSliding from '@/views/ScheduleFormSliding.vue'
 import DailyViewSliding from '@/views/DailyViewSliding.vue'
-import { ref, reactive, onBeforeMount } from 'vue'
+import { ref, reactive, onBeforeMount, watch } from 'vue'
+import { useCalendarStore } from '@/stores/calendarStore'
+import { useTeacherStore } from '@/stores/teacherStore'
 import { getWeeklyCalendar, deleteScheduleList } from '@/api/schedule'
 
+const calendarStore = useCalendarStore()
+const teacherStore = useTeacherStore()
 // Ref 설정
 const isZoomed = reactive({})
 const isVisible = ref(false)
@@ -245,6 +249,27 @@ onBeforeMount(() => {
 
   // currentYear, currentMonth Schedule 가져오기
   fetchSchedule(year, month, day)
+})
+// 스토어의 selectedDate 변경 감지
+watch(() => calendarStore.selectedDate, (newDate) => {
+  if (newDate) {
+    fetchSchedule(
+      newDate.getFullYear(),
+      newDate.getMonth() + 1,
+      newDate.getDate()
+    )
+  }
+})
+
+// 스토어의 selectedTeachers 변경 감지
+watch(() => teacherStore.selectedTeachers, (newTeachers) => {
+  if (newTeachers) {
+    fetchSchedule(
+      calendarStore.selectedDate.getFullYear(),
+      calendarStore.selectedDate.getMonth() + 1,
+      calendarStore.selectedDate.getDate()
+    )
+  }
 })
 </script>
 

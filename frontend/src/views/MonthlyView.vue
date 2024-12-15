@@ -9,7 +9,12 @@ import {
 import ScheduleFormSliding from '@/views/ScheduleFormSliding.vue'
 import DailyViewSliding from '@/views/DailyViewSliding.vue'
 import { getMonthlyCalendar, deleteScheduleList } from '@/api/schedule'
-import { ref, reactive, onMounted, onBeforeMount } from 'vue'
+import { ref, reactive, onMounted, onBeforeMount, watch } from 'vue'
+import { useCalendarStore } from '@/stores/calendarStore'
+import { useTeacherStore } from '@/stores/teacherStore'
+
+const calendarStore = useCalendarStore()
+const teacherStore = useTeacherStore()
 
 const isZoomed = reactive({})
 const isVisible = ref(false)
@@ -199,6 +204,27 @@ onBeforeMount(() => {
   // currentYear, currentMonth Schedule 가져오기
   fetchSchedule(currentDateInfo.value.currentYear, currentDateInfo.value.currentMonth)
 })
+
+// 스토어의 selectedDate 변경 감지
+watch(() => calendarStore.selectedDate, (newDate) => {
+  if (newDate) {
+    fetchSchedule(
+      newDate.getFullYear(),
+      newDate.getMonth() + 1
+    )
+  }
+})
+
+// 스토어의 selectedTeachers 변경 감지
+watch(() => teacherStore.selectedTeachers, (newTeachers) => {
+  if (newTeachers) {
+    fetchSchedule(
+      calendarStore.selectedDate.getFullYear(),
+      calendarStore.selectedDate.getMonth() + 1
+    )
+  }
+})
+
 </script>
 
 <template>
@@ -229,7 +255,7 @@ onBeforeMount(() => {
         <router-link
           to="/admin/monthly"
           class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
-          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/monthly' }"
+          :class="{ 'bg-blue-500 text-white': $route.path === '/admin/monthly' || $route.path === '/admin' }"
         >
           <span class="text-sm font-medium"> 월간 </span>
         </router-link>

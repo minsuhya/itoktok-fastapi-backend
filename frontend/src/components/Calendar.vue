@@ -1,8 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useCalendarStore } from '@/stores/calendarStore'
 
+const router = useRouter()
+const route = useRoute()
+const calendarStore = useCalendarStore()
 const currentDate = ref(new Date())
-const selectedDate = ref(null)
+const selectedDate = ref(null) 
+const today = new Date()
 
 const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 const days = ['일', '월', '화', '수', '목', '금', '토']
@@ -40,7 +46,10 @@ const daysInMonth = computed(() => {
       isSelected: selectedDate.value && 
                   selectedDate.value.getDate() === i && 
                   selectedDate.value.getMonth() === currentMonth.value &&
-                  selectedDate.value.getFullYear() === currentYear.value
+                  selectedDate.value.getFullYear() === currentYear.value,
+      isToday: today.getDate() === i && 
+               today.getMonth() === currentMonth.value &&
+               today.getFullYear() === currentYear.value
     })
   }
   
@@ -57,18 +66,59 @@ const daysInMonth = computed(() => {
   return days
 })
 
+const selectDate = (day) => {
+  let selectedYear = currentYear.value
+  let selectedMonth = currentMonth.value
+  
+  if (day.isPrevMonth) {
+    if (currentMonth.value === 0) {
+      selectedYear = currentYear.value - 1
+      selectedMonth = 11
+    } else {
+      selectedMonth = currentMonth.value - 1
+    }
+  } else if (day.isNextMonth) {
+    if (currentMonth.value === 11) {
+      selectedYear = currentYear.value + 1
+      selectedMonth = 0
+    } else {
+      selectedMonth = currentMonth.value + 1
+    }
+  }
+
+  selectedDate.value = new Date(selectedYear, selectedMonth, day.date)
+  
+  // 스토어에 선택된 날짜 저장
+  calendarStore.setSelectedDate(selectedDate.value)
+
+  // 현재 라우트에 따라 다른 동작 수행
+  router.push(`/admin/weekly`)
+}
+
 const prevMonth = () => {
-  currentDate.value = new Date(currentYear.value, currentMonth.value - 1)
+  // 이전달의 첫날로 설정
+  const firstDayOfPrevMonth = new Date(currentYear.value, currentMonth.value - 1, 1)
+  currentDate.value = firstDayOfPrevMonth
+  
+  // 스토어에 선택된 날짜 저장
+  calendarStore.setSelectedDate(firstDayOfPrevMonth)
+
+  // if (route.path.includes('/admin/monthly')) {
+  //   router.push('/admin/monthly')
+  // }
 }
 
 const nextMonth = () => {
-  currentDate.value = new Date(currentYear.value, currentMonth.value + 1)
-}
+  // 다음달의 첫날로 설정  
+  const firstDayOfNextMonth = new Date(currentYear.value, currentMonth.value + 1, 1)
+  currentDate.value = firstDayOfNextMonth
 
-const selectDate = (day) => {
-  if (day.isCurrentMonth) {
-    selectedDate.value = new Date(currentYear.value, currentMonth.value, day.date)
-  }
+  // 스토어에 선택된 날짜 저장
+  calendarStore.setSelectedDate(firstDayOfNextMonth)
+
+  // if (route.path.includes('/admin/monthly')) {
+  //   router.push('/admin/monthly')
+  // }
 }
 </script>
 
@@ -106,7 +156,8 @@ const selectDate = (day) => {
             'text-gray-500': !day.isCurrentMonth,
             'text-red-500': new Date(currentYear, currentMonth, day.date).getDay() === 0 && day.isCurrentMonth,
             'bg-blue-100 rounded': day.isSelected,
-            'hover:bg-gray-100 rounded': day.isCurrentMonth && !day.isSelected
+            'bg-green-100 rounded': day.isToday,
+            'hover:bg-gray-100 rounded': !day.isSelected && !day.isToday
           }"
         >
           {{ day.date }}
@@ -120,4 +171,4 @@ const selectDate = (day) => {
 .material-icons {
   font-size: 1rem;
 }
-</style> 
+</style>
