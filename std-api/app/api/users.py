@@ -111,12 +111,25 @@ def update_user(
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if user.password:
-        user.password = pwd_context.hash(user.password)
-    user_data = user.dict(exclude_unset=True)
+    print("user", user)
+    
+    user_data = user.model_dump(exclude_unset=True)
+    
+    # password가 빈값이거나 None이면 update에서 제외
+    if user.password and user.password.strip():
+        user_data["password"] = pwd_context.hash(user.password)
+    else:
+        user_data.pop("password", None)
+        
     for key, value in user_data.items():
         setattr(db_user, key, value)
+        
+    print("db_user", db_user)
+    
+    # db_user.password가 빈값이면 password 필드 제외
+    if not db_user.password:
+        user_data.pop("password", None)
+        
     session.add(db_user)
     session.commit()
     session.refresh(db_user)

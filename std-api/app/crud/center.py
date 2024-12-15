@@ -60,6 +60,10 @@ def update_center_director(
     session: Session, director: CenterDirectorUpdate, db_director: CenterDirector
 ) -> Optional[CenterDirector]:
     director_data = director.model_dump(exclude_unset=True)
+    if director.password and director.password.strip():
+        director_data["password"] = get_password_hash(director.password)
+    else:
+        director_data.pop("password", None)
     db_director.sqlmodel_update(director_data)
     session.commit()
     session.refresh(db_director)
@@ -112,11 +116,13 @@ def update_center_info(
 ) -> Optional[CenterInfo]:
     # info 객체에서 변경된 데이터를 dict로 변환합니다.
     info_data = info.model_dump(exclude_unset=True)
-
-    # # db_info 객체를 model_validate를 사용하여 업데이트합니다.
-    # updated_db_info = db_info.model_validate(info_data)
-    # pydantic 모델을 사용하여 필드 갱신
-    db_info.__dict__.update(info_data)
+    
+    # password가 없는 경우 update에서 제외
+    if "password" not in info_data:
+        info_data.pop("password", None)
+        
+    # sqlmodel의 sqlmodel_update 메서드를 사용하여 필드 갱신
+    db_info.sqlmodel_update(info_data)
 
     # 세션을 커밋하고, 변경된 객체를 새로 고칩니다.
     session.add(db_info)

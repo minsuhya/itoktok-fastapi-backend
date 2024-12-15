@@ -58,6 +58,10 @@ def get_users(
 
 def update_user(session: Session, user: UserUpdate, db_user: User) -> Optional[User]:
     user_data = user.model_dump(exclude_unset=True)
+    if user.password and user.password.strip():
+        user_data["password"] = get_password_hash(user.password)
+    else:
+        user_data.pop("password", None)
     db_user.sqlmodel_update(user_data)
     session.commit()
     session.refresh(db_user)
