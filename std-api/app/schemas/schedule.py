@@ -21,7 +21,7 @@ class ScheduleBase(BaseModel):
         default=1,
         description="반복 유형: 1(매일), 2(매주), 3(매월)"
     )
-    repeat_days: Optional[str] = Field(
+    repeat_days: Optional[Union[str, dict]] = Field(
         default=None,
         description="반복 요일 지정: 매주 반복일 경우 사용"
     )

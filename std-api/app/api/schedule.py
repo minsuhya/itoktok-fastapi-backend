@@ -92,11 +92,16 @@ def delete_schedule_list(
 def get_monthly_calendar(
     year: int,
     month: int,
+    selected_teachers: Optional[str] = Query(None),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
     schedule_data = get_schedule_for_month(
-        session, year, month, login_user=current_user
+        session, 
+        year, 
+        month, 
+        login_user=current_user,
+        selected_teachers=selected_teachers
     )
     monthly_calendar_data = generate_monthly_calendar_without_timeslots(
         year, month, schedule_data
@@ -111,6 +116,7 @@ def get_weekly_calendar(
     year: int,
     month: int,
     day: int,
+    selected_teachers: Optional[str] = Query(None),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -121,7 +127,7 @@ def get_weekly_calendar(
     )  # Monday of the current week
 
     schedule_data = get_schedule_for_week(
-        session, start_of_week, login_user=current_user
+        session, start_of_week, login_user=current_user, selected_teachers=selected_teachers
     )
     weekly_calendar_data = generate_weekly_schedule_with_empty_days(
         start_of_week, schedule_data

@@ -30,6 +30,8 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
     schedule_data = schedule_create.dict()
     if isinstance(schedule_data.get('repeat_days'), dict):
         schedule_data['repeat_days'] = str(schedule_data['repeat_days'])
+
+    print("schedule_data: ", schedule_data)
     # schedule 생성 
     schedule = Schedule(**schedule_data)
     session.add(schedule)
@@ -46,9 +48,23 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
         if schedule.repeat_type == 1:  # 매일
             create_schedule = True
         elif schedule.repeat_type == 2:  # 매주
-            print("current_date.weekday(): ", current_date.weekday())
-            print("schedule.start_date.weekday(): ", schedule.start_date.weekday())
-            if current_date.weekday() == schedule.start_date.weekday():
+            # repeat_days 문자열을 dict로 변환
+            repeat_days = eval(schedule.repeat_days)
+            weekday = current_date.weekday()
+            # 요일별 매핑 (0:월요일 ~ 6:일요일)
+            weekday_map = {
+                0: 'mon', 
+                1: 'tue',
+                2: 'wed', 
+                3: 'thu',
+                4: 'fri',
+                5: 'sat',
+                6: 'sun'
+            }
+            # 해당 요일이 repeat_days에서 True로 설정되어 있으면 일정 생성
+            print("repeat_days: ", repeat_days)
+            print("weekday_map[weekday]: ", weekday_map[weekday])
+            if repeat_days[weekday_map[weekday]]:
                 create_schedule = True
         elif schedule.repeat_type == 3:  # 매월
             if current_date.day == schedule.start_date.day:
@@ -204,8 +220,7 @@ def delete_schedule_list_info(session: Session, schedule_list_id: int):
 
 
 # 월별 스케줄 조회
-def get_schedule_for_month(session: Session, year: int, month: int, login_user):
-    print("login_user", login_user)
+def get_schedule_for_month(session: Session, year: int, month: int, login_user, selected_teachers=None):
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
 
@@ -213,21 +228,22 @@ def get_schedule_for_month(session: Session, year: int, month: int, login_user):
         ScheduleList.schedule_date.between(first_day, last_day)
     )
 
-    if login_user.is_superuser != "1":
-        # schedule_liut 테이블의 schedule_id 필드와 schedule 테이블의 id 필드를 조인하고 schedule 테리블의 teacher_username 필드와 User 테이블의 center_username이 login_user.username
-        statement = statement.join(Schedule).where(
-            ScheduleList.schedule_id == Schedule.id
-        )
-        if login_user.user_type == "1":  # 센터 관리자일 경우
-            statement = (
-                statement.join(User)
-                .where(Schedule.teacher_username == User.username)
-                .where(User.center_username == login_user.center_username)
-            )
-        elif login_user.user_type == "2":  # 상담사일 경우
-            statement = statement.join(User).where(
-                Schedule.teacher_username == login_user.username
-            )
+    statement = statement.join(Schedule).where(
+        ScheduleList.schedule_id == Schedule.id
+    )
+
+    # 해당 센터 일정 조정
+    statement = (
+        statement.join(User)
+        .where(Schedule.teacher_username == User.username)
+        .where(User.center_username == login_user.center_username)
+    )
+    
+    if selected_teachers:  # 선택된 상담사가 있는 경우
+        statement = statement.where(Schedule.teacher_username.in_([t.strip() for t in selected_teachers.split(',')]))
+        
+    # 쿼리 출력
+    print("Generated SQL:", statement.compile(compile_kwargs={"literal_binds": True}))
 
     return session.exec(statement).all()
 
@@ -308,28 +324,26 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 
 # 주별 스케줄 조회
 # Function to get the schedule for the week from the database
-def get_schedule_for_week(session: Session, start_date: date, login_user):
+def get_schedule_for_week(session: Session, start_date: date, login_user, selected_teachers=None):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)
 
     statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(start_date, end_date)
     )
 
-    if login_user.is_superuser != "1":
-        # schedule_liut 테이블의 schedule_id 필드와 schedule 테이블의 id 필드를 조인하고 schedule 테리블의 teacher_username 필드와 User 테이블의 center_username이 login_user.username
-        statement = statement.join(Schedule).where(
-            ScheduleList.schedule_id == Schedule.id
-        )
-        if login_user.user_type == "1":  # 센터 관리자일 경우
-            statement = (
-                statement.join(User)
-                .where(Schedule.teacher_username == User.username)
-                .where(User.center_username == login_user.center_username)
-            )
-        elif login_user.user_type == "2":  # 상담사일 경우
-            statement = statement.join(User).where(
-                Schedule.teacher_username == login_user.username
-            )
+    statement = statement.join(Schedule).where(
+        ScheduleList.schedule_id == Schedule.id
+    )
+
+    # 해당 센터 일정 조정
+    statement = (
+        statement.join(User)
+        .where(Schedule.teacher_username == User.username)
+        .where(User.center_username == login_user.center_username)
+    )
+
+    if selected_teachers:  # 선택된 상담사가 있는 경우
+        statement = statement.where(Schedule.teacher_username.in_([t.strip() for t in selected_teachers.split(',')]))
 
     return session.exec(statement).all()
 
