@@ -312,6 +312,7 @@ const fetchProgramList = async () => {
 onBeforeMount(() => {
   fetchScheduleInfo()
   fetchTeacherList()
+  fetchProgramList()
 })
 
 onUpdated(() => {
@@ -379,6 +380,7 @@ watch(
   (newScheduleId, oldScheduleId) => {
     if (newScheduleId !== oldScheduleId) {
       fetchScheduleInfo()
+      fetchProgramList()
     }
   }
 )

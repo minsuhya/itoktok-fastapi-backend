@@ -51,7 +51,7 @@ class ScheduleRead(ScheduleBase):
     # schedule_list: List["ScheduleListRead"] = []
     teacher: Optional["UserRead"] = None  # Reverse relationship
     clientinfo: Optional["ClientInfoRead"] = None  # Reverse relationship
-    programinfo: Optional["ProgramRead"] = None  # Reverse relationship
+    program: Optional["ProgramRead"] = None  # Reverse relationship
     
     @property
     def repeat_days_dict(self) -> dict:

@@ -90,12 +90,15 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
 
 
 def get_schedule(session: Session, schedule_id: int) -> Optional[Schedule]:
-    return session.exec(
-        select(Schedule)
-        .options(joinedload(Schedule.teacher))
-        .options(joinedload(Schedule.clientinfo))
+    statement = select(Schedule)\
+        .options(joinedload(Schedule.teacher))\
+        .options(joinedload(Schedule.clientinfo))\
+        .options(joinedload(Schedule.program))\
         .where(Schedule.id == schedule_id)
-    ).first()
+    
+    print("Raw SQL Query:", statement.compile(compile_kwargs={"literal_binds": True}))
+    
+    return session.exec(statement).first()
 
 
 def get_schedules(session: Session, skip: int = 0, limit: int = 10) -> List[Schedule]:
@@ -126,7 +129,7 @@ def update_schedule_info(
 
     # 선택된 일정 이후의 schedule_list 항목 삭제
     if schedule_list_id:
-        delete_query = delete_query.where(ScheduleList.id >= schedule_list_id)
+        delete_query = delete(ScheduleList).where(ScheduleList.id >= schedule_list_id)
     else:
         delete_query = (
         delete(ScheduleList)
@@ -145,7 +148,8 @@ def update_schedule_info(
 
     # 현재 시간 기준으로 새로운 일정 생성
     now = datetime.now()
-    update_data = schedule_update.dict(exclude_unset=True)
+    # pydantic model을 dict로 변환하고 sqlmodel에 맞게 데이터 전달
+    update_data = schedule_update.model_dump(exclude_unset=True)
     new_schedule = Schedule(**update_data)
     new_schedule.id = None
 
