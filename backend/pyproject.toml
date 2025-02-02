@@ -24,7 +24,7 @@ python-jose = { extras = ["cryptography"], version = "^3.3.0" }
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 # Pin bcrypt until passlib supports the latest
 bcrypt = "4.0.1"
-fastapi-pagination = "^0.12.26"
+fastapi-pagination = "^0.12.34"
 
 
 [tool.poetry.group.tests.dependencies]

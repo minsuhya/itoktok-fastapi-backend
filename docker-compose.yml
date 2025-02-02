@@ -10,8 +10,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./src/frontend/dist:/var/www/html
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/var/www/html
     environment:
       - TZ=Asia/Seoul
     depends_on:
@@ -26,14 +26,14 @@ services:
   api:
     image: python:3.12-alpine
     container_name: std-api
-    build: ./std-api
+    build: ./backend
     # command: poetry run python app/main.py
     command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
     ports:
       - 3000:3000
     env_file: ./.env
     volumes:
-      - ./std-api/app:/backend/app
+      - ./backend/app:/backend/app
       - ./data:/data
     networks:
       - std-net

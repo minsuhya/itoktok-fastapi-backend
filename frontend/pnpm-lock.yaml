@@ -21,7 +21,7 @@ importers:
         specifier: ^1.7.5
         version: 1.7.5
       pinia:
-        specifier: ^2.1.7
+        specifier: ^2.2.2
         version: 2.2.2(vue@3.4.38)
       vee-validate:
         specifier: ^4.13.2
@@ -30,14 +30,14 @@ importers:
         specifier: ^3.4.38
         version: 3.4.38
       vue-router:
-        specifier: ^4.3.3
+        specifier: ^4.4.3
         version: 4.4.3(vue@3.4.38)
       yup:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
       '@rushstack/eslint-patch':
-        specifier: ^1.8.0
+        specifier: ^1.10.4
         version: 1.10.4
       '@tailwindcss/forms':
         specifier: ^0.5.7
@@ -46,7 +46,7 @@ importers:
         specifier: ^0.5.14
         version: 0.5.14(tailwindcss@3.4.14)
       '@vitejs/plugin-vue':
-        specifier: ^5.0.5
+        specifier: ^5.1.2
         version: 5.1.2(vite@5.4.2)(vue@3.4.38)
       '@vue/eslint-config-prettier':
         specifier: ^9.0.0
@@ -58,22 +58,22 @@ importers:
         specifier: ^8.57.0
         version: 8.57.0
       eslint-plugin-vue:
-        specifier: ^9.23.0
+        specifier: ^9.27.0
         version: 9.27.0(eslint@8.57.0)
       postcss:
         specifier: ^8.4.47
         version: 8.4.47
       prettier:
-        specifier: ^3.2.5
+        specifier: ^3.3.3
         version: 3.3.3
       tailwindcss:
         specifier: ^3.4.14
         version: 3.4.14
       vite:
-        specifier: ^5.3.1
+        specifier: ^5.4.2
         version: 5.4.2
       vite-plugin-vue-devtools:
-        specifier: ^7.3.1
+        specifier: ^7.3.9
         version: 7.3.9(rollup@4.21.1)(vite@5.4.2)(vue@3.4.38)
 
 packages:
@@ -754,8 +754,8 @@ packages:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
 
-  caniuse-lite@1.0.30001653:
-    resolution: {integrity: sha512-XGWQVB8wFQ2+9NZwZ10GxTYC5hk0Fa+q8cSkr0tgvMhYhMHP/QC+WTgrePMDBWiWc/pV+1ik82Al20XOK25Gcw==}
+  caniuse-lite@1.0.30001696:
+    resolution: {integrity: sha512-pDCPkvzfa39ehJtJ+OwGT/2yvT2SbjfHhiIW2LWOAcMQ7BzwxT/XuyUp4OTOd0XFWA6BKw0JalnBHgSi5DGJBQ==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -2456,7 +2456,7 @@ snapshots:
   autoprefixer@10.4.20(postcss@8.4.47):
     dependencies:
       browserslist: 4.23.3
-      caniuse-lite: 1.0.30001653
+      caniuse-lite: 1.0.30001696
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.0.1
@@ -2494,7 +2494,7 @@ snapshots:
 
   browserslist@4.23.3:
     dependencies:
-      caniuse-lite: 1.0.30001653
+      caniuse-lite: 1.0.30001696
       electron-to-chromium: 1.5.13
       node-releases: 2.0.18
       update-browserslist-db: 1.1.0(browserslist@4.23.3)
@@ -2509,7 +2509,7 @@ snapshots:
 
   camelcase@6.3.0: {}
 
-  caniuse-lite@1.0.30001653: {}
+  caniuse-lite@1.0.30001696: {}
 
   chalk@2.4.2:
     dependencies:
