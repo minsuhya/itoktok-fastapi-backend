@@ -25,13 +25,11 @@ def hex_to_rgba(hex_color, alpha=1.0):
 
 
 def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> Schedule:
-
-    # repeat_days가 dict 타입인 경우 string으로 변환
+    # schedule_data 준비
     schedule_data = schedule_create.dict()
     if isinstance(schedule_data.get('repeat_days'), dict):
         schedule_data['repeat_days'] = str(schedule_data['repeat_days'])
 
-    print("schedule_data: ", schedule_data)
     # schedule 생성 
     schedule = Schedule(**schedule_data)
     session.add(schedule)
@@ -40,30 +38,18 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
 
     # schedule_list 생성
     current_date = schedule.start_date
-    
     while current_date <= schedule.finish_date:
-        # 반복 유형에 따른 일정 생성
         create_schedule = False
-        print("repeat_type: ", schedule.repeat_type) 
+        
         if schedule.repeat_type == 1:  # 매일
             create_schedule = True
         elif schedule.repeat_type == 2:  # 매주
-            # repeat_days 문자열을 dict로 변환
             repeat_days = eval(schedule.repeat_days)
             weekday = current_date.weekday()
-            # 요일별 매핑 (0:월요일 ~ 6:일요일)
             weekday_map = {
-                0: 'mon', 
-                1: 'tue',
-                2: 'wed', 
-                3: 'thu',
-                4: 'fri',
-                5: 'sat',
-                6: 'sun'
+                0: 'mon', 1: 'tue', 2: 'wed', 
+                3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'
             }
-            # 해당 요일이 repeat_days에서 True로 설정되어 있으면 일정 생성
-            print("repeat_days: ", repeat_days)
-            print("weekday_map[weekday]: ", weekday_map[weekday])
             if repeat_days[weekday_map[weekday]]:
                 create_schedule = True
         elif schedule.repeat_type == 3:  # 매월
@@ -74,14 +60,18 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
             
         if create_schedule:
             schedule_list = ScheduleList(
+                title = "", # 제목 제거
+                teacher_username=schedule.teacher_username,
+                client_id=schedule.client_id,
+                program_id=schedule_create.program_id,
                 schedule_id=schedule.id,
                 schedule_date=current_date,
                 schedule_time=schedule.start_time,
                 schedule_status="1",
-                schedule_memo="",
+                schedule_memo=schedule_create.memo or "",
+                created_by=schedule.created_by
             )
             session.add(schedule_list)
-            print("create schedule_list: ", schedule_list)
             
         current_date += timedelta(days=1)
 
@@ -89,16 +79,19 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
     return schedule
 
 
-def get_schedule(session: Session, schedule_id: int) -> Optional[Schedule]:
-    statement = select(Schedule)\
-        .options(joinedload(Schedule.teacher))\
-        .options(joinedload(Schedule.clientinfo))\
-        .options(joinedload(Schedule.program))\
-        .where(Schedule.id == schedule_id)
+def get_schedule(session: Session, schedule_list_id: int) -> Optional[ScheduleList]:
+    statement = select(ScheduleList)\
+        .options(joinedload(ScheduleList.schedule))\
+        .options(joinedload(ScheduleList.teacher))\
+        .options(joinedload(ScheduleList.clientinfo))\
+        .options(joinedload(ScheduleList.program))\
+        .where(ScheduleList.id == schedule_list_id)
     
     print("Raw SQL Query:", statement.compile(compile_kwargs={"literal_binds": True}))
     
-    return session.exec(statement).first()
+    result = session.exec(statement).first()
+    print("result:", result)
+    return result
 
 
 def get_schedules(session: Session, skip: int = 0, limit: int = 10) -> List[Schedule]:
@@ -122,76 +115,69 @@ def update_schedule_info(
     if not schedule_list:
         return None
 
-    # 기존 schedule의 finish_date를 선택된 일정의 날짜로 업데이트
-    schedule.finish_date = schedule_list.schedule_date
+    # schedule 업데이트
+    update_data = schedule_update.model_dump(exclude_unset=True)
+    schedule_fields = Schedule.__fields__.keys()
+    for key, value in update_data.items():
+        if key in schedule_fields:
+            if key == 'repeat_days' and isinstance(value, dict):
+                value = str(value)
+            setattr(schedule, key, value)
+    
+    schedule.finish_date = schedule_update.finish_date
     session.add(schedule)
     session.commit()
 
     # 선택된 일정 이후의 schedule_list 항목 삭제
-    if schedule_list_id:
-        delete_query = delete(ScheduleList).where(ScheduleList.id >= schedule_list_id)
-    else:
-        delete_query = (
+    delete_query = (
         delete(ScheduleList)
         .where(ScheduleList.schedule_id == schedule.id)
         .where(
             (ScheduleList.schedule_date > schedule_list.schedule_date) |
-            (
-                (ScheduleList.schedule_date == schedule_list.schedule_date) &
-                (ScheduleList.schedule_time >= schedule_list.schedule_time)
-            )
+            ((ScheduleList.schedule_date == schedule_list.schedule_date) &
+             (ScheduleList.schedule_time >= schedule_list.schedule_time))
         )
     )
-
     session.exec(delete_query)
     session.commit()
 
-    # 현재 시간 기준으로 새로운 일정 생성
-    now = datetime.now()
-    # pydantic model을 dict로 변환하고 sqlmodel에 맞게 데이터 전달
-    update_data = schedule_update.model_dump(exclude_unset=True)
-    new_schedule = Schedule(**update_data)
-    new_schedule.id = None
-
-    # 시작일이 현재보다 이전이면 현재 날짜로 조정
-    if new_schedule.start_date < now.date():
-        new_schedule.start_date = now.date()
-
-    session.add(new_schedule)
-    session.commit()
-    session.refresh(new_schedule)
-
-    # 새로운 schedule_list 항목 생성
-    current_date = new_schedule.start_date
-    while current_date <= new_schedule.finish_date:
-        # 반복 유형에 따른 일정 생성
+    # 새로운 schedule_list 생성 - 지난 일정 유지, 새로운 일정 생성
+    current_date = schedule_list.schedule_date
+    while current_date <= schedule.finish_date:
         create_schedule = False
         
-        if new_schedule.repeat_type == "1":  # 매일
+        if schedule.repeat_type == 1:
             create_schedule = True
-        elif new_schedule.repeat_type == "2":  # 매주
-            if current_date.weekday() == new_schedule.start_date.weekday():
+        elif schedule.repeat_type == 2:
+            repeat_days = eval(schedule.repeat_days)
+            weekday = current_date.weekday()
+            weekday_map = {0: 'mon', 1: 'tue', 2: 'wed', 
+                          3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
+            if repeat_days[weekday_map[weekday]]:
                 create_schedule = True
-        elif new_schedule.repeat_type == "3":  # 매월
-            if current_date.day == new_schedule.start_date.day:
+        elif schedule.repeat_type == 3:
+            if current_date.day == schedule.start_date.day:
                 create_schedule = True
-        else:  # 반복 없음
-            create_schedule = True
             
         if create_schedule:
             schedule_list = ScheduleList(
-                schedule_id=new_schedule.id,
+                title="",
+                teacher_username=schedule_update.teacher_username,
+                client_id=schedule_update.client_id,
+                program_id=schedule_update.program_id,
+                schedule_id=schedule.id,
                 schedule_date=current_date,
-                schedule_time=new_schedule.start_time,
+                schedule_time=schedule.start_time,
                 schedule_status="1",
-                schedule_memo="",
+                schedule_memo=schedule_update.memo or "",
+                updated_by=schedule.updated_by
             )
             session.add(schedule_list)
             
         current_date += timedelta(days=1)
 
     session.commit()
-    return new_schedule
+    return schedule
 
 
 def delete_schedule_info(session: Session, schedule_id: int) -> Optional[Schedule]:
@@ -311,15 +297,15 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     # "teacher_usercolor": "bg-[#b77334]/50",
                     "client_id": event.schedule.client_id,
                     "client_name": event.schedule.clientinfo.client_name,
-                    "title": event.schedule.title,
-                    "program_name": event.schedule.program.program_name,
+                    "title": event.title,
+                    "program_name": event.program.program_name,
                     "start_date": event.schedule.start_date,
                     "finish_date": event.schedule.finish_date,
                     "start_time": event.schedule.start_time,
                     "finish_time": event.schedule.finish_time,
-                    "memo": event.schedule.memo,
-                    "created_by": event.schedule.created_by,
-                    "updated_by": event.schedule.updated_by,
+                    "memo": event.schedule_memo,
+                    "created_by": event.created_by,
+                    "updated_by": event.updated_by,
                 }
             )
 
@@ -398,15 +384,15 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 # "teacher_usercolor": "bg-[#b77334]/50",
                 "client_id": event.schedule.client_id,
                 "client_name": event.schedule.clientinfo.client_name,
-                "title": event.schedule.title,
-                "program_name": event.schedule.program.program_name,
+                "title": event.title,
+                "program_name": event.program.program_name,
                 "start_date": event.schedule.start_date,
                 "finish_date": event.schedule.finish_date,
                 "start_time": event.schedule.start_time,
                 "finish_time": event.schedule.finish_time,
-                "memo": event.schedule.memo,
-                "created_by": event.schedule.created_by,
-                "updated_by": event.schedule.updated_by,
+                "memo": event.schedule_memo,
+                "created_by": event.created_by,
+                "updated_by": event.updated_by,
             }
         )
         # # 기존 weekly_schedule 구조
@@ -481,15 +467,15 @@ def generate_daily_schedule_with_empty_times(target_date: date, schedule_data):
                 # "teacher_usercolor": "bg-[#b77334]/50",
                 "client_id": event.schedule.client_id,
                 "client_name": event.schedule.clientinfo.client_name,
-                "title": event.schedule.title,
-                "program_name": event.schedule.program.program_name,
+                "title": event.title,
+                "program_name": event.program.program_name,
                 "start_date": event.schedule.start_date,
                 "finish_date": event.schedule.finish_date,
                 "start_time": event.schedule.start_time,
                 "finish_time": event.schedule.finish_time,
-                "memo": event.schedule.memo,
-                "created_by": event.schedule.created_by,
-                "updated_by": event.schedule.updated_by,
+                "memo": event.schedule_memo,
+                "created_by": event.created_by,
+                "updated_by": event.updated_by,
             }
         )
 

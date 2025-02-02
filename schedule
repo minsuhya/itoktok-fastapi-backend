@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS `schedule` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `teacher_username` varchar(20) NOT NULL,
+  `client_id` int(11) NOT NULL,
+  `start_date` date DEFAULT curdate(),
+  `finish_date` date DEFAULT curdate(),
+  `start_time` varchar(5) NOT NULL,
+  `finish_time` varchar(5) NOT NULL,
+  `repeat_type` int(11) NOT NULL DEFAULT 1 COMMENT '반복 유형: 1(매일), 2(매주), 3(매월)',
+  `repeat_days` text DEFAULT NULL COMMENT '반복 요일 지정: 매주 반복일 경우 사용',
+  `created_by` varchar(20) DEFAULT NULL,
+  `updated_by` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_schedule_teacher_username` (`teacher_username`),
+  KEY `idx_schedule_client_id` (`client_id`)
+) 

@@ -63,6 +63,7 @@ class User(SQLModel, table=True):
     center_info: Optional["CenterInfo"] = Relationship(back_populates="users")
     # 스케줄 정보
     schedules: List["Schedule"] = Relationship(back_populates="teacher")
+    schedulelists: List["ScheduleList"] = Relationship(back_populates="teacher")
     # 프로그램 정보
     programs: List["Program"] = Relationship(back_populates="teacher")
 

@@ -172,7 +172,16 @@ const schema = yup.object({
     otherwise: () => yup.string()
   }),
   start_date: yup.string().required('일정시작일을 선택해주세요.'),
-  finish_date: yup.string().required('일정종료일을 선택해주세요.'),
+  finish_date: yup.string().transform((value, originalValue, context) => {
+    // start_date가 있는 경우 1년 후의 날짜로 자동 설정
+    const startDate = context?.parent?.start_date;
+    if (startDate) {
+      const oneYearLater = new Date(startDate);
+      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+      return oneYearLater.toISOString().split('T')[0];
+    }
+    return value;
+  }),
   start_time: yup.string().required('시작시간을 선택해주세요.'),
   finish_time: yup.string().required('종료시간을 선택해주세요.'),
   repeat_type: yup.string().required("반복 타입을 선택해주세요.")
@@ -182,9 +191,10 @@ const form = reactive({
   id: '',
   teacher_username: '',
   client_id: '',
+  schedule_type: 1, // 재활:1, 상담/평가:2, 기타:3 기본값(재활)
   client_name: '',
   program_id: '',
-  repeat_type: '1', // 매일:1, 매주:2, 매월:3 기본값(매일)
+  repeat_type: 1, // 매일:1, 매주:2, 매월:3 기본값(매일)
   repeat_days: {
     mon: false,
     tue: false,
@@ -207,16 +217,21 @@ const closeForm = () => {
 }
 
 const fetchScheduleInfo = async () => {
-  if (!props.scheduleId) {
+  if (!props.scheduleListId) {
     Object.keys(form).forEach((key) => {
       form[key] = ''
     })
+
+    form.schedule_type = 1
+    form.repeat_type = 1
+
     // 일정 초기화
     form.start_date = props.scheduleDate
     form.finish_date = props.scheduleDate
 
     if (!form.start_time) {
-      form.start_time = formatHour(today.getHours())
+      const currentHour = today.getHours()
+      form.start_time = (currentHour >= 9 && currentHour < 18) ? formatHour(currentHour) : '09:00'
     }
     updateEndTimeOptions()
     // repeat_days가 문자열인 경우 객체로 초기화
@@ -233,11 +248,17 @@ const fetchScheduleInfo = async () => {
   }
 
   try {
-    const scheduleInfo = await readSchedule(props.scheduleId)
+    const scheduleInfo = await readSchedule(props.scheduleListId)
+    console.log("scheduleInfo:", scheduleInfo)
     
     // 기본 필드 복사
-    const { clientinfo, teacher, ...basicInfo } = scheduleInfo
-    Object.assign(form, basicInfo)
+    const { clientinfo, teacher, schedule, ...basicInfo } = scheduleInfo
+    Object.assign(form, basicInfo, schedule)
+
+    // 메모
+    form.memo = basicInfo.schedule_memo
+    form.schedule_type = schedule.schedule_type
+    console.log("form.schedule_type:", form.schedule_type)
 
     // 관계 필드 처리
     form.client_name = clientinfo?.client_name || ''
@@ -258,8 +279,8 @@ const fetchScheduleInfo = async () => {
           )
           : form.repeat_days || {
               mon: false,
-              tue: false, 
-              wed: false,
+              tue: false,
+              wed: false, 
               thu: false,
               fri: false,
               sat: false,
@@ -277,7 +298,6 @@ const fetchScheduleInfo = async () => {
         }
       }
     })()
-    console.log('form.repeat_days:', form.repeat_days)
   } catch (error) {
     console.error('Error fetching user:', error)
   }
@@ -340,7 +360,8 @@ const onSubmit = async (values) => {
   try {
     const formData = {
       ...values,
-      repeat_days: form.repeat_days  // form의 repeat_days 상태를 직접 사용
+      repeat_days: form.repeat_days,  // form의 repeat_days 상태를 직접 사용
+      finish_date: new Date(new Date(values.start_date).setFullYear(new Date(values.start_date).getFullYear() + 1)).toISOString().split('T')[0]
     }
     delete formData.created_at
     delete formData.updated_at 
@@ -357,6 +378,7 @@ const onSubmit = async (values) => {
     form.id = null
     form.client_id = null 
     form.client_name = ''
+    form.schedule_type = 1
     form.phone_number = ''
     form.teacher_username = ''
     form.program_id = ''
@@ -366,6 +388,15 @@ const onSubmit = async (values) => {
     form.finish_time = ''
     form.repeat_type = 1
     form.memo = ''
+    form.repeat_days = {
+      mon: false,
+      tue: false,
+      wed: false,
+      thu: false,
+      fri: false,
+      sat: false,
+      sun: false
+    }
 
   } catch (error) {
     showModal('상담일정 정보 저장 중 오류가 발생했습니다.')
@@ -401,6 +432,13 @@ watch(
     updateEndTimeOptions()
   }
 )
+
+watch(
+  () => form.schedule_type,
+  (newScheduleType, oldScheduleType) => {
+    form.schedule_type = newScheduleType
+  }
+)
 </script>
 
 <template>
@@ -425,6 +463,21 @@ watch(
         <Form @submit="onSubmit" :validation-schema="schema" :initial-values="form" class="space-y-4 text-sm">
           <Field type="hidden" name="id" v-model="form.id" />
           <Field type="hidden" name="client_id" v-model="form.client_id" />
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">일정 유형</label>
+            <div class="mt-2 flex gap-4">
+              <label class="inline-flex items-center">
+                <Field type="radio" name="schedule_type" :value="1" v-model="form.schedule_type" 
+                  class="form-radio text-indigo-600" />
+                <span class="ml-2">재활</span>
+              </label>
+              <label class="inline-flex items-center">
+                <Field type="radio" name="schedule_type" :value="2" v-model="form.schedule_type"
+                  class="form-radio text-indigo-600" />
+                <span class="ml-2">상담/평가</span>
+              </label>
+            </div>
+          </div>
           <div class="grid gap-4">
             <div class="mb-4">
               <label for="client-search" class="block text-sm font-medium text-gray-700">내담자를 선택하세요.</label>
@@ -547,7 +600,7 @@ watch(
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
               <ErrorMessage name="start_date" class="text-red-500 text-xs italic mt-2" />
             </div>
-            <div class="mb-4">
+            <div class="mb-4 hidden">
               <label for="finish_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정종료일 <span
                   class="text-red-500">*</span></label>
               <Field type="date" name="finish_date" v-model="form.finish_date"
@@ -562,7 +615,6 @@ watch(
               <Field name="start_time" id="start_time" v-model="form.start_time" as="select"
                 @change="updateEndTimeOptions" class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
                 <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
-                <!-- 상담사 옵션 추가 -->
               </Field>
               <ErrorMessage name="start_time" class="text-red-500 text-xs italic mt-2" />
             </div>
@@ -572,7 +624,6 @@ watch(
               <Field name="finish_time" id="finish_time" v-model="form.finish_time" as="select"
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
                 <option v-for="time in endTimeOptions" :key="time" :value="time">{{ time }}</option>
-                <!-- 상담사 옵션 추가 -->
               </Field>
               <ErrorMessage name="finish_time" class="text-red-500 text-xs italic mt-2" />
             </div>

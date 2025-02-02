@@ -302,7 +302,8 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
       <div class="bg-white py-2 text-center text-sm font-medium">Fri</div>
       <div class="bg-white py-2 text-center text-sm font-medium">Sat</div>
       <div class="bg-white py-2 text-center text-sm font-medium">Sun</div>
-
+    </div>
+    <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-y-auto max-h-[calc(100vh-200px)] text-sm">
       <!-- schedule data loop -->
       <div
         :class="[

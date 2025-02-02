@@ -25,7 +25,7 @@ class ClientInfo(SQLModel, table=True):
     family_members: Optional[str] = Field(default=None)
     consultation_path: str = Field(max_length=20, nullable=False)
     center_username: str = Field(max_length=20, nullable=False)
-    register: str = Field(max_length=20, nullable=False)  # 등록자
+    registered_by: str = Field(max_length=20, nullable=False)  # 등록자
 
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -45,4 +45,5 @@ class ClientInfo(SQLModel, table=True):
     )
 
     schedule: List["Schedule"] = Relationship(back_populates="clientinfo")
+    schedulelists: List["ScheduleList"] = Relationship(back_populates="clientinfo")
     consultant_info: Optional["User"] = Relationship(back_populates="client_infos")

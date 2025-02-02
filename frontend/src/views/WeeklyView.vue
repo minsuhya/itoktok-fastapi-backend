@@ -337,7 +337,7 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
     class="not-prose relative bg-slate-50 rounded-xl overflow-hidden w-full mx-auto dark:bg-slate-800/25"
   >
     <div class="relative rounded-xl overflow-auto">
-      <div class="mx-4 my-4 box-content bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+      <div class="mx-4 mt-4 box-content bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
         <div class="grid grid-cols-[70px,repeat(7,1fr)] grid-rows-1 h-auto">
           <!-- class="overflow-y-scroll grid grid-cols-[70px,repeat(7,1fr)] grid-rows-[auto,repeat(16,50px)] max-h-screen"> -->
           <!-- Calendar frame -->
@@ -359,14 +359,25 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
             {{ week_days.day }}
           </div>
         </div>
+      </div>
+      <div class="mx-4 mb-4 box-content bg-white dark:bg-slate-800 shadow-xl overflow-y-auto max-h-[calc(100vh-200px)]">
         <div class="grid grid-cols-[70px,repeat(7,1fr)] grid-rows-1 max-h-full h-full">
           <div class="flex-row h-full">
             <div
               v-for="times in 11"
               :key="times"
-              class="h-[90px] border-slate-100 dark:border-slate-200/5 border-r text-xs p-1.5 text-right text-slate-400 uppercase sticky left-0 bg-white dark:bg-slate-800 font-medium"
+              class="h-[90px] border-slate-100 dark:border-slate-200/5 border-r text-xs p-1.5 text-right text-slate-400 uppercase sticky left-0 bg-white dark:bg-slate-800 font-medium relative"
             >
-              {{ times + 7 }} AM
+              <div 
+                v-if="today.getHours() >= times + 7 && today.getHours() < times + 8"
+                class="absolute left-0"
+                :style="{
+                  top: `${(today.getMinutes() / 60) * 90}px`
+                }"
+              >
+                <div class="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] border-l-red-500"></div>
+              </div>
+              {{ times + 7 >= 12 ? `${(times + 7) % 12 || 12} PM` : `${times + 7} AM` }}
             </div>
           </div>
           <!-- 요일/날짜 반복 -->
@@ -387,6 +398,14 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
             >
               <div class="absolute left-0 w-full border-t border-slate-100 top-[30px]"></div>
               <div class="absolute left-0 w-full border-t border-slate-100 top-[60px]"></div>
+              <div 
+                v-if="dayIndex == new Intl.DateTimeFormat('fr-CA').format(new Date()) && 
+                      timeIndex == Math.floor(new Date().getHours())"
+                class="absolute left-0 w-full border-t border-red-500 border-dashed"
+                :style="{
+                  top: `${(new Date().getMinutes() / 60) * 90}px`
+                }"
+              ></div>
               <!-- 시간 대 개별일정들 -->
               <div
                 class="relative flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"

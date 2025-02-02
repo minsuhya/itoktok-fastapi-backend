@@ -59,7 +59,7 @@ class Program(ProgramBase, table=True):
     teacher: Optional["User"] = Relationship(back_populates="programs")
 
     # 스케줄 정보
-    schedules: List["Schedule"] = Relationship(back_populates="program")
+    schedulelists: List["ScheduleList"] = Relationship(back_populates="program")
 
     @staticmethod
     def get_current_time():

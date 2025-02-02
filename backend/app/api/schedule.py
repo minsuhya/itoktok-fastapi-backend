@@ -39,12 +39,13 @@ def create_schedule(
     return schedule
 
 
-@router.get("/{schedule_id}", response_model=ScheduleRead)
-def read_schedule(schedule_id: int, session: Session = Depends(get_session)):
-    schedule = get_schedule(session, schedule_id)
-    if not schedule:
+@router.get("/{schedule_list_id}", response_model=ScheduleListRead)
+def read_schedule(schedule_list_id: int, session: Session = Depends(get_session)):
+    schedule_list_info = get_schedule(session, schedule_list_id)
+    print("schedule_list_info:", schedule_list_info)
+    if not schedule_list_info:
         raise HTTPException(status_code=404, detail="Schedule not found")
-    return schedule
+    return schedule_list_info
 
 
 @router.get("", response_model=List[ScheduleRead])
