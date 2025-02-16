@@ -72,9 +72,9 @@ def update_schedule(
     return SuccessResponse(data=schedule)
 
 
-@router.delete("/{schedule_id}", response_model=SuccessResponse[ScheduleRead])
-def delete_schedule(schedule_id: int, session: Session = Depends(get_session)):
-    schedule = delete_schedule_info(session, schedule_id)
+@router.delete("/{schedule_id}/{schedule_list_id}", response_model=SuccessResponse[ScheduleRead])
+def delete_schedule(schedule_id: int, schedule_list_id: int, update_range: str, session: Session = Depends(get_session)):
+    schedule = delete_schedule_info(session, schedule_id, schedule_list_id, update_range)
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     return SuccessResponse(data=schedule)

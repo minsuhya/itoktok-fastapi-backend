@@ -104,6 +104,10 @@ class ScheduleRead(BaseModel):
 
 
 class ScheduleUpdate(ScheduleBase):
+    update_range: str = Field(
+        default="single",
+        description="수정 범위: single(이번 일정만 변경), all(이후 반복일정 모두 변경)"
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )
@@ -165,6 +169,10 @@ class ScheduleListRead(BaseModel):
 
 
 class ScheduleListUpdate(ScheduleListBase):
+    update_range: str = Field(
+        default="single",
+        description="수정 범위: single(이번 일정만 변경), all(이후 반복일정 모두 변경)"
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone(timedelta(hours=9))).replace(microsecond=0)
     )

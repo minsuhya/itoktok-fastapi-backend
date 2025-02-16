@@ -24,8 +24,12 @@ export const updateSchedule = async (scheduleId, scheduleListId, scheduleUpdate)
   return axios.put(`/schedules/${scheduleId}/${scheduleListId}`, scheduleUpdate)
 }
 
-export const deleteSchedule = async (scheduleId) => {
-  return axios.delete(`/schedules/${scheduleId}`)
+export const deleteSchedule = async (scheduleId, scheduleListId, updateRange) => {
+  return axios.delete(`/schedules/${scheduleId}/${scheduleListId}`, {
+    params: {
+      update_range: updateRange.update_range
+    }
+  })
 }
 
 export const deleteScheduleList = async (scheduleListId) => {

@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
 import { readUserByUsername, readTeachers } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
-import { createSchedule, updateSchedule, readSchedule } from '@/api/schedule'
+import { createSchedule, updateSchedule, readSchedule, deleteSchedule } from '@/api/schedule'
 import { readPrograms } from '@/api/program'
 
 const userStore = useUserStore()
@@ -204,12 +204,14 @@ const form = reactive({
     sat: false,
     sun: false
   },
+  schedule_status: 1, // 예약:1, 완료:2, 취소:3 기본값(예약)
   start_date: props.scheduleDate,
   finish_date: props.scheduleDate,
   start_time: formatHour(props.scheduleTime),
   finish_time: formatHour(props.scheduleTime),
   memo: '',
-  teacher: {}
+  teacher: {},
+  update_range: 'single', // 기본값으로 '이번 일정만 변경' 설정
 })
 
 const closeForm = () => {
@@ -223,8 +225,9 @@ const fetchScheduleInfo = async () => {
     })
 
     form.schedule_type = 1
+    form.schedule_status = 1
     form.repeat_type = 1
-
+    form.update_range = 'single'
     // 일정 초기화
     form.start_date = props.scheduleDate
     form.finish_date = props.scheduleDate
@@ -360,14 +363,22 @@ const onSubmit = async (values) => {
   try {
     const formData = {
       ...values,
-      repeat_days: form.repeat_days,  // form의 repeat_days 상태를 직접 사용
-      finish_date: new Date(new Date(values.start_date).setFullYear(new Date(values.start_date).getFullYear() + 1)).toISOString().split('T')[0]
+      repeat_days: form.repeat_days,
+      finish_date: new Date(new Date(values.start_date).setFullYear(new Date(values.start_date).getFullYear() + 1)).toISOString().split('T')[0],
+      update_range: form.update_range // 수정 범위 추가
     }
     delete formData.created_at
     delete formData.updated_at 
     delete formData.deleted_at
 
     if (form.id) {
+      // 수정 확인 다이얼로그
+      const confirmMessage = form.update_range === 'all' 
+        ? '이 일정과 향후 모든 반복 일정이 수정됩니다. 계속하시겠습니까?' 
+        : '이 일정만 수정됩니다. 계속하시겠습니까?'
+      
+      if (!confirm(confirmMessage)) return
+
       await updateSchedule(form.id, props.scheduleListId, formData)
       showModal('상담일정 정보가 수정되었습니다.')
     } else {
@@ -397,7 +408,7 @@ const onSubmit = async (values) => {
       sat: false,
       sun: false
     }
-
+    form.update_range = 'single'
   } catch (error) {
     showModal('상담일정 정보 저장 중 오류가 발생했습니다.')
     console.error('Error registering schedule data:', error)
@@ -439,6 +450,28 @@ watch(
     form.schedule_type = newScheduleType
   }
 )
+
+// 일정 삭제 함수 추가
+const deleteScheduleInfo = async () => {
+  try {
+    if (!props.scheduleListId) return
+
+    // 삭제 확인 다이얼로그
+    const confirmMessage = form.update_range === 'all' 
+      ? '이 일정과 향후 모든 반복 일정이 삭제됩니다. 계속하시겠습니까?' 
+      : '이 일정만 삭제됩니다. 계속하시겠습니까?'
+    
+    if (!confirm(confirmMessage)) return
+
+    // 삭제 API 호출
+    await deleteSchedule(form.id, props.scheduleListId, { update_range: form.update_range })
+    showModal('일정이 삭제되었습니다.')
+    emit('close')
+  } catch (error) {
+    console.error('Error deleting schedule:', error)
+    showModal('일정 삭제 중 오류가 발생했습니다.')
+  }
+}
 </script>
 
 <template>
@@ -478,7 +511,7 @@ watch(
               </label>
             </div>
           </div>
-          <div class="grid gap-4">
+          <div class="grid gap-4" v-if="!props.scheduleId && !props.scheduleListId">
             <div class="mb-4">
               <label for="client-search" class="block text-sm font-medium text-gray-700">내담자를 선택하세요.</label>
               <div class="relative mt-1">
@@ -521,7 +554,7 @@ watch(
               <ErrorMessage name="teacher_username" class="text-red-500 text-xs italic mt-2" />
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div v-if="userStore.user.user_type == 1 && userStore.user.is_superuser == 1" class="grid grid-cols-2 gap-4">
             <div>
               <label class="block mb-1 text-gray-700">내담자 이름 <span class="text-red-500">*</span></label>
               <Field name="client_name" as="input" type="text" v-model="form.client_name"
@@ -534,6 +567,10 @@ watch(
                 class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2" placeholder="내담자 휴대전화번호를 입력하세요." />
               <ErrorMessage name="phone_number" class="text-red-500 text-xs italic mt-2" />
             </div>
+          </div>
+          <div v-else>
+            <Field name="client_name" type="hidden" v-model="form.client_name" />
+            <Field name="phone_number" type="hidden" v-model="form.phone_number" />
           </div>
           <div>
             <div class="mb-4">
@@ -635,13 +672,42 @@ watch(
             <ErrorMessage name="memo" class="text-red-500 text-xs italic mt-2" />
             <div class="text-right text-gray-500 text-sm">0 / 100</div>
           </div>
+          <div class="mb-4">
+            <label for="schedule_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">상태</label>
+            <Field name="schedule_status" id="schedule_status" v-model="form.schedule_status" as="select" 
+              class="w-full bg-neutral-50 border border-gray-300 rounded-md p-2">
+              <option value="1">예정</option>
+              <option value="2">완료</option>
+              <option value="3">취소</option>
+            </Field>
+          </div>
+          <div class="mb-4" v-if="props.scheduleId && props.scheduleListId">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">일정 수정 범위</label>
+            <div class="flex items-center space-x-4 mt-2">
+              <label class="inline-flex items-center">
+                <Field type="radio" name="update_range" value="single" v-model="form.update_range" class="form-radio" />
+                <span class="ml-2">이번 일정만 변경</span>
+              </label>
+              <label class="inline-flex items-center">
+                <Field type="radio" name="update_range" value="all" v-model="form.update_range" class="form-radio" />
+                <span class="ml-2">이후 반복일정 모두 변경</span>
+              </label>
+            </div>
+          </div>
           <div class="flex justify-between mt-4">
-            <button type="button" @click="closeForm" class="bg-gray-400 text-white rounded-md p-2 w-[80px]">
-              취소
-            </button>
-            <button type="submit" class="bg-green-600 text-white rounded-md p-2 w-[80px]">
-              확인
-            </button>
+            <div>
+              <button type="button" @click="closeForm" class="bg-gray-400 text-white rounded-md p-2 w-[80px]">
+                취소
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <button v-if="props.scheduleListId" type="button" @click="deleteScheduleInfo" class="bg-red-600 text-white rounded-md p-2 w-[80px]">
+                삭제
+              </button>
+              <button type="submit" class="bg-green-600 text-white rounded-md p-2 w-[80px]">
+                {{ props.scheduleListId ? '수정' : '등록' }}
+              </button>
+            </div>
           </div>
         </Form>
       </div>

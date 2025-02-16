@@ -87,10 +87,24 @@ def get_schedule(session: Session, schedule_list_id: int) -> Optional[ScheduleLi
         .options(joinedload(ScheduleList.program))\
         .where(ScheduleList.id == schedule_list_id)
     
-    print("Raw SQL Query:", statement.compile(compile_kwargs={"literal_binds": True}))
+    # print("Raw SQL Query:", statement.compile(compile_kwargs={"literal_binds": True}))
     
     result = session.exec(statement).first()
-    print("result:", result)
+    # print("result:", result)
+
+    # 현재 일시 가져오기
+    now = datetime.now()
+    current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
+    event_datetime = datetime.combine(result.schedule_date, datetime.strptime(result.schedule_time, '%H:%M').time())
+
+    print("current_datetime:", current_datetime)
+    print("event_datetime:", event_datetime)
+    # 취소 상태가 아닌 경우에만 상태 업데이트
+    if result.schedule_status != '3':
+        if event_datetime < current_datetime:
+            result.schedule_status = '2'  # 완료
+        else:
+            result.schedule_status = '1'  # 예약
     return result
 
 
@@ -110,10 +124,25 @@ def update_schedule_info(
     if not schedule:
         return None
 
-    # 현재 선택된 schedule_list 조회
+    # 현재 선택된 schedule_list 조회 
     schedule_list = session.get(ScheduleList, schedule_list_id)
     if not schedule_list:
         return None
+
+
+    # update_range가 'single'인 경우 해당 일정만 업데이트 후 반환
+    if schedule_update.update_range == 'single':
+        schedule_list.title = ""
+        schedule_list.teacher_username = schedule_update.teacher_username
+        schedule_list.client_id = schedule_update.client_id
+        schedule_list.program_id = schedule_update.program_id
+        schedule_list.schedule_time = schedule.start_time
+        schedule_list.schedule_memo = schedule_update.memo or ""
+        schedule_list.updated_by = schedule.updated_by
+
+        session.add(schedule_list)
+        session.commit()
+        return schedule
 
     # schedule 업데이트
     update_data = schedule_update.model_dump(exclude_unset=True)
@@ -180,25 +209,33 @@ def update_schedule_info(
     return schedule
 
 
-def delete_schedule_info(session: Session, schedule_id: int) -> Optional[Schedule]:
+def delete_schedule_info(session: Session, schedule_id: int, schedule_list_id: int, update_range: str) -> Optional[Schedule]:
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
         return None
 
-    # 오늘 날짜 이후의 schedule_list 항목 삭제
-    today = datetime.now().date()
-    session.exec(
-        select(ScheduleList)
-        .where(ScheduleList.schedule_id == schedule.id)
-        .where(ScheduleList.schedule_date >= today)
-        .delete()
-    )
+    # update_range가 "single"인 경우 해당 일정만 삭제
+    if update_range == "single":
+        schedule_list = session.get(ScheduleList, schedule_list_id)
+        if schedule_list:
+            session.delete(schedule_list)
+            session.commit()
+            return schedule
+    else:
+        # 오늘 날짜 이후의 schedule_list 항목 삭제
+        today = datetime.now().date()
+        session.exec(
+            select(ScheduleList)
+            .where(ScheduleList.schedule_id == schedule.id)
+            .where(ScheduleList.schedule_date >= today)
+            .delete()
+        )
 
-    # schedule 삭제
-    session.delete(schedule)
-    session.commit()
+        # schedule 삭제
+        session.delete(schedule)
+        session.commit()
 
-    return schedule
+        return schedule
 
 
 def delete_schedule_list_info(session: Session, schedule_list_id: int):
@@ -279,6 +316,17 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 
         # Add the event to the correct day in the calendar
         if event_day in calendar_data:
+            # 현재 일시 가져오기
+            now = datetime.now()
+            current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
+            event_datetime = datetime.combine(event.schedule_date, datetime.strptime(event.schedule_time, '%H:%M').time())
+
+            # 취소 상태가 아닌 경우에만 상태 업데이트
+            if event.schedule_status != '3':
+                if event_datetime < current_datetime:
+                    event.schedule_status = '2'  # 완료
+                else:
+                    event.schedule_status = '1'  # 예약
             calendar_data[event_day].append(
                 {
                     "id": event.id,
@@ -366,6 +414,18 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
         # If the time is not in the day's dictionary, initialize it
         if event_time not in weekly_schedule_by_day[event_day]:
             weekly_schedule_by_day[event_day][event_time] = []
+
+        # 현재 일시 가져오기
+        now = datetime.now()
+        current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
+        event_datetime = datetime.combine(event.schedule_date, datetime.strptime(event.schedule_time, '%H:%M').time())
+
+        # 취소 상태가 아닌 경우에만 상태 업데이트
+        if event.schedule_status != '3':
+            if event_datetime < current_datetime:
+                event.schedule_status = '2'  # 완료
+            else:
+                event.schedule_status = '1'  # 예약
 
         # Append the event information to the corresponding date and time
         weekly_schedule_by_day[event_day][event_time].append(
