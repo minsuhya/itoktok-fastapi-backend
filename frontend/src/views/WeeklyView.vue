@@ -142,6 +142,10 @@ const clickCalendarTime = (selected_date, selected_time, event) => {
     minutes = 40 // 세 번째 구간: 40분
   }
 
+  currentScheduleId.value = ''
+  currentScheduleListId.value = ''
+  currentScheduleDate.value = ''
+
   currentScheduleDate.value = selected_date
   currentScheduleTime.value = `${selected_time}:${minutes.toString().padStart(2, '0')}`
   toggleForm()
@@ -235,6 +239,23 @@ const setDateInfo = (year, month, day) => {
   currentDateInfo.value = getCurrentDateInfo(year, month, day)
   currentDateInfo.value.weekDates = getWeeklyDates(currentDateInfo.value.weekStartDate)
   console.log('set Date Info - currentDateInfo:', currentDateInfo.value)
+}
+
+// 일정 높이 계산 함수 추가
+const calculateScheduleHeight = (startTime, finishTime) => {
+  const start = new Date(`2000-01-01 ${startTime}`);
+  const finish = new Date(`2000-01-01 ${finishTime}`);
+  const diffMinutes = (finish - start) / (1000 * 60);
+  
+  // 50분 이상이면 90px, 그 이하는 비율로 계산
+  return diffMinutes >= 50 ? 80 : (diffMinutes / 50) * 80;
+}
+
+// 시작 시간에 따른 top 위치 계산 함수 추가
+const calculateScheduleTop = (startTime) => {
+  const [hours, minutes] = startTime.split(':').map(Number)
+  const minutesFromHourStart = minutes
+  return (minutesFromHourStart / 60) * 90 // 90px 높이 기준으로 비율 계산
 }
 
 onBeforeMount(() => {
@@ -408,65 +429,53 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
               ></div>
               <!-- 시간 대 개별일정들 -->
               <div
-                class="relative flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
-                v-for="(time_schedule, itemindex) in time_schedules.slice(0, 2)"
+                class="absolute flex-row text-xs text-black border border-gray-700 rounded-md m-1 space-y-1 w-full pt-1 border-blue-700"
+                v-for="(time_schedule, itemindex) in time_schedules"
                 :key="itemindex"
                 :class="[
-                  'transform transition duration-500 ease-in-out overflow-hidden',
+                  'transform transition duration-500 ease-in-out overflow-hidden absolute',
                   !isZoomed[dayIndex]?.[timeIndex]?.[itemindex]
-                    ? 'scale-100 h-6'
-                    : 'scale-105 h-auto min-h-6 w-full pt-1 border-blue-700'
+                    ? 'scale-100'
+                    : 'scale-105 w-full pt-1 border-blue-700'
                 ]"
                 :style="{
                   backgroundColor: !isZoomed[dayIndex]?.[timeIndex]?.[itemindex]
-                    ? time_schedule.teacher_usercolor
-                    : 'rgba(255, 255, 255, 1)',
-                  zIndex: !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10
+                    ? `${time_schedule.teacher_usercolor}`
+                    : 'rgb(255, 255, 255)',
+                  zIndex: !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10,
+                  height: calculateScheduleHeight(time_schedule.start_time, time_schedule.finish_time) + 'px',
+                  left: itemindex > 0 ? (itemindex * 20) + 'px' : '0px',
+                  width: itemindex > 0 ? 'calc(98% - ' + (itemindex * 20) + 'px)' : '98%',
+                  top: calculateScheduleTop(time_schedule.start_time) + 'px'
                 }"
-                @click.stop="zoom(dayIndex, timeIndex, itemindex, $event)"
+                @click.stop="
+                  clickCalendarSchedule(
+                    time_schedule.schedule_id,
+                    time_schedule.id,
+                    time_schedule.schedule_date
+                  )
+                "
               >
-                <div class="flex justify-between items-center px-1 h-full w-full">
+                <div class="flex justify-between items-center px-1 w-full">
                   <span class="inline-block">{{ time_schedule.schedule_time }}</span>
                   <span class="ml-auto inline-block whitespace-nowrap overflow-hidden text-ellipsis"
                     >[{{ time_schedule.client_name }}] {{ time_schedule.program_name.length > 10 ? time_schedule.program_name.slice(0,10) + '...' : time_schedule.program_name }}</span
                   >
                 </div>
-                <div class="flex justify-between items-center px-1 h-full w-full">
+                <div class="flex justify-between items-center px-1 w-full">
                   <span class="inline-block">상담사</span>
                   <span class="ml-auto inline-block">{{ time_schedule.teacher_fullname }}</span>
                 </div>
-                <div class="flex justify-between items-center px-1 h-full w-full">
+                <div class="flex justify-between items-center px-1 w-full">
                   <span class="inline-block">상담시간</span>
                   <span class="ml-auto inline-block"
                     >{{ time_schedule.start_time }} ~ {{ time_schedule.finish_time }}</span
                   >
                 </div>
-                <div class="flex justify-center items-center px-1 h-full w-full">
-                  <!-- 수정 버튼 -->
-                  <button
-                    class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-                    @click.stop="
-                      clickCalendarSchedule(
-                        time_schedule.schedule_id,
-                        time_schedule.id,
-                        time_schedule.schedule_date
-                      )
-                    "
-                  >
-                    <PencilSquareIcon class="w-4 h-4" />
-                  </button>
-                  <!-- 삭제버튼 -->
-                  <button
-                    class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-                    @click.stop="deleteCalendarSchedule(time_schedule.id)"
-                  >
-                    <TrashIcon class="w-4 h-4" />
-                  </button>
-                </div>
               </div>
               <div
                 v-if="time_schedules.length > 2"
-                class="flex items-center justify-center ml-auto w-6 h-5 text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 bg-blue-400/20"
+                class="flex items-center justify-center ml-auto w-6 h-5 text-xs text-black border border-blue-700/10 rounded-md m-1 bg-blue-400/20"
                 @click.stop="clickMoreDailyView(dayIndex)"
               >
                 <PlusIcon class="w-5 h-4" /> {{ time_schedules.length - 2 }}

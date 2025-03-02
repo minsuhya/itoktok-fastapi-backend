@@ -418,9 +418,9 @@ const onSubmit = async (values) => {
 
 // Watch for changes in clientId and call toggleForm
 watch(
-  () => props.scheduleId,
-  (newScheduleId, oldScheduleId) => {
-    if (newScheduleId !== oldScheduleId) {
+  () => props.scheduleListId,
+  (newScheduleListId, oldScheduleListId) => {
+    if (newScheduleListId !== oldScheduleListId) {
       fetchScheduleInfo()
       fetchProgramList()
     }

@@ -152,3 +152,18 @@ class Teacher(UserBase, table=True):
         sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
     deleted_at: Optional[datetime] = Field(default=None)
+
+
+class UserSearchSelectedTeacher(SQLModel, table=True):
+    __tablename__ = "user_search_selected_teacher"
+
+    username: str = Field(primary_key=True, max_length=20)
+    selected_teacher: str = Field(max_length=255)
+    
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )
+    deleted_at: Optional[datetime] = Field(default=None)

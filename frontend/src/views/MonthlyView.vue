@@ -183,6 +183,17 @@ const fetchSchedule = async (year, month) => {
 
   try {
     const data = await getMonthlyCalendar(year, month)
+
+    // 각 날짜별 일정을 시간순으로 정렬
+    Object.keys(data.data).forEach(date => {
+      data.data[date].sort((a, b) => {
+        // 시간을 비교하기 위해 시간 문자열을 Date 객체로 변환
+        const timeA = new Date(`2000-01-01 ${a.start_time}`)
+        const timeB = new Date(`2000-01-01 ${b.start_time}`)
+        return timeA - timeB
+      })
+    })
+
     schedule_data.value = data.data
     setDateInfo(year, month - 1)
     console.log('schedule_data:', schedule_data.value)
@@ -322,7 +333,7 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
           >{{ index.split('-')[2] }}</span
         >
         <div
-          class="relative flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
+          class="relative flex-row text-xs text-black border border-blue-700/40 rounded-md m-1 space-y-1"
           v-for="(day_schedule, itemindex) in day_schedules.slice(0, 2)"
           :key="itemindex"
           :class="[

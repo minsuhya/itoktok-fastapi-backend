@@ -121,3 +121,24 @@ export const deleteUser = async (user_id) => {
     throw error
   }
 }
+export const getSelectedTeachers = async () => {
+  try {
+    const response = await axios.get('/users/selected-teachers')
+    return response.selected_teacher
+  } catch (error) {
+    console.error('Error getting selected teachers:', error)
+    throw error
+  }
+}
+
+export const updateSelectedTeachers = async (selectedTeachers) => {
+  try {
+    const response = await axios.post('/users/selected-teachers', selectedTeachers)
+    return response.data
+  } catch (error) {
+    console.error('Error updating selected teachers:', error)
+    throw error
+  }
+}
+
+

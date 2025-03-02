@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useTeacherStore } from '@/stores/teacherStore'
-import { readTeachers } from '@/api/user'
+import { readTeachers, getSelectedTeachers, updateSelectedTeachers } from '@/api/user'
 
 const teacherStore = useTeacherStore()
 const counselors = ref([])
@@ -18,18 +18,24 @@ onMounted(async () => {
       checked: true,
       color: teacher.usercolor
     }))
+
+    const selectedTeachers = await getSelectedTeachers()
+    // 선택된 상담사 문자열을 배열로 변환
+    const selectedTeacherArray = selectedTeachers ? selectedTeachers.split(',') : []
     
-    // 초기 선택된 상담사 목록 저장
-    const selectedTeachers = counselors.value
-      .filter(c => c.checked)
-      .map(c => c.username)
-    teacherStore.setSelectedTeachers(selectedTeachers)
+    // 상담사 목록의 체크 상태 업데이트
+    counselors.value.forEach(counselor => {
+      counselor.checked = selectedTeacherArray.includes(counselor.username)
+    })
+
+    // store에 선택된 상담사 저장
+    teacherStore.setSelectedTeachers(selectedTeacherArray)
   } catch (error) {
     console.error('Error fetching teachers:', error)
   }
 })
 
-const toggleCounselor = (counselor) => {
+const toggleCounselor = async (counselor) => {
   counselor.checked = !counselor.checked
   
   // 체크된 상담사들의 username 목록을 store에 저장
@@ -37,6 +43,14 @@ const toggleCounselor = (counselor) => {
     .filter(c => c.checked)
     .map(c => c.username)
   teacherStore.setSelectedTeachers(selectedTeachers)
+
+  // 선택된 상담사 목록을 서버에 등록
+  try {
+    const selectedTeachersString = selectedTeachers.join(',')
+    await updateSelectedTeachers({ selected_teacher: selectedTeachersString })
+  } catch (error) {
+    console.error('Error updating selected teachers:', error)
+  }
 }
 </script>
 

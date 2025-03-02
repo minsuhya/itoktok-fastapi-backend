@@ -94,6 +94,49 @@ watch(
     }
   }
 )
+
+// 시간 차이를 분으로 계산하는 함수 추가
+const getTimeDifferenceInMinutes = (start, end) => {
+  const [startHour, startMinute] = start.split(':').map(Number)
+  const [endHour, endMinute] = end.split(':').map(Number)
+  return (endHour - startHour) * 60 + (endMinute - startMinute)
+}
+
+// 겹치는 일정 그룹화 함수 추가
+const getOverlappingGroups = (schedules) => {
+  return schedules.reduce((groups, schedule, index) => {
+    const startTime = schedule.start_time
+    const group = groups.find(g => 
+      g.some(s => s.start_time === startTime)
+    )
+    if (group) {
+      group.push({ ...schedule, index })
+    } else {
+      groups.push([{ ...schedule, index }])
+    }
+    return groups
+  }, [])
+}
+
+// 시간 차이를 분으로 계산하고 높이를 반환하는 함수 수정
+const getScheduleHeight = (start, end) => {
+  const timeDiff = getTimeDifferenceInMinutes(start, end)
+  const MAX_HEIGHT = 90 // 상위 요소의 최대 높이
+  
+  if (timeDiff >= 50) {
+    return MAX_HEIGHT
+  } else {
+    return Math.max((timeDiff / 50) * MAX_HEIGHT, 30) // 최소 높이 30px 보장
+  }
+}
+
+// 시작 시간에 따른 top 위치 계산 함수 추가
+const getScheduleTop = (start_time) => {
+  const [hours, minutes] = start_time.split(':').map(Number)
+  const minutesFromHourStart = minutes
+  const MINUTES_PER_PIXEL = 50 / 90 // 50분을 97px로 나눈 비율
+  return minutesFromHourStart * (1 / MINUTES_PER_PIXEL)
+}
 </script>
 
 <template>
@@ -138,60 +181,64 @@ watch(
               <div class="absolute left-0 w-full border-t border-gray-200 top-2/3"></div>
               <div v-for="(minute_schedule, minute) in hour_schedule" :key="minute"
                 class="flex-row items-center justify-between w-full">
-
-                <div class="relative">
-                  <div v-for="(day_schedule, itemindex) in minute_schedule" :key="itemindex"
-                    class="flex-row text-xs text-blue-600 border border-blue-700/40 rounded-md m-1 space-y-1"
-                    :class="[
-                      `item-${itemindex}`,
-                      'transform transition-all duration-300 ease-in-out',
-                      isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'z-50' : 'z-0',
-                    ]"
-                    :style="{
-                      backgroundColor: !isZoomed[day_schedule.schedule_time]?.[itemindex]
-                        ? day_schedule.teacher_usercolor
-                        : 'rgba(255, 255, 255, 1)',
-                      position: isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'absolute' : 'relative',
-                      width: isZoomed[day_schedule.schedule_time]?.[itemindex] ? 'calc(100% - 0.5rem)' : 'auto',
-                      transform: isZoomed[day_schedule.schedule_time]?.[itemindex] 
-                        ? 'scale(1.05)' 
-                        : 'scale(1)',
-                    }"
-                    @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                    <!-- 기존 내용 -->
-                    <div class="flex justify-between items-center px-1 h-6"
-                         @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                      <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
-                      <span class="ml-auto inline-block">[{{ day_schedule.client_name }}] {{
-                        day_schedule.teacher_expertise }}</span>
-                    </div>
-                    <!-- 확장시 보이는 내용 -->
-                    <div v-show="isZoomed[day_schedule.schedule_time]?.[itemindex]"
-                      class="transition-all duration-300 ease-in-out">
+                <div class="relative w-full">
+                  <template v-for="group in getOverlappingGroups(minute_schedule)" :key="group[0].schedule_time">
+                    <div v-for="(day_schedule, groupIndex) in group" :key="day_schedule.index"
+                      class="flex-row text-xs text-black border border-blue-700/40 rounded-md m-1 space-y-1"
+                      :class="[
+                        'transform transition duration-500 ease-in-out overflow-hidden',
+                        !isZoomed[day_schedule.schedule_time]?.[day_schedule.index] ? 'scale-100' : 'scale-105'
+                      ]"
+                      :style="{
+                        backgroundColor: !isZoomed[day_schedule.schedule_time]?.[day_schedule.index]
+                          ? `${day_schedule.teacher_usercolor}`
+                          : 'rgb(255, 255, 255)',
+                        position: 'absolute',
+                        zIndex: !isZoomed[day_schedule.schedule_time]?.[day_schedule.index] ? 1 : 10,
+                        left: `${(groupIndex * 15)}%`,
+                        width: !isZoomed[day_schedule.schedule_time]?.[day_schedule.index]
+                          ? `${85 - (groupIndex * 15)}%`
+                          : '85%',
+                        height: `${getScheduleHeight(day_schedule.start_time, day_schedule.finish_time)}px`,
+                        top: `${getScheduleTop(day_schedule.start_time)}px`,
+                        right: 'auto'
+                      }"
+                      @click.stop="zoom(day_schedule.schedule_time, day_schedule.index, $event)"
+                    >
+                      <!-- 기존 내용 -->
                       <div class="flex justify-between items-center px-1 h-6"
-                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                        <span class="inline-block">상담사</span>
-                        <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
+                           @click.stop="zoom(day_schedule.schedule_time, day_schedule.index, $event)">
+                        <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
+                        <span class="ml-auto inline-block whitespace-nowrap overflow-hidden text-ellipsis">
+                          [{{ day_schedule.client_name }}] {{ day_schedule.teacher_expertise }}
+                        </span>
                       </div>
-                      <div class="flex justify-between items-center px-1 h-6"
-                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                        <span class="inline-block">상담시간</span>
-                        <span class="ml-auto inline-block font-semibold">{{ day_schedule.start_time }} ~ {{
-                          day_schedule.finish_time }}</span>
-                      </div>
-                      <div class="flex justify-center items-center px-1 h-8"
-                           @click.stop="zoom(day_schedule.schedule_time, itemindex, $event)">
-                        <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
-                          @click.stop="handleMoreClick(
-                            day_schedule.schedule_id,
-                            day_schedule.id,
-                            day_schedule.schedule_date
-                          )">
-                          <PencilSquareIcon class="w-4 h-4" />
-                        </button>
+                      <!-- 확장시 보이는 내용 -->
+                      <div v-show="isZoomed[day_schedule.schedule_time]?.[day_schedule.index]"
+                        class="transition-all duration-300 ease-in-out">
+                        <div class="flex justify-between items-center px-1 h-6">
+                          <span class="inline-block">상담사</span>
+                          <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
+                        </div>
+                        <div class="flex justify-between items-center px-1 h-6">
+                          <span class="inline-block">상담시간</span>
+                          <span class="ml-auto inline-block font-semibold">
+                            {{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}
+                          </span>
+                        </div>
+                        <div class="flex justify-center items-center px-1 h-8">
+                          <button class="text-xs text-blue-600 border border-blue-700/10 rounded-md m-1 p-0.5 bg-blue-400/20"
+                            @click.stop="handleMoreClick(
+                              day_schedule.schedule_id,
+                              day_schedule.id,
+                              day_schedule.schedule_date
+                            )">
+                            <PencilSquareIcon class="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
               </div>
             </div>

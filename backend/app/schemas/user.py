@@ -190,3 +190,29 @@ class TeacherUpdate(BaseModel):
     birthdate: Optional[date] = None
     profile_image: Optional[str] = None
     teacher_role: Optional[str] = None
+
+
+class UserSearchSelectedTeacherBase(BaseModel):
+    username: str
+    selected_teacher: str
+
+
+class UserSearchSelectedTeacherCreate(BaseModel):
+    username: Optional[str] = None
+    selected_teacher: str
+    pass
+
+
+class UserSearchSelectedTeacherUpdate(BaseModel):
+    username: Optional[str] = None
+    selected_teacher: str
+    updated_at: Optional[datetime] = None
+
+
+class UserSearchSelectedTeacherRead(UserSearchSelectedTeacherBase):
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

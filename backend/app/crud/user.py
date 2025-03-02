@@ -1,13 +1,13 @@
 from typing import List, Optional
-
+from datetime import datetime
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from passlib.context import CryptContext
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, desc, select
 
-from ..models.user import User
-from ..schemas.user import UserUpdate
+from ..models.user import User, UserSearchSelectedTeacher
+from ..schemas.user import UserUpdate, UserSearchSelectedTeacherCreate, UserSearchSelectedTeacherUpdate
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -84,3 +84,56 @@ def get_teachers(session: Session, center_username: str = "") -> List[User]:
         .where(User.center_username == center_username)
         .order_by(desc(User.id))
     ).all()
+
+
+def get_user_selected_teachers(session: Session, username: str) -> Optional[UserSearchSelectedTeacher]:
+    """사용자가 선택한 상담사 목록 조회"""
+    statement = select(UserSearchSelectedTeacher).where(UserSearchSelectedTeacher.username == username)
+    return session.exec(statement).first()
+
+
+def create_user_selected_teachers(
+    session: Session, 
+    data: UserSearchSelectedTeacherCreate
+) -> UserSearchSelectedTeacher:
+    """사용자가 선택한 상담사 목록 생성"""
+    db_selected = UserSearchSelectedTeacher(
+        username=data.username,
+        selected_teacher=data.selected_teacher,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+    session.add(db_selected)
+    session.commit()
+    session.refresh(db_selected)
+    return db_selected
+
+
+def update_user_selected_teachers(
+    session: Session,
+    username: str,
+    data: UserSearchSelectedTeacherUpdate
+) -> Optional[UserSearchSelectedTeacher]:
+    """사용자가 선택한 상담사 목록 업데이트"""
+    db_selected = get_user_selected_teachers(session, username)
+    if not db_selected:
+        return None
+        
+    data_dict = data.model_dump(exclude_unset=True)
+    for key, value in data_dict.items():
+        setattr(db_selected, key, value)
+    
+    session.add(db_selected)
+    session.commit()
+    session.refresh(db_selected)
+    return db_selected
+
+
+def delete_user_selected_teachers(session: Session, username: str) -> bool:
+    """사용자가 선택한 상담사 목록 삭제"""
+    db_selected = get_user_selected_teachers(session, username)
+    if db_selected:
+        session.delete(db_selected)
+        session.commit()
+        return True
+    return False
