@@ -20,13 +20,13 @@ services:
       - std-net
     logging:
       options:
-        max-size: "10m"  
+        max-size: "10m"
         max-file: "1"
 
   api:
     # image: python:3.12-alpine
     container_name: std-api
-    image: itoktok-api
+    # image: itoktok-api
     build: ./backend
     # command: poetry run python app/main.py
     command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
@@ -40,7 +40,7 @@ services:
       - std-net
     logging:
       options:
-        max-size: "10m"  
+        max-size: "10m"
         max-file: "1"
 
   # mariadb
