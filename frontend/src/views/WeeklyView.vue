@@ -34,6 +34,7 @@ const showUpdateModal = ref(false)
 const dropTargetDate = ref('')
 const dropTargetTime = ref('')
 const updateAllFutureSchedules = ref(false)
+const hoveredSchedule = ref(null) // 마우스 오버된 일정 추적
 
 // 날짜 관련 Reference
 const weekNames = ['Mon', 'Tue', 'Web', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -322,6 +323,16 @@ const handleScheduleUpdate = async () => {
   }
 }
 
+// 마우스 오버 핸들러
+const handleMouseOver = (schedule) => {
+  hoveredSchedule.value = schedule
+}
+
+// 마우스 아웃 핸들러
+const handleMouseOut = () => {
+  hoveredSchedule.value = null
+}
+
 onBeforeMount(() => {
   currentScheduleDate.value = formatDate(new Date())
   currentScheduleTime.value = formatHour(new Date().getHours())
@@ -481,7 +492,7 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
               :class="[
                 'h-[90px] text-xs text-slate-400 font-medium p-[1px] relative',
                 dayIndex === new Date().toISOString().split('T')[0] ? 'bg-yellow-100' : '',
-                isDragging ? 'border-2 border-dashed border-blue-500' : ''
+                // isDragging ? 'border-2 border-dashed border-blue-500' : 'border-2 border-dashed border-red-500'
               ]"
             >
               <div class="absolute left-0 w-full border-t border-slate-100 top-[30px]"></div>
@@ -502,6 +513,8 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                 draggable="true"
                 @dragstart="handleDragStart(time_schedule, $event)"
                 @dragend="handleDragEnd($event)"
+                @mouseover="handleMouseOver(time_schedule)"
+                @mouseout="handleMouseOut"
                 :class="[
                   'transform transition duration-500 ease-in-out overflow-hidden absolute cursor-move',
                   !isZoomed[dayIndex]?.[timeIndex]?.[itemindex]
@@ -512,11 +525,13 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                   backgroundColor: !isZoomed[dayIndex]?.[timeIndex]?.[itemindex]
                     ? `${time_schedule.teacher_usercolor}`
                     : 'rgb(255, 255, 255)',
-                  zIndex: !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10,
+                  zIndex: hoveredSchedule === time_schedule ? 20 : 
+                          !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10,
                   height: calculateScheduleHeight(time_schedule.start_time, time_schedule.finish_time) + 'px',
                   left: itemindex > 0 ? (itemindex * 20) + 'px' : '0px',
                   width: itemindex > 0 ? 'calc(98% - ' + (itemindex * 20) + 'px)' : '98%',
-                  top: calculateScheduleTop(time_schedule.start_time) + 'px'
+                  top: calculateScheduleTop(time_schedule.start_time) + 'px',
+                  transition: 'z-index 0s, transform 0.3s ease-in-out'
                 }"
                 @click.stop="
                   clickCalendarSchedule(
