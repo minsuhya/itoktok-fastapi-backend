@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlmodel import Session, desc, select
 
 from ..core import get_session
@@ -13,7 +13,7 @@ from ..crud.schedule import (create_schedule_info, delete_schedule_info,
                              get_schedule, get_schedule_for_day,
                              get_schedule_for_month, get_schedule_for_week,
                              get_schedules, update_schedule_info)
-from ..models.schedule import Schedule
+from ..models.schedule import Schedule, ScheduleList
 from ..models.user import User
 from ..schemas import ErrorResponse, SuccessResponse
 from ..schemas.schedule import (ScheduleCreate, ScheduleListCreate,
@@ -150,3 +150,117 @@ def get_daily_calendar(
     )
 
     return SuccessResponse(data=daily_calendar_data)
+
+
+@router.put("/update-date")
+async def update_schedule_date(
+    request: Request,
+    schedule_id: int,
+    schedule_list_id: int,
+    new_date: str,
+    update_all_future: bool = False,
+    db: Session = Depends(get_session)
+):
+    try:
+        # 현재 일정 정보 조회
+        current_schedule = db.query(ScheduleList).filter(
+            ScheduleList.id == schedule_list_id,
+            ScheduleList.schedule_id == schedule_id
+        ).first()
+        
+        if not current_schedule:
+            raise HTTPException(status_code=404, detail="Schedule not found")
+            
+        if update_all_future:
+            # 현재 일정 이후의 모든 일정 업데이트
+            future_schedules = db.query(ScheduleList).filter(
+                ScheduleList.schedule_id == schedule_id,
+                ScheduleList.schedule_date >= current_schedule.schedule_date
+            ).all()
+            
+            for schedule in future_schedules:
+                # 날짜 차이 계산
+                current_date = datetime.strptime(current_schedule.schedule_date, "%Y-%m-%d")
+                schedule_date = datetime.strptime(schedule.schedule_date, "%Y-%m-%d")
+                date_diff = (schedule_date - current_date).days
+                
+                # 새로운 날짜 계산
+                new_schedule_date = datetime.strptime(new_date, "%Y-%m-%d") + timedelta(days=date_diff)
+                schedule.schedule_date = new_schedule_date.strftime("%Y-%m-%d")
+                
+        else:
+            # 현재 일정만 업데이트
+            current_schedule.schedule_date = new_date
+            
+        db.commit()
+        return SuccessResponse(data={"success": True, "message": "Schedule updated successfully"})
+        
+    except Exception as e:
+        db.rollback()
+        return ErrorResponse(
+            status_code=500,
+            message="일정 업데이트 중 오류가 발생했습니다",
+            error=str(e)
+        )
+
+@router.put("/update-date-time")
+async def update_schedule_date_time(
+    request: Request,
+    schedule_id: int,
+    schedule_list_id: int,
+    new_date: str,
+    new_time: int,
+    update_all_future: bool = False,
+    db: Session = Depends(get_session)
+):
+    try:
+        # 현재 일정 정보 조회
+        current_schedule = db.query(ScheduleList).filter(
+            ScheduleList.id == schedule_list_id,
+            ScheduleList.schedule_id == schedule_id
+        ).first()
+
+        if not current_schedule:
+            raise HTTPException(status_code=404, detail="Schedule not found")
+            
+        # 시작 시간과 종료 시간 계산
+        # 기존 시간의 분 추출
+        current_schedule_minutes = current_schedule.schedule_time.split(':')[1]
+
+        # 새로운 시간에 기존 분을 유지
+        schedule_time = f"{new_time:02d}:{current_schedule_minutes}"
+
+        if update_all_future:
+            # 현재 일정 이후의 모든 일정 업데이트
+            future_schedules = db.query(ScheduleList).filter(
+                ScheduleList.schedule_id == schedule_id,
+                ScheduleList.schedule_date >= current_schedule.schedule_date
+            ).all()
+
+            for schedule in future_schedules:
+                # 날짜 차이 계산
+                current_date = datetime.strptime(current_schedule.schedule_date, "%Y-%m-%d")
+                schedule_date = datetime.strptime(schedule.schedule_date, "%Y-%m-%d")
+                date_diff = (schedule_date - current_date).days
+                
+                # 새로운 날짜 계산
+                new_schedule_date = datetime.strptime(new_date, "%Y-%m-%d") + timedelta(days=date_diff)
+                schedule.schedule_date = new_schedule_date.strftime("%Y-%m-%d")
+                
+                # 시간 업데이트
+                schedule.schedule_time = schedule_time
+        else:
+            # 현재 일정만 업데이트
+            current_schedule.schedule_date = new_date
+            current_schedule.schedule_time = schedule_time
+            
+        db.commit()
+        return SuccessResponse(data={"success": True, "message": "Schedule updated successfully"})
+        
+    except Exception as e:
+        db.rollback()
+        return ErrorResponse(
+            status_code=500,
+            message="일정 업데이트 중 오류가 발생했습니다",
+            error=str(e)
+        )

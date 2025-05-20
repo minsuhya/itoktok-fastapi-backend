@@ -11,7 +11,7 @@ import DailyViewSliding from '@/views/DailyViewSliding.vue'
 import { ref, reactive, onBeforeMount, watch } from 'vue'
 import { useCalendarStore } from '@/stores/calendarStore'
 import { useTeacherStore } from '@/stores/teacherStore'
-import { getWeeklyCalendar, deleteScheduleList } from '@/api/schedule'
+import { getWeeklyCalendar, deleteScheduleList, updateScheduleDateTime } from '@/api/schedule'
 
 const calendarStore = useCalendarStore()
 const teacherStore = useTeacherStore()
@@ -26,6 +26,14 @@ const currentScheduleTime = ref('')
 const schedule_data = ref([])
 const currentDateInfo = ref({})
 const today = new Date()
+
+// 드래그 앤 드롭 관련 상태 추가
+const isDragging = ref(false)
+const draggedSchedule = ref(null)
+const showUpdateModal = ref(false)
+const dropTargetDate = ref('')
+const dropTargetTime = ref('')
+const updateAllFutureSchedules = ref(false)
 
 // 날짜 관련 Reference
 const weekNames = ['Mon', 'Tue', 'Web', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -258,6 +266,62 @@ const calculateScheduleTop = (startTime) => {
   return (minutesFromHourStart / 60) * 90 // 90px 높이 기준으로 비율 계산
 }
 
+// 드래그 시작 핸들러
+const handleDragStart = (schedule, event) => {
+  isDragging.value = true
+  draggedSchedule.value = schedule
+  event.dataTransfer.effectAllowed = 'move'
+  event.target.style.zIndex = '9999'
+}
+
+// 드래그 종료 핸들러
+const handleDragEnd = (event) => {
+  isDragging.value = false
+  event.target.style.zIndex = ''
+}
+
+// 드롭 가능한 영역 표시
+const handleDragOver = (event) => {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
+}
+
+// 드롭 핸들러
+const handleDrop = (date, time, event) => {
+  event.preventDefault()
+  if (!draggedSchedule.value) return
+  
+  dropTargetDate.value = date
+  dropTargetTime.value = time
+  showUpdateModal.value = true
+}
+
+// 일정 업데이트 처리
+const handleScheduleUpdate = async () => {
+  try {
+    const response = await updateScheduleDateTime({
+      scheduleId: draggedSchedule.value.schedule_id,
+      scheduleListId: draggedSchedule.value.id,
+      newDate: dropTargetDate.value,
+      newTime: dropTargetTime.value,
+      updateAllFuture: updateAllFutureSchedules.value
+    })
+    
+    if (response.success) {
+      // 일정 목록 새로고침
+      await fetchSchedule(
+        currentDateInfo.value.currentYear,
+        currentDateInfo.value.currentMonth,
+        currentDateInfo.value.currentDay
+      )
+      showUpdateModal.value = false
+      updateAllFutureSchedules.value = false
+    }
+  } catch (error) {
+    console.error('Error updating schedule:', error)
+  }
+}
+
 onBeforeMount(() => {
   currentScheduleDate.value = formatDate(new Date())
   currentScheduleTime.value = formatHour(new Date().getHours())
@@ -412,9 +476,12 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
               v-for="(time_schedules, timeIndex) in day_schedule"
               :key="timeIndex"
               @click="clickCalendarTime(dayIndex, timeIndex, $event)"
+              @dragover="handleDragOver"
+              @drop="handleDrop(dayIndex, timeIndex, $event)"
               :class="[
                 'h-[90px] text-xs text-slate-400 font-medium p-[1px] relative',
-                dayIndex === new Date().toISOString().split('T')[0] ? 'bg-yellow-100' : ''
+                dayIndex === new Date().toISOString().split('T')[0] ? 'bg-yellow-100' : '',
+                isDragging ? 'border-2 border-dashed border-blue-500' : ''
               ]"
             >
               <div class="absolute left-0 w-full border-t border-slate-100 top-[30px]"></div>
@@ -432,8 +499,11 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                 class="absolute flex-row text-xs text-black border border-gray-700 rounded-md m-1 space-y-1 w-full pt-1 border-blue-700"
                 v-for="(time_schedule, itemindex) in time_schedules"
                 :key="itemindex"
+                draggable="true"
+                @dragstart="handleDragStart(time_schedule, $event)"
+                @dragend="handleDragEnd($event)"
                 :class="[
-                  'transform transition duration-500 ease-in-out overflow-hidden absolute',
+                  'transform transition duration-500 ease-in-out overflow-hidden absolute cursor-move',
                   !isZoomed[dayIndex]?.[timeIndex]?.[itemindex]
                     ? 'scale-100'
                     : 'scale-105 w-full pt-1 border-blue-700'
@@ -508,6 +578,40 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
       @clickCalendarSchedule="clickCalendarSchedule"
       class="z-10"
     />
+  </div>
+
+  <!-- 일정 업데이트 모달 -->
+  <div v-if="showUpdateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h3 class="text-lg font-semibold mb-4">일정 이동</h3>
+      <p class="mb-4">
+        {{ dropTargetDate }} {{ dropTargetTime }}시로 일정을 이동하시겠습니까?
+      </p>
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            v-model="updateAllFutureSchedules"
+            class="mr-2"
+          >
+          이후 모든 일정에 적용
+        </label>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button
+          class="px-4 py-2 bg-gray-200 rounded"
+          @click="showUpdateModal = false"
+        >
+          취소
+        </button>
+        <button
+          class="px-4 py-2 bg-blue-500 text-white rounded"
+          @click="handleScheduleUpdate"
+        >
+          확인
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 

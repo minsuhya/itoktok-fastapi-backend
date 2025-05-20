@@ -58,3 +58,38 @@ export const getWeeklyCalendar = async (year, month, day) => {
 export const getDailyCalendar = async (year, month, day) => {
   return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`)
 }
+
+export const updateScheduleDate = async (params) => {
+  try {
+    const response = await axios.put('/schedules/update-date', null, {
+      params: {
+        schedule_id: params.scheduleId,
+        schedule_list_id: params.scheduleListId,
+        new_date: params.newDate,
+        update_all_future: params.updateAllFuture
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error updating schedule date:', error)
+    throw error
+  }
+}
+
+export const updateScheduleDateTime = async (params) => {
+  try {
+    const response = await axios.put('/schedules/update-date-time', null, {
+      params: {
+        schedule_id: params.scheduleId,
+        schedule_list_id: params.scheduleListId,
+        new_date: params.newDate,
+        new_time: params.newTime,
+        update_all_future: params.updateAllFuture
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error updating schedule date and time:', error)
+    throw error
+  }
+}
