@@ -1,0 +1,156 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 프로젝트 구조
+- backend/: Python 기반 백엔드 서버
+  - app/: 메인 애플리케이션 코드
+  - http-json/: HTTP/JSON API 관련 코드
+  - tests/: 테스트 코드
+  - poetry.lock, pyproject.toml: Python 의존성 관리
+  - Dockerfile: 백엔드 컨테이너 설정
+
+- frontend/: JavaScript/React 기반 프론트엔드
+  - src/: 소스 코드
+  - public/: 정적 파일
+  - vite.config.js: Vite 설정
+  - tailwind.config.js: Tailwind CSS 설정
+  - package.json: Node.js 의존성 관리
+
+- database/: 데이터베이스 관련 파일
+- conf/: 설정 파일
+- data/: 데이터 파일
+- docker-compose.yml: 개발 및 프로덕션 환경 설정
+
+# 코딩 컨벤션
+1. Python (Backend)
+   - Poetry를 사용한 의존성 관리
+   - 테스트 코드는 tests/ 디렉토리에 작성
+   - Docker 컨테이너화 지원
+
+2. JavaScript (Frontend)
+   - Vite를 사용한 빌드 시스템
+   - Tailwind CSS를 사용한 스타일링
+   - ESLint와 Prettier를 사용한 코드 포맷팅
+   - pnpm을 사용한 패키지 관리
+
+# 개발 환경
+- Docker Compose를 사용한 개발 환경 구성
+- 개발용(docker-compose.dev.yml)과 프로덕션용(docker-compose.yml) 설정 분리
+
+# 비즈니스 로직
+1. 사용자 등급 및 권한
+   - 최고관리자: 시스템 전체 관리 권한
+   - 센터장: 
+     * 회원으로 가입하는 등급
+     * 센터 생성 및 관리
+     * 센터 내 선생님 일정 관리
+     * 고객 관리
+   - 선생님:
+     # 센터장이 생성하는 등급
+     * 자신의 고객 관리
+     * 상담/치료 일정 관리
+
+2. 주요 기능
+   - 심리 상담/치료 예약 관리
+   - 일정 관리
+   - 고객 관리
+   - 센터 관리
+
+# 개발 환경
+1. 백엔드
+   - Docker Compose로 실행
+   - 개발 환경: docker-compose.dev.yml 사용
+   - 테스트: Docker 컨테이너 내에서 실행
+
+2. 프론트엔드
+   - 로컬 개발: pnpm dev로 실행
+   - 프로덕션: Docker Compose로 실행
+
+# 권한 관리
+1. 최고관리자
+   - 시스템 전체 설정
+   - 모든 센터 관리
+   - 모든 사용자 관리
+
+2. 센터장
+   - 센터 설정 관리
+   - 센터 내 선생님 관리
+   - 센터 내 고객 관리
+   - 선생님 일정 관리
+
+3. 선생님
+   - 개인 일정 관리
+   - 담당 고객 관리
+   - 상담/치료 기록 관리
+
+# 핵심 기능
+1. 사용자 관리
+   - 회원가입 및 로그인
+   - 사용자 등급별 권한 관리
+   - 마이페이지 관리
+
+2. 센터 관리
+   - 센터 정보 관리
+   - 센터별 프로그램 관리
+   - 센터별 선생님 관리
+
+3. 일정 관리
+   - 월간/주간/일간 일정 조회
+   - 상담/치료 일정 등록/수정/삭제
+   - 선생님별 일정 관리
+
+4. 고객 관리
+   - 고객 정보 관리
+   - 상담/치료 기록 관리
+   - 바우처 관리
+
+5. 프로그램 관리
+   - 프로그램 등록/수정/삭제
+   - 프로그램별 일정 관리
+   - 프로그램별 고객 관리
+
+6. 기타 기능
+   - 공지사항 관리
+   - 문의사항 관리
+   - 알림 기능
+
+# API 구조
+1. 인증 관련
+   - auth.py: 로그인, 토큰 관리
+   - signup.py: 회원가입
+   - users.py: 사용자 관리
+
+2. 센터 관련
+   - center.py: 센터 관리
+   - teacher.py: 선생님 관리
+   - program.py: 프로그램 관리
+
+3. 일정 관련
+   - schedule.py: 일정 관리
+   - record.py: 상담/치료 기록
+
+4. 고객 관련
+   - customer.py: 고객 관리
+   - client.py: 클라이언트 관리
+   - voucher.py: 바우처 관리
+
+5. 기타
+   - announcement.py: 공지사항
+   - inquiry.py: 문의사항
+
+# 프론트엔드 구조
+1. 주요 뷰
+   - MonthlyView: 월간 일정
+   - WeeklyView: 주간 일정
+   - DailyViewSliding: 일간 일정
+   - ProgramView: 프로그램 관리
+   - ClientList: 고객 목록
+   - UserList: 사용자 목록
+
+2. 폼 컴포넌트
+   - ScheduleFormSliding: 일정 등록/수정
+   - ProgramFormSliding: 프로그램 등록/수정
+   - UserFormSliding: 사용자 등록/수정
+   - ClientFormSliding: 고객 등록/수정
