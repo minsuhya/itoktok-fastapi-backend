@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isVisible"
-    class="min-w-72 fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 transition-opacity duration-300 ease-in-out"
+    class="min-w-72 fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 transition-opacity duration-300 ease-in-out z-50"
     :class="{ 'opacity-0': !isVisible, 'opacity-100': isVisible }"
   >
     <div

@@ -528,8 +528,8 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                   zIndex: hoveredSchedule === time_schedule ? 20 : 
                           !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10,
                   height: calculateScheduleHeight(time_schedule.start_time, time_schedule.finish_time) + 'px',
-                  left: itemindex > 0 ? (itemindex * 20) + 'px' : '0px',
-                  width: itemindex > 0 ? 'calc(98% - ' + (itemindex * 20) + 'px)' : '98%',
+                  left: itemindex === 0 ? '0' : `${(itemindex * (100 / (time_schedules.length)))}%`,
+                  width: itemindex === 0 ? '98%' : `${100 / (time_schedules.length)}%`,
                   top: calculateScheduleTop(time_schedule.start_time) + 'px',
                   transition: 'z-index 0s, transform 0.3s ease-in-out'
                 }"
@@ -547,11 +547,11 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                     >[{{ time_schedule.client_name }}] {{ time_schedule.program_name.length > 10 ? time_schedule.program_name.slice(0,10) + '...' : time_schedule.program_name }}</span
                   >
                 </div>
-                <div class="flex justify-between items-center px-1 w-full">
+                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden">
                   <span class="inline-block">상담사</span>
                   <span class="ml-auto inline-block">{{ time_schedule.teacher_fullname }}</span>
                 </div>
-                <div class="flex justify-between items-center px-1 w-full">
+                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden">
                   <span class="inline-block">상담시간</span>
                   <span class="ml-auto inline-block"
                     >{{ time_schedule.start_time }} ~ {{ time_schedule.finish_time }}</span
@@ -559,7 +559,7 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                 </div>
               </div>
               <div
-                v-if="time_schedules.length > 2"
+                v-if="time_schedules.length > 3"
                 class="flex items-center justify-center ml-auto w-6 h-5 text-xs text-black border border-blue-700/10 rounded-md m-1 bg-blue-400/20"
                 @click.stop="clickMoreDailyView(dayIndex)"
               >
