@@ -72,6 +72,7 @@ const form = reactive({
   id: '',
   username: '',
   password: '',
+  password_confirm: '',
   email: '',
   full_name: '',
   birth_date: '',
@@ -110,6 +111,7 @@ const fetchUserInfo = async () => {
     const userInfo = await readUser(props.userId)
     console.log('userInfo:', userInfo)
     userInfo.password = ''
+    userInfo.password_confirm = ''
     Object.assign(form, userInfo)
   } catch (error) {
     console.error('Error fetching user:', error)
@@ -254,7 +256,7 @@ watch(
               <Field
                 type="password"
                 name="password_confirm"
-                v-model="form.password"
+                v-model="form.password_confirm"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
               />
               <ErrorMessage name="password_confirm" class="text-red-500 text-xs italic mt-2" />

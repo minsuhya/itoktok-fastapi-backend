@@ -268,6 +268,11 @@ const fetchScheduleInfo = async () => {
     form.phone_number = clientinfo?.phone_number || ''
     form.teacher_username = teacher?.username || ''
 
+    // 상담사가 설정된 경우 프로그램 목록 가져오기
+    if (form.teacher_username) {
+      await fetchProgramList()
+    }
+
     // 시간 처리
     form.start_time = form.start_time || formatHour(today.getHours())
     updateEndTimeOptions()
@@ -335,7 +340,6 @@ const fetchProgramList = async () => {
 onBeforeMount(() => {
   fetchScheduleInfo()
   fetchTeacherList()
-  fetchProgramList()
 })
 
 onUpdated(() => {
@@ -422,7 +426,6 @@ watch(
   (newScheduleListId, oldScheduleListId) => {
     if (newScheduleListId !== oldScheduleListId) {
       fetchScheduleInfo()
-      fetchProgramList()
     }
   }
 )

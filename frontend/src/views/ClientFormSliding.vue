@@ -104,12 +104,23 @@ const onSubmit = async (values) => {
   if (!form.consultant_status) {
     form.consultant_status = '1'
   }
-  if (form.id) {
-    await updateClientInfo(form.id, form)
-    showModal('내담자 정보가 수정되었습니다.')
-  } else {
-    await registerClientInfo(form)
-    showModal('내담자 정보가 등록되었습니다.')
+  
+  try {
+    if (form.id) {
+      await updateClientInfo(form.id, form)
+      showModal('내담자 정보가 수정되었습니다.')
+    } else {
+      await registerClientInfo(form)
+      showModal('내담자 정보가 등록되었습니다.')
+    }
+    
+    // 폼 초기화
+    Object.keys(form).forEach((key) => {
+      form[key] = key === 'center_username' ? userStore.user.center_username : ''
+    })
+  } catch (error) {
+    console.error('내담자 정보 저장 중 오류 발생:', error)
+    showModal('내담자 정보 저장 중 오류가 발생했습니다.')
   }
   emit('close')
 }

@@ -72,10 +72,11 @@
                   <Field
                     name="is_all_teachers"
                     type="checkbox"
-                    v-model="formData.is_all_teachers"
                     @change="handleAllTeachersChange"
-                    class="form-checkbox h-4 w-4 text-blue-600"
+                    v-model="formData.is_all_teachers"
+                    :value="true"
                   />
+                  <!-- <input name="is_all_teachers" @change="handleAllTeachersChange" type="checkbox" v-model="formData.is_all_teachers" /> -->
                   <span class="ml-2">전체 선생님</span>
                 </label>
               </div>
@@ -159,10 +160,12 @@ const formData = reactive({
 })
 
 const handleAllTeachersChange = (e) => {
-  if (e.target.checked) {
-     formData.teacher_username = null
+  const isChecked = e.target.checked
+  if (isChecked) {
+    formData.teacher_username = null
   }
-  formData.is_all_teachers = isAllTeachers.value = Boolean(e.target.checked)
+  formData.is_all_teachers = isChecked
+  isAllTeachers.value = isChecked
   console.log("formData.is_all_teachers:", formData.is_all_teachers)
 }
 
@@ -189,12 +192,14 @@ const loadProgram = async () => {
       max_participants: 1,
       price: 0
     })
+    isAllTeachers.value = false
     return
   }
 
   try {
     const response = await readProgram(props.programId)
     Object.assign(formData, response)
+    isAllTeachers.value = formData.is_all_teachers
     console.log("loadProgram:", formData)
   } catch (error) {
     console.error('Error fetching program:', error)
@@ -229,12 +234,8 @@ onMounted(() => {
   loadProgram()
 })
 
-watch(() => props.programId, (newId) => {
-  if (newId) {
-    loadProgram()
-  }
-})
-
+// programId가 변경되었을 때는 isVisible 감시자에서 처리하므로 별도 감시 불필요
+// isVisible이 true일 때만 데이터를 로드하거나 초기화
 watch(() => props.isVisible, (newVal) => {
   if (newVal) {
     if (!props.programId) {
@@ -242,15 +243,19 @@ watch(() => props.isVisible, (newVal) => {
       Object.assign(formData, {
         program_type: '',
         program_name: '',
-        is_all_teachers: true,
+        is_all_teachers: false,
         teacher_username: '',
         description: '',
         duration: 60,
         max_participants: 1,
         price: 0
       })
+      isAllTeachers.value = false
+      console.log("폼 초기화:", formData)
     } else {
+      // programId가 있는 경우에만 프로그램 데이터 로드
       loadProgram()
+      console.log("프로그램 데이터 로드:", formData)
     }
   }
 })

@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacherStore'
 import { readTeachers, getSelectedTeachers, updateSelectedTeachers } from '@/api/user'
 
+const router = useRouter()
 const teacherStore = useTeacherStore()
 const counselors = ref([])
 
@@ -44,10 +46,18 @@ const toggleCounselor = async (counselor) => {
     .map(c => c.username)
   teacherStore.setSelectedTeachers(selectedTeachers)
 
+  console.log('selectedTeachers:', selectedTeachers)
+
   // 선택된 상담사 목록을 서버에 등록
   try {
     const selectedTeachersString = selectedTeachers.join(',')
     await updateSelectedTeachers({ selected_teacher: selectedTeachersString })
+    
+    // 현재 페이지가 월간 일정 페이지가 아니라면 월간 일정 페이지로 이동
+    const currentRoute = router.currentRoute.value
+    if (currentRoute.path !== '/admin/monthly') {
+      router.push('/admin/monthly')
+    }
   } catch (error) {
     console.error('Error updating selected teachers:', error)
   }
