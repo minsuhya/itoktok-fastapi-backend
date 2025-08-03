@@ -13,6 +13,7 @@ from ..schemas.client import ClientInfoCreate, ClientInfoRead, ClientInfoUpdate
 ###### Client Info CRUD #####
 # 클라이언트 정보 생성
 def create_client_info(session: Session, info: ClientInfoCreate) -> ClientInfo:
+    print("create_client_info", info)
     client_info = ClientInfo.from_orm(info)
     session.add(client_info)
     session.commit()

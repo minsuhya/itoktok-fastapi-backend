@@ -27,10 +27,10 @@ def hex_to_rgba(hex_color, alpha=1.0):
 def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> Schedule:
     # schedule_data 준비
     schedule_data = schedule_create.dict()
-    if isinstance(schedule_data.get('repeat_days'), dict):
-        schedule_data['repeat_days'] = str(schedule_data['repeat_days'])
+    if isinstance(schedule_data.get("repeat_days"), dict):
+        schedule_data["repeat_days"] = str(schedule_data["repeat_days"])
 
-    # schedule 생성 
+    # schedule 생성
     schedule = Schedule(**schedule_data)
     session.add(schedule)
     session.commit()
@@ -40,15 +40,20 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
     current_date = schedule.start_date
     while current_date <= schedule.finish_date:
         create_schedule = False
-        
+
         if schedule.repeat_type == 1:  # 매일
             create_schedule = True
         elif schedule.repeat_type == 2:  # 매주
             repeat_days = eval(schedule.repeat_days)
             weekday = current_date.weekday()
             weekday_map = {
-                0: 'mon', 1: 'tue', 2: 'wed', 
-                3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'
+                0: "mon",
+                1: "tue",
+                2: "wed",
+                3: "thu",
+                4: "fri",
+                5: "sat",
+                6: "sun",
             }
             if repeat_days[weekday_map[weekday]]:
                 create_schedule = True
@@ -57,10 +62,10 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
                 create_schedule = True
         else:  # 반복 없음
             create_schedule = True
-            
+
         if create_schedule:
             schedule_list = ScheduleList(
-                title = "", # 제목 제거
+                title="",  # 제목 제거
                 teacher_username=schedule.teacher_username,
                 client_id=schedule.client_id,
                 program_id=schedule_create.program_id,
@@ -69,10 +74,10 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
                 schedule_time=schedule.start_time,
                 schedule_status="1",
                 schedule_memo=schedule_create.memo or "",
-                created_by=schedule.created_by
+                created_by=schedule.created_by,
             )
             session.add(schedule_list)
-            
+
         current_date += timedelta(days=1)
 
     session.commit()
@@ -80,31 +85,37 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
 
 
 def get_schedule(session: Session, schedule_list_id: int) -> Optional[ScheduleList]:
-    statement = select(ScheduleList)\
-        .options(joinedload(ScheduleList.schedule))\
-        .options(joinedload(ScheduleList.teacher))\
-        .options(joinedload(ScheduleList.clientinfo))\
-        .options(joinedload(ScheduleList.program))\
+    statement = (
+        select(ScheduleList)
+        .options(joinedload(ScheduleList.schedule))
+        .options(joinedload(ScheduleList.teacher))
+        .options(joinedload(ScheduleList.clientinfo))
+        .options(joinedload(ScheduleList.program))
         .where(ScheduleList.id == schedule_list_id)
-    
+    )
+
     # print("Raw SQL Query:", statement.compile(compile_kwargs={"literal_binds": True}))
-    
+
     result = session.exec(statement).first()
     # print("result:", result)
 
     # 현재 일시 가져오기
     now = datetime.now()
-    current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
-    event_datetime = datetime.combine(result.schedule_date, datetime.strptime(result.schedule_time, '%H:%M').time())
+    current_datetime = datetime.combine(
+        now.date(), datetime.strptime(now.strftime("%H:%M"), "%H:%M").time()
+    )
+    event_datetime = datetime.combine(
+        result.schedule_date, datetime.strptime(result.schedule_time, "%H:%M").time()
+    )
 
     print("current_datetime:", current_datetime)
     print("event_datetime:", event_datetime)
     # 취소 상태가 아닌 경우에만 상태 업데이트
-    if result.schedule_status != '3':
+    if result.schedule_status != "3":
         if event_datetime < current_datetime:
-            result.schedule_status = '2'  # 완료
+            result.schedule_status = "2"  # 완료
         else:
-            result.schedule_status = '1'  # 예약
+            result.schedule_status = "1"  # 예약
     return result
 
 
@@ -124,14 +135,13 @@ def update_schedule_info(
     if not schedule:
         return None
 
-    # 현재 선택된 schedule_list 조회 
+    # 현재 선택된 schedule_list 조회
     schedule_list = session.get(ScheduleList, schedule_list_id)
     if not schedule_list:
         return None
 
-
     # update_range가 'single'인 경우 해당 일정만 업데이트 후 반환
-    if schedule_update.update_range == 'single':
+    if schedule_update.update_range == "single":
         schedule_list.title = ""
         schedule_list.teacher_username = schedule_update.teacher_username
         schedule_list.client_id = schedule_update.client_id
@@ -149,10 +159,10 @@ def update_schedule_info(
     schedule_fields = Schedule.__fields__.keys()
     for key, value in update_data.items():
         if key in schedule_fields:
-            if key == 'repeat_days' and isinstance(value, dict):
+            if key == "repeat_days" and isinstance(value, dict):
                 value = str(value)
             setattr(schedule, key, value)
-    
+
     schedule.finish_date = schedule_update.finish_date
     session.add(schedule)
     session.commit()
@@ -162,9 +172,11 @@ def update_schedule_info(
         delete(ScheduleList)
         .where(ScheduleList.schedule_id == schedule.id)
         .where(
-            (ScheduleList.schedule_date > schedule_list.schedule_date) |
-            ((ScheduleList.schedule_date == schedule_list.schedule_date) &
-             (ScheduleList.schedule_time >= schedule_list.schedule_time))
+            (ScheduleList.schedule_date > schedule_list.schedule_date)
+            | (
+                (ScheduleList.schedule_date == schedule_list.schedule_date)
+                & (ScheduleList.schedule_time >= schedule_list.schedule_time)
+            )
         )
     )
     session.exec(delete_query)
@@ -174,20 +186,27 @@ def update_schedule_info(
     current_date = schedule_list.schedule_date
     while current_date <= schedule.finish_date:
         create_schedule = False
-        
+
         if schedule.repeat_type == 1:
             create_schedule = True
         elif schedule.repeat_type == 2:
             repeat_days = eval(schedule.repeat_days)
             weekday = current_date.weekday()
-            weekday_map = {0: 'mon', 1: 'tue', 2: 'wed', 
-                          3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
+            weekday_map = {
+                0: "mon",
+                1: "tue",
+                2: "wed",
+                3: "thu",
+                4: "fri",
+                5: "sat",
+                6: "sun",
+            }
             if repeat_days[weekday_map[weekday]]:
                 create_schedule = True
         elif schedule.repeat_type == 3:
             if current_date.day == schedule.start_date.day:
                 create_schedule = True
-            
+
         if create_schedule:
             schedule_list = ScheduleList(
                 title="",
@@ -199,17 +218,19 @@ def update_schedule_info(
                 schedule_time=schedule.start_time,
                 schedule_status="1",
                 schedule_memo=schedule_update.memo or "",
-                updated_by=schedule.updated_by
+                updated_by=schedule.updated_by,
             )
             session.add(schedule_list)
-            
+
         current_date += timedelta(days=1)
 
     session.commit()
     return schedule
 
 
-def delete_schedule_info(session: Session, schedule_id: int, schedule_list_id: int, update_range: str) -> Optional[Schedule]:
+def delete_schedule_info(
+    session: Session, schedule_id: int, schedule_list_id: int, update_range: str
+) -> Optional[Schedule]:
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
         return None
@@ -247,7 +268,9 @@ def delete_schedule_list_info(session: Session, schedule_list_id: int):
 
 
 # 월별 스케줄 조회
-def get_schedule_for_month(session: Session, year: int, month: int, login_user, selected_teachers=None):
+def get_schedule_for_month(
+    session: Session, year: int, month: int, login_user, selected_teachers=None
+):
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
 
@@ -255,9 +278,7 @@ def get_schedule_for_month(session: Session, year: int, month: int, login_user, 
         ScheduleList.schedule_date.between(first_day, last_day)
     )
 
-    statement = statement.join(Schedule).where(
-        ScheduleList.schedule_id == Schedule.id
-    )
+    statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
 
     # 해당 센터 일정 조정
     statement = (
@@ -265,10 +286,17 @@ def get_schedule_for_month(session: Session, year: int, month: int, login_user, 
         .where(Schedule.teacher_username == User.username)
         .where(User.center_username == login_user.center_username)
     )
-    
+
     if selected_teachers:  # 선택된 상담사가 있는 경우
-        statement = statement.where(Schedule.teacher_username.in_([t.strip() for t in selected_teachers.split(',')]))
-        
+        statement = statement.where(
+            Schedule.teacher_username.in_(
+                [t.strip() for t in selected_teachers.split(",")]
+            )
+        )
+    else:
+        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
+        statement = statement.where(Schedule.teacher_username == login_user.username)
+
     # 쿼리 출력
     print("Generated SQL:", statement.compile(compile_kwargs={"literal_binds": True}))
 
@@ -318,15 +346,20 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
         if event_day in calendar_data:
             # 현재 일시 가져오기
             now = datetime.now()
-            current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
-            event_datetime = datetime.combine(event.schedule_date, datetime.strptime(event.schedule_time, '%H:%M').time())
+            current_datetime = datetime.combine(
+                now.date(), datetime.strptime(now.strftime("%H:%M"), "%H:%M").time()
+            )
+            event_datetime = datetime.combine(
+                event.schedule_date,
+                datetime.strptime(event.schedule_time, "%H:%M").time(),
+            )
 
             # 취소 상태가 아닌 경우에만 상태 업데이트
-            if event.schedule_status != '3':
+            if event.schedule_status != "3":
                 if event_datetime < current_datetime:
-                    event.schedule_status = '2'  # 완료
+                    event.schedule_status = "2"  # 완료
                 else:
-                    event.schedule_status = '1'  # 예약
+                    event.schedule_status = "1"  # 예약
             calendar_data[event_day].append(
                 {
                     "id": event.id,
@@ -339,7 +372,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "teacher_fullname": event.schedule.teacher.full_name,
                     "teacher_expertise": event.schedule.teacher.expertise,
                     "teacher_usercolor": hex_to_rgba(
-                        event.schedule.teacher.usercolor, 1 
+                        event.schedule.teacher.usercolor, 1
                     ),
                     # "teacher_usercolor": f"bg-[{event.schedule.teacher.usercolor}]",
                     # "teacher_usercolor": "bg-[#b77334]/50",
@@ -362,16 +395,16 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
 
 # 주별 스케줄 조회
 # Function to get the schedule for the week from the database
-def get_schedule_for_week(session: Session, start_date: date, login_user, selected_teachers=None):
+def get_schedule_for_week(
+    session: Session, start_date: date, login_user, selected_teachers=None
+):
     end_date = start_date + timedelta(days=6)  # Get the end date (Sunday of that week)
 
     statement = select(ScheduleList).where(
         ScheduleList.schedule_date.between(start_date, end_date)
     )
 
-    statement = statement.join(Schedule).where(
-        ScheduleList.schedule_id == Schedule.id
-    )
+    statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
 
     # 해당 센터 일정 조정
     statement = (
@@ -381,7 +414,14 @@ def get_schedule_for_week(session: Session, start_date: date, login_user, select
     )
 
     if selected_teachers:  # 선택된 상담사가 있는 경우
-        statement = statement.where(Schedule.teacher_username.in_([t.strip() for t in selected_teachers.split(',')]))
+        statement = statement.where(
+            Schedule.teacher_username.in_(
+                [t.strip() for t in selected_teachers.split(",")]
+            )
+        )
+    else:
+        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
+        statement = statement.where(Schedule.teacher_username == login_user.username)
 
     return session.exec(statement).all()
 
@@ -406,7 +446,9 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
     # Populate the weekly_schedule with actual schedule data
     for event in schedule_data:
         event_day = event.schedule_date.strftime("%Y-%m-%d")  # Get date as 'YYYY-MM-DD'
-        event_time = int(event.schedule_time.split(":")[0])  # Extract the time of the event
+        event_time = int(
+            event.schedule_time.split(":")[0]
+        )  # Extract the time of the event
         # event_time = event.schedule_date.strftime(
         #     "%H:%M"
         # )  # Extract the time of the event
@@ -417,15 +459,19 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
 
         # 현재 일시 가져오기
         now = datetime.now()
-        current_datetime = datetime.combine(now.date(), datetime.strptime(now.strftime('%H:%M'), '%H:%M').time())
-        event_datetime = datetime.combine(event.schedule_date, datetime.strptime(event.schedule_time, '%H:%M').time())
+        current_datetime = datetime.combine(
+            now.date(), datetime.strptime(now.strftime("%H:%M"), "%H:%M").time()
+        )
+        event_datetime = datetime.combine(
+            event.schedule_date, datetime.strptime(event.schedule_time, "%H:%M").time()
+        )
 
         # 취소 상태가 아닌 경우에만 상태 업데이트
-        if event.schedule_status != '3':
+        if event.schedule_status != "3":
             if event_datetime < current_datetime:
-                event.schedule_status = '2'  # 완료
+                event.schedule_status = "2"  # 완료
             else:
-                event.schedule_status = '1'  # 예약
+                event.schedule_status = "1"  # 예약
 
         # Append the event information to the corresponding date and time
         weekly_schedule_by_day[event_day][event_time].append(

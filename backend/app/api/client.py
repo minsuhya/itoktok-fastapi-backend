@@ -5,11 +5,16 @@ from fastapi_pagination import Page, add_pagination
 from sqlalchemy.orm import Session
 
 from ..core import get_session, oauth2_scheme
-from ..crud.client import (create_client_info, delete_client_info,
-                           get_client_info_by_consultant,
-                           get_client_info_by_id, get_client_infos,
-                           search_client_infos, update_client_info,
-                           update_consultant_status)
+from ..crud.client import (
+    create_client_info,
+    delete_client_info,
+    get_client_info_by_consultant,
+    get_client_info_by_id,
+    get_client_infos,
+    search_client_infos,
+    update_client_info,
+    update_consultant_status,
+)
 from ..models.client import ClientInfo
 from ..models.user import User
 from ..schemas import ErrorResponse, SuccessResponse
@@ -31,7 +36,7 @@ def create_client(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    info.register = current_user.username
+    info.registered_by = current_user.username
     return create_client_info(db, info)
 
 
