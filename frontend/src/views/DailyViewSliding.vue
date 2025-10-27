@@ -205,8 +205,8 @@ const getScheduleTop = (start_time) => {
                       }"
                       @click.stop="zoom(day_schedule.schedule_time, day_schedule.index, $event)"
                     >
-                      <!-- 기존 내용 -->
-                      <div class="flex justify-between items-center px-1 h-6"
+                      <!-- 기본 내용 -->
+                      <div class="flex justify-between items-center px-1 h-6" :class="{ 'line-through': day_schedule.schedule_status === '3' }"
                            @click.stop="zoom(day_schedule.schedule_time, day_schedule.index, $event)">
                         <span class="inline-block font-semibold">{{ day_schedule.schedule_time }}</span>
                         <span class="ml-auto inline-block whitespace-nowrap overflow-hidden text-ellipsis">
@@ -216,11 +216,11 @@ const getScheduleTop = (start_time) => {
                       <!-- 확장시 보이는 내용 -->
                       <div v-show="isZoomed[day_schedule.schedule_time]?.[day_schedule.index]"
                         class="transition-all duration-300 ease-in-out">
-                        <div class="flex justify-between items-center px-1 h-6">
+                        <div class="flex justify-between items-center px-1 h-6" :class="{ 'line-through': day_schedule.schedule_status === '3' }">
                           <span class="inline-block">상담사</span>
                           <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
                         </div>
-                        <div class="flex justify-between items-center px-1 h-6">
+                        <div class="flex justify-between items-center px-1 h-6" :class="{ 'line-through': day_schedule.schedule_status === '3' }">
                           <span class="inline-block">상담시간</span>
                           <span class="ml-auto inline-block font-semibold">
                             {{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}

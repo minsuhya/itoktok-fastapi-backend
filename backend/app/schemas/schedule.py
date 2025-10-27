@@ -104,6 +104,11 @@ class ScheduleRead(BaseModel):
 
 
 class ScheduleUpdate(ScheduleBase):
+    schedule_status: str = Field(
+        max_length=1,
+        default="1",
+        description="스케줄 상태: 1(예약), 2(완료), 3(취소), 4(노쇼), 5(보류)"
+    )
     update_range: str = Field(
         default="single",
         description="수정 범위: single(이번 일정만 변경), all(이후 반복일정 모두 변경)"

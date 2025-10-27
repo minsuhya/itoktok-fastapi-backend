@@ -51,7 +51,8 @@ def read_teachers(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    return SuccessResponse(data=get_teachers(session, current_user.center_username))
+    print("current_user:", current_user)
+    return SuccessResponse(data=get_teachers(session, current_user))
 
 @router.get("/selected-teachers", response_model=UserSearchSelectedTeacherRead)
 def read_user_selected_teachers(

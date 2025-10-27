@@ -163,11 +163,21 @@ def get_weekly_calendar(
 # get daily calendar
 @router.get("/calendar/daily/{year}/{month}/{day}")
 def get_daily_calendar(
-    year: int, month: int, day: int, session: Session = Depends(get_session)
+    year: int,
+    month: int,
+    day: int,
+    selected_teachers: Optional[str] = Query(None),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     target_date = date(year, month, day)
 
-    schedule_data = get_schedule_for_day(session, target_date)
+    schedule_data = get_schedule_for_day(
+        session,
+        target_date,
+        login_user=current_user,
+        selected_teachers=selected_teachers,
+    )
     daily_calendar_data = generate_daily_schedule_with_empty_times(
         target_date, schedule_data
     )

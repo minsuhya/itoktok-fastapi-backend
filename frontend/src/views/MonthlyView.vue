@@ -410,17 +410,17 @@ const handleScheduleUpdate = async () => {
           }"
           @click.stop="zoom(index, itemindex, $event)"
         >
-          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
+          <div class="flex justify-between items-center px-1 h-full w-full" :class="{ 'line-through': day_schedule.schedule_status === '3' }" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">{{ day_schedule.schedule_time }}</span>
             <span class="ml-auto inline-block"
               >[{{ day_schedule.client_name }}] {{ day_schedule.program_name.length > 10 ? day_schedule.program_name.slice(0,10) + '...' : day_schedule.program_name }}</span
             >
           </div>
-          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
+          <div class="flex justify-between items-center px-1 h-full w-full" :class="{ 'line-through': day_schedule.schedule_status === '3' }" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담사</span>
             <span class="ml-auto inline-block">{{ day_schedule.teacher_fullname }}</span>
           </div>
-          <div class="flex justify-between items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">
+          <div class="flex justify-between items-center px-1 h-full w-full" :class="{ 'line-through': day_schedule.schedule_status === '3' }" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담시간</span>
             <span class="ml-auto inline-block"
               >{{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}</span

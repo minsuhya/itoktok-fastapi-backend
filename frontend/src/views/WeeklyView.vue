@@ -307,8 +307,15 @@ const handleScheduleUpdate = async () => {
       newTime: dropTargetTime.value,
       updateAllFuture: updateAllFutureSchedules.value
     })
-    
+
     if (response.success) {
+      // 현재 열려있는 상세페이지가 업데이트된 일정인 경우 날짜/시간 동기화
+      if (isDailyViewSlidingVisible.value &&
+          currentScheduleListId.value === draggedSchedule.value.id) {
+        currentScheduleDate.value = dropTargetDate.value
+        currentScheduleTime.value = `${dropTargetTime.value}:00`
+      }
+
       // 일정 목록 새로고침
       await fetchSchedule(
         currentDateInfo.value.currentYear,
@@ -541,17 +548,17 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                   )
                 "
               >
-                <div class="flex justify-between items-center px-1 w-full">
+                <div class="flex justify-between items-center px-1 w-full" :class="{ 'line-through': time_schedule.schedule_status === '3' }">
                   <span class="inline-block">{{ time_schedule.schedule_time }}</span>
                   <span class="ml-auto inline-block whitespace-nowrap overflow-hidden text-ellipsis"
                     >[{{ time_schedule.client_name }}] {{ time_schedule.program_name.length > 10 ? time_schedule.program_name.slice(0,10) + '...' : time_schedule.program_name }}</span
                   >
                 </div>
-                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden">
+                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden" :class="{ 'line-through': time_schedule.schedule_status === '3' }">
                   <span class="inline-block">상담사</span>
                   <span class="ml-auto inline-block">{{ time_schedule.teacher_fullname }}</span>
                 </div>
-                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden">
+                <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden" :class="{ 'line-through': time_schedule.schedule_status === '3' }">
                   <span class="inline-block">상담시간</span>
                   <span class="ml-auto inline-block"
                     >{{ time_schedule.start_time }} ~ {{ time_schedule.finish_time }}</span

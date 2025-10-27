@@ -45,15 +45,23 @@ def get_users(
 ) -> Page[User]:
     # statement = select(User).offset(skip).limit(limit)
     # return session.exec(statement).all()
-    query = select(User).options(joinedload(User.center_info)).order_by(desc(User.id))
+
+    statement = select(User).options(joinedload(User.center_info)).order_by(desc(User.id))
+
+    # 로그인 사용자 타입에 따라 조회 조건 설정
+    if login_user:
+        # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 사용자 조회
+        if login_user.user_type == "1":
+            statement = statement.where(User.center_username == login_user.username)
+        # 선생님(user_type=2)인 경우 자신만 조회
+        elif login_user.user_type == "2":
+            statement = statement.where(User.username == login_user.username)
+        # 최고관리자는 모든 사용자 조회 (필터링 없음)
 
     if search_qry:
-        query = query.where(User.full_name.like(f"%{search_qry}%"))
+        statement = statement.where(User.full_name.like(f"%{search_qry}%"))
 
-    if login_user.is_superuser != 1:  # 최고관리자일경우 - 센터 정보만
-        query = query.where(User.center_username == login_user.center_username)
-
-    return paginate(session, query)
+    return paginate(session, statement)
 
 
 def update_user(session: Session, user: UserUpdate, db_user: User) -> Optional[User]:
@@ -78,12 +86,20 @@ def delete_user(session: Session, user_id: int) -> bool:
 
 
 # 사용자(상담사) 리스트
-def get_teachers(session: Session, center_username: str = "") -> List[User]:
-    return session.exec(
-        select(User)
-        .where(User.center_username == center_username)
-        .order_by(desc(User.id))
-    ).all()
+def get_teachers(session: Session, current_user: User) -> List[User]:
+    # 로그인 사용자 타입에 따라 조회 조건 설정
+    statement = select(User)
+    if current_user:
+        # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 선생님 조회
+        if current_user.user_type == "1":
+            statement = statement.where(User.center_username == current_user.username)
+        # 선생님(user_type=2)인 경우 자신만 조회
+        elif current_user.user_type == "2":
+            print("선생님")
+            statement = statement.where(User.username == current_user.username)
+        # 최고관리자는 모든 선생님 조회 (필터링 없음)
+    statement = statement.order_by(desc(User.id))
+    return session.exec(statement).all()
 
 
 def get_user_selected_teachers(session: Session, username: str) -> Optional[UserSearchSelectedTeacher]:

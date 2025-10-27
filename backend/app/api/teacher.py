@@ -12,9 +12,10 @@ from ..crud.teacher import (
     get_teachers,
     update_teacher,
 )
-from ..models.user import Teacher
+from ..models.user import Teacher, User
 from ..schemas import ErrorResponse, SuccessResponse
 from ..schemas.user import TeacherCreate, TeacherRead, TeacherUpdate
+from .auth import get_current_user
 
 router = APIRouter(
     prefix="/teachers",
@@ -40,9 +41,12 @@ def read_teacher(teacher_id: int, session: Session = Depends(get_session)):
 
 @router.get("", response_model=SuccessResponse[List[TeacherRead]])
 def read_teachers(
-    skip: int = 0, limit: int = 10, session: Session = Depends(get_session)
+    skip: int = 0,
+    limit: int = 10,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ):
-    results = get_teachers(session, skip=skip, limit=limit)
+    results = get_teachers(session, skip=skip, limit=limit, login_user=current_user)
     return SuccessResponse(data={"total": len(results), "list": results})
 
 

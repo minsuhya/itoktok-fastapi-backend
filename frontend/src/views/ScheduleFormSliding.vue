@@ -226,26 +226,34 @@ const fetchScheduleInfo = async () => {
 
     form.schedule_type = 1
     form.schedule_status = 1
-    form.repeat_type = 1
+    form.repeat_type = 2  // 매주로 기본값 변경
     form.update_range = 'single'
     // 일정 초기화
     form.start_date = props.scheduleDate
     form.finish_date = props.scheduleDate
 
-    if (!form.start_time) {
+    // 시작 시간 설정 (props에서 전달받은 시간 사용)
+    if (props.scheduleTime) {
+      form.start_time = formatHour(props.scheduleTime)
+    } else if (!form.start_time) {
       const currentHour = today.getHours()
       form.start_time = (currentHour >= 9 && currentHour < 18) ? formatHour(currentHour) : '09:00'
     }
     updateEndTimeOptions()
-    // repeat_days가 문자열인 경우 객체로 초기화
+
+    // repeat_days 초기화 - 선택된 날짜의 요일을 기본 선택
+    const weekdayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+    const selectedDate = new Date(props.scheduleDate)
+    const selectedWeekday = weekdayMap[selectedDate.getDay()]
+
     form.repeat_days = {
-      mon: false,
-      tue: false,
-      wed: false,
-      thu: false,
-      fri: false,
-      sat: false,
-      sun: false
+      mon: selectedWeekday === 'mon',
+      tue: selectedWeekday === 'tue',
+      wed: selectedWeekday === 'wed',
+      thu: selectedWeekday === 'thu',
+      fri: selectedWeekday === 'fri',
+      sat: selectedWeekday === 'sat',
+      sun: selectedWeekday === 'sun'
     }
     return
   }
@@ -433,8 +441,27 @@ watch(
 watch(
   () => props.scheduleDate,
   (newScheduleDate, oldScheduleDate) => {
-    form.start_date = newScheduleDate
-    form.finish_date = newScheduleDate
+    if (newScheduleDate !== oldScheduleDate) {
+      form.start_date = newScheduleDate
+      form.finish_date = newScheduleDate
+
+      // 신규 일정인 경우 선택된 요일 업데이트
+      if (!props.scheduleListId && newScheduleDate) {
+        const weekdayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+        const selectedDate = new Date(newScheduleDate)
+        const selectedWeekday = weekdayMap[selectedDate.getDay()]
+
+        form.repeat_days = {
+          mon: selectedWeekday === 'mon',
+          tue: selectedWeekday === 'tue',
+          wed: selectedWeekday === 'wed',
+          thu: selectedWeekday === 'thu',
+          fri: selectedWeekday === 'fri',
+          sat: selectedWeekday === 'sat',
+          sun: selectedWeekday === 'sun'
+        }
+      }
+    }
   }
 )
 
@@ -467,7 +494,7 @@ const deleteScheduleInfo = async () => {
     if (!confirm(confirmMessage)) return
 
     // 삭제 API 호출
-    await deleteSchedule(form.id, props.scheduleListId, { update_range: form.update_range })
+    await deleteSchedule(form.id, props.scheduleListId, form.update_range)
     showModal('일정이 삭제되었습니다.')
     emit('close')
   } catch (error) {

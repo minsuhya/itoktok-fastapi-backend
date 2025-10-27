@@ -27,7 +27,7 @@ export const updateSchedule = async (scheduleId, scheduleListId, scheduleUpdate)
 export const deleteSchedule = async (scheduleId, scheduleListId, updateRange) => {
   return axios.delete(`/schedules/${scheduleId}/${scheduleListId}`, {
     params: {
-      update_range: updateRange.update_range
+      update_range: updateRange
     }
   })
 }
@@ -56,7 +56,11 @@ export const getWeeklyCalendar = async (year, month, day) => {
 
 // 일별 일정 조회
 export const getDailyCalendar = async (year, month, day) => {
-  return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`)
+  return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`, {
+    params: {
+      selected_teachers: teacherStore.selectedTeachers.join(',')
+    }
+  })
 }
 
 export const updateScheduleDate = async (params) => {

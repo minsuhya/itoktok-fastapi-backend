@@ -130,6 +130,9 @@ def update_schedule_info(
     schedule_update: ScheduleUpdate,
     schedule_list_id: Union[int, None] = None,
 ) -> Optional[Schedule]:
+    print("schedule_update:", schedule_update)
+    print("schedule_list_id:", schedule_list_id)
+    print("schedule_id:", schedule_id)
     # 기존 schedule 조회
     schedule = session.get(Schedule, schedule_id)
     if not schedule:
@@ -148,6 +151,7 @@ def update_schedule_info(
         schedule_list.program_id = schedule_update.program_id
         schedule_list.schedule_time = schedule.start_time
         schedule_list.schedule_memo = schedule_update.memo or ""
+        schedule_list.schedule_status = schedule_update.schedule_status
         schedule_list.updated_by = schedule.updated_by
 
         session.add(schedule_list)
@@ -281,11 +285,16 @@ def get_schedule_for_month(
     statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
 
     # 해당 센터 일정 조정
-    statement = (
-        statement.join(User)
-        .where(Schedule.teacher_username == User.username)
-        .where(User.center_username == login_user.center_username)
-    )
+    statement = statement.where(Schedule.teacher_username == User.username)
+
+    if login_user:
+        # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 일정 조회
+        if login_user.user_type == "1":
+            statement = statement.join(User).where(User.center_username == login_user.username)
+        # 선생님(user_type=2)인 경우 자신만 조회
+        elif login_user.user_type == "2":
+            statement = statement.join(User).where(User.username == login_user.username)
+        # 최고관리자는 모든 일정 조회 (필터링 없음)
 
     if selected_teachers:  # 선택된 상담사가 있는 경우
         statement = statement.where(
@@ -407,11 +416,16 @@ def get_schedule_for_week(
     statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
 
     # 해당 센터 일정 조정
-    statement = (
-        statement.join(User)
-        .where(Schedule.teacher_username == User.username)
-        .where(User.center_username == login_user.center_username)
-    )
+    statement = statement.where(Schedule.teacher_username == User.username)
+
+    if login_user:
+        # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 일정 조회
+        if login_user.user_type == "1":
+            statement = statement.join(User).where(User.center_username == login_user.username)
+        # 선생님(user_type=2)인 경우 자신만 조회
+        elif login_user.user_type == "2":
+            statement = statement.join(User).where(User.username == login_user.username)
+        # 최고관리자는 모든 일정 조회 (필터링 없음)
 
     if selected_teachers:  # 선택된 상담사가 있는 경우
         statement = statement.where(
@@ -531,8 +545,28 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
 
 # 일별 스케줄 조회
 # Function to get the schedule for a specific day from the database
-def get_schedule_for_day(session: Session, target_date: date):
+def get_schedule_for_day(session: Session, target_date: date, login_user, selected_teachers=None):
     statement = select(ScheduleList).where(ScheduleList.schedule_date == target_date)
+
+    statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
+
+    # 해당 센터 일정 조정
+    statement = (
+        statement.join(User)
+        .where(Schedule.teacher_username == User.username)
+        .where(User.center_username == login_user.center_username)
+    )
+
+    if selected_teachers:  # 선택된 상담사가 있는 경우
+        statement = statement.where(
+            Schedule.teacher_username.in_(
+                [t.strip() for t in selected_teachers.split(",")]
+            )
+        )
+    else:
+        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
+        statement = statement.where(Schedule.teacher_username == login_user.username)
+
     return session.exec(statement).all()
 
 
