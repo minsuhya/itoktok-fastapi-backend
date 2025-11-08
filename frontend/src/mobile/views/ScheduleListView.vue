@@ -72,9 +72,19 @@ const fetchSchedules = async () => {
     const date = route.params.date || new Date().toISOString().split('T')[0]
     const [year, month, day] = date.split('-')
     const response = await getDailyCalendar(parseInt(year), parseInt(month), parseInt(day))
-    schedules.value = response.data || []
+    // interceptors에서 이미 response.data를 반환하므로 직접 사용
+    // API 응답이 배열인 경우 그대로 사용, 객체인 경우 data 속성 확인
+    if (Array.isArray(response)) {
+      schedules.value = response
+    } else if (response && response.data) {
+      schedules.value = Array.isArray(response.data) ? response.data : []
+    } else {
+      schedules.value = []
+    }
   } catch (error) {
     console.error('일정 조회 오류:', error)
+    schedules.value = []
+    // 에러 발생 시에도 빈 배열로 설정하여 화면이 표시되도록 함
   }
 }
 
