@@ -1,8 +1,6 @@
 import { useTeacherStore } from '@/stores/teacherStore'
 import axios from 'axios'
 
-const teacherStore = useTeacherStore()
-
 export const createSchedule = async (scheduleCreate) => {
   return axios.post('/schedules', scheduleCreate)
 }
@@ -38,27 +36,36 @@ export const deleteScheduleList = async (scheduleListId) => {
 
 // 월간 일정 조회
 export const getMonthlyCalendar = async (year, month) => {
+  const teacherStore = useTeacherStore()
+  const selectedTeachers = teacherStore.selectedTeachers || []
+
   return axios.get(`/schedules/calendar/${year}/${month}`, {
       params: {
-        selected_teachers: teacherStore.selectedTeachers.join(',')
+        selected_teachers: selectedTeachers.join(',')
       }
   })
 }
 
 // 주간 일정 조회
 export const getWeeklyCalendar = async (year, month, day) => {
+  const teacherStore = useTeacherStore()
+  const selectedTeachers = teacherStore.selectedTeachers || []
+
   return axios.get(`/schedules/calendar/${year}/${month}/${day}`, {
       params: {
-        selected_teachers: teacherStore.selectedTeachers.join(',')
+        selected_teachers: selectedTeachers.join(',')
       }
   })
 }
 
 // 일별 일정 조회
 export const getDailyCalendar = async (year, month, day) => {
+  const teacherStore = useTeacherStore()
+  const selectedTeachers = teacherStore.selectedTeachers || []
+
   return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`, {
     params: {
-      selected_teachers: teacherStore.selectedTeachers.join(',')
+      selected_teachers: selectedTeachers.join(',')
     }
   })
 }

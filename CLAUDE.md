@@ -6,10 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다. FastAPI 백엔드와 Vue 3 프론트엔드로 구성된 풀스택 애플리케이션으로, 센터 운영, 상담사 관리, 내담자 관리, 일정 관리를 지원합니다.
 
+**플랫폼:**
+- **데스크톱 버전**: 관리자/센터장용 전체 기능 관리 인터페이스
+- **모바일 버전**: 선생님용 경량화된 일정 및 내담자 관리 인터페이스 (`/mobile` 경로)
+
 **주요 사용자 역할:**
-- **최고관리자**: 시스템 전체 관리 권한
-- **센터장**: 센터 생성/관리, 선생님 및 내담자 관리, 일정 관리
-- **선생님**: 담당 내담자 및 개인 일정 관리
+- **최고관리자 (is_superuser == 1)**: 시스템 전체 관리 권한
+- **센터장 (user_type == 1)**: 센터 생성/관리, 선생님 및 내담자 관리, 일정 관리
+- **선생님 (기본값)**: 담당 내담자 및 개인 일정 관리
 
 ## 개발 환경 설정
 
@@ -25,18 +29,25 @@ ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다
 
 **프로덕션 모드:**
 ```bash
-docker compose up
+docker compose up -d
 # Frontend: http://www.itoktok.com:8081
+# Mobile: http://www.itoktok.com:8081/mobile
 # Backend API: http://api.itoktok.com:3000
 # API Docs: http://api.itoktok.com:3000/docs
 ```
 
 **개발 모드:**
 ```bash
-docker compose -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml up -d
 # Frontend: http://localhost:2080
+# Mobile: http://localhost:2080/mobile
 # Backend API: http://localhost:3000
+# API Docs: http://localhost:3000/docs
 ```
+
+**참고:**
+- 데이터베이스는 외부 MySQL 서버를 사용 (`.env`의 `CONN_URL`로 설정)
+- docker-compose의 MariaDB/PostgreSQL/MongoDB는 주석 처리되어 있음
 
 ## 백엔드 개발 (FastAPI)
 
@@ -81,13 +92,17 @@ backend/app/
 ```
 
 **데이터베이스:**
-- MySQL (주 데이터베이스, SQLModel/SQLAlchemy 사용)
+- MySQL/MariaDB (주 데이터베이스, 외부 서버 사용)
+  - 연결: `CONN_URL` 환경 변수 (예: `mysql+pymysql://user:password@host:port/database`)
+  - SQLModel/SQLAlchemy ORM 사용
 - MongoDB (보조 데이터베이스, 선택적 사용)
+  - 연결: `MONGO_URI`, `MONGO_DB` 환경 변수
 
 **인증:**
 - JWT 토큰 기반 (python-jose)
 - OAuth2 password flow
-- bcrypt 비밀번호 해싱
+- bcrypt 비밀번호 해싱 (passlib)
+- 토큰 만료: `ACCESS_TOKEN_EXPIRE_MINUTES` 환경 변수로 설정
 
 ### 주요 API 엔드포인트
 
@@ -134,9 +149,14 @@ pnpm format
 ```
 frontend/src/
 ├── api/          # API 통신 (axios)
-├── views/        # 페이지 컴포넌트
+├── views/        # 데스크톱 페이지 컴포넌트
+├── mobile/       # 모바일 버전 (선생님용)
+│   ├── components/  # 모바일 전용 컴포넌트
+│   └── views/       # 모바일 페이지 컴포넌트
 ├── components/   # 재사용 컴포넌트
 ├── router/       # Vue Router 설정
+│   ├── admin/       # 데스크톱 라우트
+│   └── mobile/      # 모바일 라우트
 ├── stores/       # Pinia 상태 관리
 ├── hooks/        # Composable 함수
 └── assets/       # 정적 자원
@@ -153,13 +173,15 @@ frontend/src/
 
 ### 인증 흐름
 
-1. `useAuth()` 훅으로 로그인
-2. JWT 토큰을 localStorage에 저장
-3. axios 인터셉터가 모든 요청에 토큰 자동 첨부
+1. `useAuth()` 훅으로 로그인 (`/auth/login` API 호출)
+2. JWT 토큰을 localStorage에 저장 (`VITE_TOKEN_KEY`)
+3. axios 인터셉터(`src/api/interceptors.js:14`)가 모든 요청에 `Authorization: Bearer {token}` 헤더 자동 첨부
 4. 401 응답 시 자동 로그아웃 및 로그인 페이지로 리다이렉트
+5. `userStore`(Pinia)에 사용자 정보 저장
 
-### 주요 뷰 컴포넌트
+### 데스크톱 뷰 컴포넌트
 
+**메인 뷰:**
 - **MonthlyView**: 월간 일정 캘린더
 - **WeeklyView**: 주간 일정 뷰
 - **DailyViewSliding**: 일간 일정 상세 뷰
@@ -167,64 +189,117 @@ frontend/src/
 - **ClientList**: 내담자 목록
 - **UserList**: 사용자 목록
 
-### 폼 컴포넌트
-
-슬라이딩 패널 형태로 구현:
+**폼 컴포넌트 (슬라이딩 패널):**
 - **ScheduleFormSliding**: 일정 등록/수정
 - **ProgramFormSliding**: 프로그램 등록/수정
 - **UserFormSliding**: 사용자 등록/수정
 - **ClientFormSliding**: 내담자 등록/수정
 
+### 모바일 버전
+
+**경로:** `/mobile` (선생님용 경량화 인터페이스)
+
+**주요 화면:**
+- **HomeView**: 달력과 일정 목록 홈
+- **ScheduleView**: 일정 상세 및 관리
+- **ClientListView**: 내담자 조회
+- **ClientDetailView**: 내담자 상세 정보
+- **TreatmentStatusView**: 치료 현황
+- **SettingsView**: 설정 및 프로필 관리
+
+**모바일 컴포넌트:**
+- **MobileLayout**: 헤더 + 컨텐츠 + 하단 네비게이션
+- **MobileHeader**: 상단 헤더 (뒤로가기, 제목, 액션 버튼)
+- **MobileBottomNav**: 하단 네비게이션 바
+
+**중요 참고사항:**
+- API 응답 구조: `interceptors.js`에서 이미 `response.data`를 추출하므로, 모바일 뷰에서는 `response` 직접 사용 (`.data` 중복 접근 금지)
+- 상세 내용: `frontend/src/mobile/README.md` 및 `frontend/MOBILE_DEPLOYMENT_ISSUE.md` 참조
+
 ## 환경 변수
 
 ### 백엔드 (.env)
 
+루트 디렉토리의 `.env` 파일:
+
 ```bash
-# Database
+# MySQL/MariaDB 연결 (필수)
 CONN_URL=mysql+pymysql://user:password@host:port/database
 
-# MongoDB (선택 사항)
-MONGO_URI=mongodb://localhost:27017
+# MongoDB 연결 (선택 사항)
+MONGO_URI=mongodb://host:port
 MONGO_DB=database_name
 
-# JWT Authentication
+# JWT 인증 설정 (필수)
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-### 프론트엔드
+**중요:**
+- 외부 MySQL 서버를 사용하므로 `CONN_URL`을 실제 서버 정보로 설정해야 함
+- Docker 컨테이너의 DB는 주석 처리되어 있음
 
-**.env.development:**
+### 프론트엔드 (.env.development / .env.production)
+
+**frontend/.env.development:**
 ```bash
 VITE_API_BASE_URL=http://localhost:2080
-VITE_TOKEN_KEY=itoktok_token
+VITE_TOKEN_KEY=access_token
 ```
 
-**.env.production:**
+**frontend/.env.production:**
 ```bash
 VITE_API_BASE_URL=http://itoktok-api.gillilab.com
-VITE_TOKEN_KEY=itoktok_token
+VITE_TOKEN_KEY=access_token
 ```
+
+**참고:**
+- 개발 모드: Vite dev 서버가 API 프록시 역할
+- 프로덕션 모드: Nginx가 API 요청을 백엔드로 라우팅
 
 ## 프로젝트 구조
 
 ```
 itoktok/
-├── backend/              # FastAPI 백엔드
-│   ├── app/             # 애플리케이션 코드
-│   ├── tests/           # 테스트
-│   ├── pyproject.toml   # Poetry 설정
-│   └── Dockerfile       # 백엔드 컨테이너
-├── frontend/            # Vue 3 프론트엔드
-│   ├── src/            # 소스 코드
-│   ├── public/         # 정적 파일
-│   ├── package.json    # pnpm 설정
-│   └── dist/           # 빌드 결과 (git 제외)
-├── conf/               # Nginx 설정
-├── data/               # 데이터 파일
-├── docker-compose.yml         # 프로덕션 설정
-└── docker-compose.dev.yml     # 개발 설정
+├── backend/                    # FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/               # API 엔드포인트
+│   │   ├── crud/              # DB CRUD 작업
+│   │   ├── models/            # SQLModel 데이터베이스 모델
+│   │   ├── schemas/           # Pydantic 스키마
+│   │   ├── core/              # 설정, DB 연결
+│   │   └── main.py            # 엔트리 포인트
+│   ├── tests/                 # 테스트
+│   ├── pyproject.toml         # Poetry 의존성
+│   └── Dockerfile
+├── frontend/                   # Vue 3 프론트엔드
+│   ├── src/
+│   │   ├── api/               # API 통신 레이어
+│   │   ├── views/             # 데스크톱 페이지
+│   │   ├── mobile/            # 모바일 버전
+│   │   │   ├── components/   # 모바일 컴포넌트
+│   │   │   ├── views/        # 모바일 페이지
+│   │   │   └── README.md     # 모바일 가이드
+│   │   ├── components/        # 공통 컴포넌트
+│   │   ├── router/            # 라우팅
+│   │   │   ├── admin/        # 데스크톱 라우트
+│   │   │   └── mobile/       # 모바일 라우트
+│   │   ├── stores/            # Pinia 상태 관리
+│   │   └── hooks/             # Composables
+│   ├── public/                # 정적 파일
+│   ├── dist/                  # 빌드 결과 (git 제외)
+│   ├── .env.development       # 개발 환경 변수
+│   ├── .env.production        # 프로덕션 환경 변수
+│   ├── package.json           # pnpm 의존성
+│   └── MOBILE_DEPLOYMENT_ISSUE.md  # 모바일 배포 이슈 가이드
+├── conf/                       # Nginx 설정 파일
+│   ├── nginx.conf             # 프로덕션 설정
+│   └── nginx.dev.conf         # 개발 설정
+├── data/                       # 데이터 파일
+├── .env                        # 백엔드 환경 변수
+├── docker-compose.yml          # 프로덕션 Docker Compose
+└── docker-compose.dev.yml      # 개발 Docker Compose
 ```
 
 ## 비즈니스 로직 핵심
@@ -259,17 +334,31 @@ itoktok/
 
 ### 백엔드 작업
 
-1. Docker Compose로 전체 스택 실행
-2. 컨테이너 내에서 테스트 실행
-3. API 문서로 엔드포인트 확인: http://localhost:3000/docs
-4. CRUD 패턴 준수: `crud/` → `api/` → `schemas/`
+1. `.env` 파일에 데이터베이스 연결 정보 설정
+2. Docker Compose로 백엔드 실행: `docker compose -f docker-compose.dev.yml up -d api`
+3. 또는 로컬 개발: `cd backend && poetry run uvicorn app.main:app --reload`
+4. API 문서 확인: http://localhost:3000/docs
+5. 테스트 실행: `cd backend && poetry run pytest tests`
+6. CRUD 패턴 준수: `crud/` → `api/` → `schemas/`
 
 ### 프론트엔드 작업
 
-1. 로컬에서 `pnpm dev`로 실행 (핫 리로드)
-2. API 연동 테스트
-3. 빌드 후 Docker로 프로덕션 테스트
-4. `pnpm lint` 및 `pnpm format`으로 코드 품질 유지
+**로컬 개발 (권장):**
+1. `cd frontend && pnpm install`
+2. `pnpm dev` 실행 (핫 리로드)
+3. 데스크톱: http://localhost:5173
+4. 모바일: http://localhost:5173/mobile
+
+**Docker 개발:**
+1. `pnpm build`로 빌드
+2. `docker compose -f docker-compose.dev.yml up -d` 실행
+3. http://localhost:2080 접속
+
+**배포 전 체크리스트:**
+1. `pnpm lint` - ESLint 검사
+2. `pnpm format` - Prettier 포맷팅
+3. `pnpm build` - 프로덕션 빌드 테스트
+4. 모바일/데스크톱 양쪽 모두 테스트
 
 ## 중요 개발 참고사항
 
@@ -296,12 +385,22 @@ session.refresh(team)  # 관련 객체도 refresh 필요!
 
 ### Vue 컴포넌트 네이밍
 - 슬라이딩 폼: `*FormSliding.vue`
-- 리스트 뷰: `*List.vue`
+- 리스트 뷰: `*List.vue` 또는 `*ListView.vue`
 - 메인 뷰: `*View.vue`
+- 모바일 컴포넌트: `Mobile*.vue` (예: `MobileLayout.vue`, `MobileHeader.vue`)
+
+### API 응답 구조 (중요!)
+**axios 인터셉터 구조:**
+- `src/api/interceptors.js:31`에서 이미 `response.data`를 추출하여 반환
+- 따라서 API 호출 후 `response.data`가 아닌 `response`를 직접 사용해야 함
+- 잘못된 예: `const data = response.data.items` (오류 발생)
+- 올바른 예: `const data = response.items`
+- 특히 모바일 뷰에서 이 문제가 발생하기 쉬우므로 주의!
 
 ### 페이지네이션
 - 백엔드: `fastapi-pagination` 사용
 - 프론트엔드: API 응답의 `items`, `total`, `page`, `size` 활용
+- 예시: `const items = response.items` (`.data.items`가 아님!)
 
 ## 테스트
 
@@ -332,27 +431,81 @@ pnpm format
 
 ## 배포
 
-### 프로덕션 빌드
+### 프로덕션 빌드 및 배포
 
 ```bash
-# 프론트엔드 빌드
+# 1. 프론트엔드 빌드
 cd frontend
 pnpm build
 
-# Docker Compose로 전체 스택 실행
+# 2. Docker Compose로 전체 스택 실행
 cd ..
 docker compose up -d
+
+# 3. 서비스 확인
+docker compose ps
+docker compose logs -f  # 로그 확인
 ```
+
+### 배포 후 확인 사항
+
+1. **데스크톱 버전**: http://www.itoktok.com:8081 접속 확인
+2. **모바일 버전**: http://www.itoktok.com:8081/mobile 접속 확인
+3. **API 문서**: http://api.itoktok.com:3000/docs 확인
+4. 로그인 및 주요 기능 동작 테스트
+5. 브라우저 콘솔에서 오류 확인
 
 ### Nginx 설정
 
-- 프로덕션: `conf/nginx.conf`
-- 개발: `conf/nginx.dev.conf`
-- 프론트엔드 빌드 결과는 `frontend/dist/`를 서빙
+- **프로덕션**: `conf/nginx.conf`
+  - 포트: 8081 (HTTP), 443 (HTTPS)
+  - 프론트엔드: `frontend/dist/` 서빙
+  - API 프록시: `/api` → `http://api:3000`
+
+- **개발**: `conf/nginx.dev.conf`
+  - 포트: 2080 (HTTP), 2443 (HTTPS)
+  - 동일한 구조, 개발용 설정
+
+### Mac M1/M2 빌드 이슈
+
+```bash
+# ARM 아키텍처에서 빌드 시 플랫폼 명시 필요
+env DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
+```
+
+## 알려진 이슈 및 해결 방법
+
+### 모바일 버전 빈 화면 문제
+
+**증상:** 로그인 후 일정 페이지로 이동 시 화면이 출력되지 않음
+
+**원인:** axios 인터셉터에서 이미 `response.data`를 반환하는데, 모바일 뷰에서 `response.data`를 다시 접근
+
+**해결방법:**
+- 모바일 뷰에서 API 응답을 `response` 직접 사용 (`.data` 제거)
+- 자세한 내용: `frontend/MOBILE_DEPLOYMENT_ISSUE.md` 참조
+
+### teacherStore 초기화 문제
+
+모바일 뷰에서 `teacherStore.selectedTeachers`가 undefined일 수 있음
+- 빈 배열 기본값 설정 필요
+- 또는 모바일 앱 초기화 시 store 초기화
 
 ## 추가 참고사항
 
-- 개인정보 보호: 내담자 정보는 민감 데이터로 처리
-- 센터별 데이터 격리: 철저한 권한 검증 필수
-- 바우처 관리: 결제 관련 정보 정확성 보장
-- 일정 충돌 방지: 선생님별 시간대 중복 체크
+### 보안 및 데이터 관리
+- **개인정보 보호**: 내담자 정보는 민감 데이터로 처리, HTTPS 사용 필수
+- **센터별 데이터 격리**: 모든 API에서 센터 ID 기반 권한 검증 필수
+- **바우처 관리**: 결제 관련 정보 정확성 보장
+- **일정 충돌 방지**: 선생님별 시간대 중복 체크
+
+### 성능 최적화
+- Vue Router lazy loading으로 코드 스플리팅
+- 모바일 버전은 경량화된 인터페이스로 로딩 속도 최적화
+- Nginx에서 정적 파일 캐싱 활용
+
+### 개발 문서
+- 백엔드 상세: `backend/CLAUDE.md`
+- 프론트엔드 상세: `frontend/CLAUDE.md`
+- 모바일 가이드: `frontend/src/mobile/README.md`
+- 모바일 이슈: `frontend/MOBILE_DEPLOYMENT_ISSUE.md`
