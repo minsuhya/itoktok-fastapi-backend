@@ -195,8 +195,8 @@ const fetchSchedule = async (year, month) => {
     Object.keys(data.data).forEach(date => {
       data.data[date].sort((a, b) => {
         // 시간을 비교하기 위해 시간 문자열을 Date 객체로 변환
-        const timeA = new Date(`2000-01-01 ${a.start_time}`)
-        const timeB = new Date(`2000-01-01 ${b.start_time}`)
+        const timeA = new Date(`2000-01-01 ${a.schedule_time}`)
+        const timeB = new Date(`2000-01-01 ${b.schedule_time}`)
         return timeA - timeB
       })
     })
@@ -423,7 +423,7 @@ const handleScheduleUpdate = async () => {
           <div class="flex justify-between items-center px-1 h-full w-full" :class="{ 'line-through': day_schedule.schedule_status === '3' }" @click.stop="zoom(index, itemindex, $event)">
             <span class="inline-block">상담시간</span>
             <span class="ml-auto inline-block"
-              >{{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}</span
+              >{{ day_schedule.schedule_time }} ~ {{ day_schedule.schedule_finish_time }}</span
             >
           </div>
           <div class="flex justify-center items-center px-1 h-full w-full" @click.stop="zoom(index, itemindex, $event)">

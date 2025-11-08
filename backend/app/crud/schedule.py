@@ -72,6 +72,7 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
                 schedule_id=schedule.id,
                 schedule_date=current_date,
                 schedule_time=schedule.start_time,
+                schedule_finish_time=schedule.finish_time,
                 schedule_status="1",
                 schedule_memo=schedule_create.memo or "",
                 created_by=schedule.created_by,
@@ -150,6 +151,7 @@ def update_schedule_info(
         schedule_list.client_id = schedule_update.client_id
         schedule_list.program_id = schedule_update.program_id
         schedule_list.schedule_time = schedule.start_time
+        schedule_list.schedule_finish_time = schedule.finish_time
         schedule_list.schedule_memo = schedule_update.memo or ""
         schedule_list.schedule_status = schedule_update.schedule_status
         schedule_list.updated_by = schedule.updated_by
@@ -220,6 +222,7 @@ def update_schedule_info(
                 schedule_id=schedule.id,
                 schedule_date=current_date,
                 schedule_time=schedule.start_time,
+                schedule_finish_time=schedule.finish_time,
                 schedule_status="1",
                 schedule_memo=schedule_update.memo or "",
                 updated_by=schedule.updated_by,
@@ -375,6 +378,7 @@ def generate_monthly_calendar_without_timeslots(year: int, month: int, schedule_
                     "schedule_id": event.schedule_id,
                     "schedule_date": event.schedule_date,
                     "schedule_time": event.schedule_time,
+                    "schedule_finish_time": event.schedule_finish_time,
                     "schedule_status": event.schedule_status,
                     "schedule_memo": event.schedule_memo,
                     "teacher_username": event.schedule.teacher_username,
@@ -494,6 +498,7 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
                 "schedule_id": event.schedule_id,
                 "schedule_date": event.schedule_date,
                 "schedule_time": event.schedule_time,
+                "schedule_finish_time": event.schedule_finish_time,
                 "schedule_status": event.schedule_status,
                 "schedule_memo": event.schedule_memo,
                 "teacher_username": event.schedule.teacher_username,
@@ -598,6 +603,7 @@ def generate_daily_schedule_with_empty_times(target_date: date, schedule_data):
                 "schedule_id": event.schedule_id,
                 "schedule_date": event.schedule_date,
                 "schedule_time": event.schedule_time,
+                "schedule_finish_time": event.schedule_finish_time,
                 "schedule_status": event.schedule_status,
                 "schedule_memo": event.schedule_memo,
                 "teacher_username": event.schedule.teacher_username,

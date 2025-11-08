@@ -105,9 +105,9 @@ const getTimeDifferenceInMinutes = (start, end) => {
 // 겹치는 일정 그룹화 함수 추가
 const getOverlappingGroups = (schedules) => {
   return schedules.reduce((groups, schedule, index) => {
-    const startTime = schedule.start_time
+    const startTime = schedule.schedule_time
     const group = groups.find(g => 
-      g.some(s => s.start_time === startTime)
+      g.some(s => s.schedule_time === startTime)
     )
     if (group) {
       group.push({ ...schedule, index })
@@ -199,8 +199,8 @@ const getScheduleTop = (start_time) => {
                         width: !isZoomed[day_schedule.schedule_time]?.[day_schedule.index]
                           ? `${85 - (groupIndex * 15)}%`
                           : '85%',
-                        height: `${getScheduleHeight(day_schedule.start_time, day_schedule.finish_time)}px`,
-                        top: `${getScheduleTop(day_schedule.start_time)}px`,
+                        height: `${getScheduleHeight(day_schedule.schedule_time, day_schedule.schedule_finish_time)}px`,
+                        top: `${getScheduleTop(day_schedule.schedule_time)}px`,
                         right: 'auto'
                       }"
                       @click.stop="zoom(day_schedule.schedule_time, day_schedule.index, $event)"
@@ -223,7 +223,7 @@ const getScheduleTop = (start_time) => {
                         <div class="flex justify-between items-center px-1 h-6" :class="{ 'line-through': day_schedule.schedule_status === '3' }">
                           <span class="inline-block">상담시간</span>
                           <span class="ml-auto inline-block font-semibold">
-                            {{ day_schedule.start_time }} ~ {{ day_schedule.finish_time }}
+                            {{ day_schedule.schedule_time }} ~ {{ day_schedule.schedule_finish_time }}
                           </span>
                         </div>
                         <div class="flex justify-center items-center px-1 h-8">

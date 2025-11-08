@@ -58,6 +58,7 @@ class ScheduleListBase(SQLModel):
     program_id: int = Field(foreign_key="program.id")
     schedule_date: date = Field(default_factory=date.today)
     schedule_time: str = Field(max_length=5)
+    schedule_finish_time: str = Field(max_length=5)
     schedule_status: str = Field(
         max_length=1,
         default="1",

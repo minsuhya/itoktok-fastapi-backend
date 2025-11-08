@@ -275,12 +275,17 @@ async def update_schedule_date_time(
         if not current_schedule:
             raise HTTPException(status_code=404, detail="Schedule not found")
 
-        # 시작 시간과 종료 시간 계산
-        # 기존 시간의 분 추출
-        current_schedule_minutes = current_schedule.schedule_time.split(":")[1]
+        # 기존 schedule_time과 schedule_finish_time 파싱
+        orig_start = datetime.strptime(current_schedule.schedule_time, "%H:%M")
+        orig_finish = datetime.strptime(current_schedule.schedule_finish_time, "%H:%M")
+        time_delta = orig_finish - orig_start
 
-        # 새로운 시간에 기존 분을 유지
+        # 기존 분 추출하여 새로운 시작 시간 생성
+        current_schedule_minutes = current_schedule.schedule_time.split(":")[1]
         schedule_time = f"{new_time:02d}:{current_schedule_minutes}"
+        new_start = datetime.strptime(schedule_time, "%H:%M")
+        # 새로운 종료 시간 계산하여 HH:MM 형식으로 저장
+        schedule_finish_time = (new_start + time_delta).strftime("%H:%M")
 
         if update_all_future:
             # 현재 일정 이후의 모든 일정 업데이트
@@ -309,10 +314,12 @@ async def update_schedule_date_time(
 
                 # 시간 업데이트
                 schedule.schedule_time = schedule_time
+                schedule.schedule_finish_time = schedule_finish_time
         else:
             # 현재 일정만 업데이트
             current_schedule.schedule_date = new_date
             current_schedule.schedule_time = schedule_time
+            current_schedule.schedule_finish_time = schedule_finish_time
 
         db.commit()
         return SuccessResponse(

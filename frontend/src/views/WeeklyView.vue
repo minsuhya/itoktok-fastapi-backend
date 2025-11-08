@@ -534,10 +534,10 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                     : 'rgb(255, 255, 255)',
                   zIndex: hoveredSchedule === time_schedule ? 20 : 
                           !isZoomed[dayIndex]?.[timeIndex]?.[itemindex] ? 1 : 10,
-                  height: calculateScheduleHeight(time_schedule.start_time, time_schedule.finish_time) + 'px',
+                  height: calculateScheduleHeight(time_schedule.schedule_time, time_schedule.schedule_finish_time) + 'px',
                   left: itemindex === 0 ? '0' : `${(itemindex * (100 / (time_schedules.length)))}%`,
                   width: itemindex === 0 ? '98%' : `${100 / (time_schedules.length)}%`,
-                  top: calculateScheduleTop(time_schedule.start_time) + 'px',
+                  top: calculateScheduleTop(time_schedule.schedule_time) + 'px',
                   transition: 'z-index 0s, transform 0.3s ease-in-out'
                 }"
                 @click.stop="
@@ -561,7 +561,7 @@ watch(() => teacherStore.selectedTeachers, (newTeachers) => {
                 <div class="flex justify-between items-center px-1 w-full min-w-20 overflow-hidden" :class="{ 'line-through': time_schedule.schedule_status === '3' }">
                   <span class="inline-block">상담시간</span>
                   <span class="ml-auto inline-block"
-                    >{{ time_schedule.start_time }} ~ {{ time_schedule.finish_time }}</span
+                    >{{ time_schedule.schedule_time }} ~ {{ time_schedule.schedule_finish_time }}</span
                   >
                 </div>
               </div>

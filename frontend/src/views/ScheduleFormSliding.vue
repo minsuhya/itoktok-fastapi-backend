@@ -1,13 +1,13 @@
 <script setup>
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
-import { watch, ref, reactive, onBeforeMount, onMounted, onUpdated, inject } from 'vue'
-import { Form, Field, ErrorMessage } from 'vee-validate'
-import { useUserStore } from '@/stores/auth'
-import * as yup from 'yup'
-import { readUserByUsername, readTeachers } from '@/api/user'
 import { searchClientInfos } from '@/api/client'
-import { createSchedule, updateSchedule, readSchedule, deleteSchedule } from '@/api/schedule'
 import { readPrograms } from '@/api/program'
+import { createSchedule, deleteSchedule, readSchedule, updateSchedule } from '@/api/schedule'
+import { readTeachers, readUserByUsername } from '@/api/user'
+import { useUserStore } from '@/stores/auth'
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import { ErrorMessage, Field, Form } from 'vee-validate'
+import { inject, onBeforeMount, onMounted, onUpdated, reactive, ref, watch } from 'vue'
+import * as yup from 'yup'
 
 const userStore = useUserStore()
 const showModal = inject('showModal')
@@ -68,12 +68,14 @@ const selectClient = async (client) => {
   filteredClients.value = []
 
   // 상담사 정보 추가
-  try {
-    const consultant_info = await readUserByUsername(client.consultant)
-    form.teacher_username = consultant_info.username
-    fetchProgramList()
-  } catch (error) {
-    console.error('Error fetching clients:', error)
+  if (client.consultant) {
+    try {
+      const consultant_info = await readUserByUsername(client.consultant)
+      form.teacher_username = consultant_info.username
+      await fetchProgramList()
+    } catch (error) {
+      console.error('Error fetching consultant info:', error)
+    }
   }
 }
 
@@ -133,11 +135,11 @@ function formatHour(hm) {
   return `${hour}:${minute}`
 }
 
-const updateEndTimeOptions = () => {
+const updateEndTimeOptions = (preserveFinishTime = false) => {
   if (!form.start_time) return
 
   const [startHour, startMinute] = form.start_time.split(':').map(Number)
-  const startDate = today
+  const startDate = new Date(today)
   startDate.setHours(startHour, startMinute, 0, 0)
 
   // 시작 시간 이후 10분 단위로 1시간 뒤까지 선택지 생성
@@ -154,11 +156,14 @@ const updateEndTimeOptions = () => {
   }
 
   endTimeOptions.value = options
-  // 시작시간 + 50분을 종료시간으로 설정
-  const [sh, sm] = form.start_time.split(':').map(Number)
-  const endTime = new Date()
-  endTime.setHours(sh, sm + 50)
-  form.finish_time = formatTime(endTime)
+  
+  // finish_time이 이미 설정되어 있지 않은 경우에만 자동 설정
+  if (!preserveFinishTime && !form.finish_time) {
+    const [sh, sm] = form.start_time.split(':').map(Number)
+    const endTime = new Date()
+    endTime.setHours(sh, sm + 50)
+    form.finish_time = formatTime(endTime)
+  }
 }
 
 // vee-validate 스키마 정의
@@ -218,104 +223,118 @@ const closeForm = () => {
   emit('close')
 }
 
+// repeat_days 초기화 헬퍼 함수
+const initializeRepeatDays = (date) => {
+  const weekdayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+  const selectedDate = new Date(date)
+  const selectedWeekday = weekdayMap[selectedDate.getDay()]
+
+  return {
+    mon: selectedWeekday === 'mon',
+    tue: selectedWeekday === 'tue',
+    wed: selectedWeekday === 'wed',
+    thu: selectedWeekday === 'thu',
+    fri: selectedWeekday === 'fri',
+    sat: selectedWeekday === 'sat',
+    sun: selectedWeekday === 'sun'
+  }
+}
+
+// repeat_days 파싱 헬퍼 함수
+const parseRepeatDays = (repeatDays) => {
+  const defaultRepeatDays = {
+    mon: false,
+    tue: false,
+    wed: false,
+    thu: false,
+    fri: false,
+    sat: false,
+    sun: false
+  }
+
+  if (!repeatDays) return defaultRepeatDays
+
+  if (typeof repeatDays === 'object' && !Array.isArray(repeatDays)) {
+    return repeatDays
+  }
+
+  if (typeof repeatDays === 'string') {
+    try {
+      return JSON.parse(
+        repeatDays
+          .replace(/'/g, '"')
+          .replace(/True/g, 'true')
+          .replace(/False/g, 'false')
+      )
+    } catch {
+      return defaultRepeatDays
+    }
+  }
+
+  return defaultRepeatDays
+}
+
+// 폼 초기화 헬퍼 함수
+const resetForm = () => {
+  form.id = ''
+  form.teacher_username = ''
+  form.client_id = ''
+  form.schedule_type = 1
+  form.client_name = ''
+  form.program_id = ''
+  form.repeat_type = 2 // 매주로 기본값
+  form.repeat_days = initializeRepeatDays(props.scheduleDate)
+  form.schedule_status = 1
+  form.start_date = props.scheduleDate
+  form.finish_date = props.scheduleDate
+  form.start_time = props.scheduleTime ? formatHour(props.scheduleTime) : formatHour(today.getHours())
+  form.finish_time = ''
+  form.memo = ''
+  form.update_range = 'single'
+}
+
 const fetchScheduleInfo = async () => {
+  // 신규 일정인 경우 폼 초기화
   if (!props.scheduleListId) {
-    Object.keys(form).forEach((key) => {
-      form[key] = ''
-    })
-
-    form.schedule_type = 1
-    form.schedule_status = 1
-    form.repeat_type = 2  // 매주로 기본값 변경
-    form.update_range = 'single'
-    // 일정 초기화
-    form.start_date = props.scheduleDate
-    form.finish_date = props.scheduleDate
-
-    // 시작 시간 설정 (props에서 전달받은 시간 사용)
-    if (props.scheduleTime) {
-      form.start_time = formatHour(props.scheduleTime)
-    } else if (!form.start_time) {
-      const currentHour = today.getHours()
-      form.start_time = (currentHour >= 9 && currentHour < 18) ? formatHour(currentHour) : '09:00'
-    }
+    resetForm()
     updateEndTimeOptions()
-
-    // repeat_days 초기화 - 선택된 날짜의 요일을 기본 선택
-    const weekdayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-    const selectedDate = new Date(props.scheduleDate)
-    const selectedWeekday = weekdayMap[selectedDate.getDay()]
-
-    form.repeat_days = {
-      mon: selectedWeekday === 'mon',
-      tue: selectedWeekday === 'tue',
-      wed: selectedWeekday === 'wed',
-      thu: selectedWeekday === 'thu',
-      fri: selectedWeekday === 'fri',
-      sat: selectedWeekday === 'sat',
-      sun: selectedWeekday === 'sun'
-    }
     return
   }
 
+  // 기존 일정 조회
   try {
     const scheduleInfo = await readSchedule(props.scheduleListId)
-    console.log("scheduleInfo:", scheduleInfo)
     
     // 기본 필드 복사
     const { clientinfo, teacher, schedule, ...basicInfo } = scheduleInfo
     Object.assign(form, basicInfo, schedule)
 
-    // 메모
-    form.memo = basicInfo.schedule_memo
-    form.schedule_type = schedule.schedule_type
-    console.log("form.schedule_type:", form.schedule_type)
+    // 메모 및 일정 유형 설정
+    form.memo = basicInfo.schedule_memo || ''
+    form.schedule_type = schedule.schedule_type || 1
 
     // 관계 필드 처리
     form.client_name = clientinfo?.client_name || ''
     form.phone_number = clientinfo?.phone_number || ''
     form.teacher_username = teacher?.username || ''
 
+    // 개별 일정의 시간 사용 (schedule_time, schedule_finish_time)
+    form.start_time = basicInfo.schedule_time || formatHour(today.getHours())
+    form.finish_time = basicInfo.schedule_finish_time || ''
+
     // 상담사가 설정된 경우 프로그램 목록 가져오기
     if (form.teacher_username) {
       await fetchProgramList()
     }
 
-    // 시간 처리
-    form.start_time = form.start_time || formatHour(today.getHours())
-    updateEndTimeOptions()
+    // 종료 시간 옵션 업데이트 (기존 finish_time 유지)
+    updateEndTimeOptions(true)
 
-    form.repeat_days = (() => {
-      try {
-        return typeof form.repeat_days === 'string' 
-          ? JSON.parse(form.repeat_days
-            .replace(/'/g, '"')  // 작은따옴표를 큰따옴표로 변환
-            .replace(/True/g, 'true')  // Python True를 JavaScript true로 변환 
-            .replace(/False/g, 'false') // Python False를 JavaScript false로 변환form.repeat_days
-          )
-          : form.repeat_days || {
-              mon: false,
-              tue: false,
-              wed: false, 
-              thu: false,
-              fri: false,
-              sat: false,
-              sun: false
-            }
-      } catch {
-        return {
-          mon: false,
-          tue: false,
-          wed: false, 
-          thu: false,
-          fri: false,
-          sat: false,
-          sun: false
-        }
-      }
-    })()
+    // repeat_days 파싱
+    form.repeat_days = parseRepeatDays(form.repeat_days)
   } catch (error) {
-    console.error('Error fetching user:', error)
+    console.error('Error fetching schedule info:', error)
+    showModal('일정 정보를 불러오는 중 오류가 발생했습니다.')
   }
 }
 
@@ -327,7 +346,7 @@ const fetchTeacherList = async () => {
       text: item.full_name
     }))
   } catch (error) {
-    console.error('Error fetching client:', error)
+    console.error('Error fetching teacher list:', error)
   }
 }
 
@@ -352,18 +371,22 @@ onBeforeMount(() => {
 
 onUpdated(() => {
   searchTerm.value = ''
+  
+  // 날짜 초기화
   if (!form.start_date) {
-    // 현재 날짜로 초기화, Asia/Seoul 기준
-    form.start_date = new Date().toISOString().split('T')[0]
-    form.finish_date = form.start_date
+    const todayStr = new Date().toISOString().split('T')[0]
+    form.start_date = todayStr
+    form.finish_date = todayStr
   }
 
+  // 시간 초기화 및 검증
   if (!form.start_time) {
     form.start_time = formatHour(new Date().getHours())
   }
   if (form.start_time >= '18:00') {
     form.start_time = '17:50'
   }
+  
   updateEndTimeOptions()
 })
 
@@ -398,29 +421,7 @@ const onSubmit = async (values) => {
       showModal('상담일정 정보가 등록되었습니다.')
     }
     // 폼 초기화
-    form.id = null
-    form.client_id = null 
-    form.client_name = ''
-    form.schedule_type = 1
-    form.phone_number = ''
-    form.teacher_username = ''
-    form.program_id = ''
-    form.start_date = new Date().toISOString().split('T')[0]
-    form.finish_date = form.start_date
-    form.start_time = formatHour(new Date().getHours())
-    form.finish_time = ''
-    form.repeat_type = 1
-    form.memo = ''
-    form.repeat_days = {
-      mon: false,
-      tue: false,
-      wed: false,
-      thu: false,
-      fri: false,
-      sat: false,
-      sun: false
-    }
-    form.update_range = 'single'
+    resetForm()
   } catch (error) {
     showModal('상담일정 정보 저장 중 오류가 발생했습니다.')
     console.error('Error registering schedule data:', error)
@@ -428,7 +429,18 @@ const onSubmit = async (values) => {
   emit('close')
 }
 
-// Watch for changes in clientId and call toggleForm
+// 사이드가 열릴 때마다 일정 재로딩 (최신 변경사항 적용)
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (isVisible) {
+      // 사이드가 열릴 때 일정 재로딩
+      fetchScheduleInfo()
+    }
+  }
+)
+
+// scheduleListId 변경 시에도 재로딩
 watch(
   () => props.scheduleListId,
   (newScheduleListId, oldScheduleListId) => {
@@ -447,19 +459,7 @@ watch(
 
       // 신규 일정인 경우 선택된 요일 업데이트
       if (!props.scheduleListId && newScheduleDate) {
-        const weekdayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-        const selectedDate = new Date(newScheduleDate)
-        const selectedWeekday = weekdayMap[selectedDate.getDay()]
-
-        form.repeat_days = {
-          mon: selectedWeekday === 'mon',
-          tue: selectedWeekday === 'tue',
-          wed: selectedWeekday === 'wed',
-          thu: selectedWeekday === 'thu',
-          fri: selectedWeekday === 'fri',
-          sat: selectedWeekday === 'sat',
-          sun: selectedWeekday === 'sun'
-        }
+        form.repeat_days = initializeRepeatDays(newScheduleDate)
       }
     }
   }
@@ -467,17 +467,11 @@ watch(
 
 watch(
   () => props.scheduleTime,
-  (newScheduleTime, oldScheduleTime) => {
-    form.start_time = formatHour(newScheduleTime)
-    // form.finish_time = newScheduleTime
-    updateEndTimeOptions()
-  }
-)
-
-watch(
-  () => form.schedule_type,
-  (newScheduleType, oldScheduleType) => {
-    form.schedule_type = newScheduleType
+  (newScheduleTime) => {
+    if (newScheduleTime) {
+      form.start_time = formatHour(newScheduleTime)
+      updateEndTimeOptions()
+    }
   }
 )
 

@@ -126,6 +126,7 @@ class ScheduleListBase(BaseModel):
     program_id: int
     schedule_date: date = Field(default_factory=date.today)
     schedule_time: str
+    schedule_finish_time: str
     schedule_status: str = Field(
         max_length=1,
         default="1",
@@ -156,6 +157,7 @@ class ScheduleListRead(BaseModel):
     program_id: int
     schedule_date: date
     schedule_time: str
+    schedule_finish_time: str
     schedule_status: str
     schedule_memo: Optional[str] = None
     created_by: Optional[str] = None
