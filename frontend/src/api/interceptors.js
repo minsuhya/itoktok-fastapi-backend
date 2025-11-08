@@ -34,12 +34,14 @@ axios.interceptors.response.use(
     if (error.response) {
       if (error.response.status === 401) {
         // Unauthorized access, redirect to login
-        // authStore.logout();
-        // window.location.href = '/' // Or use Vue Router to redirect
         logoutApp()
-        // navigate to login page
-        // navigateTo('/login')
-        window.location.href = '/login'
+        // 현재 경로가 모바일인지 확인하여 적절한 로그인 페이지로 리다이렉트
+        const currentPath = window.location.pathname
+        if (currentPath.startsWith('/mobile')) {
+          window.location.href = '/mobile/login'
+        } else {
+          window.location.href = '/login'
+        }
       } else if (error.response.status === 500) {
         alert('Server error. Please try again later.')
       }

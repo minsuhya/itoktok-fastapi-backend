@@ -57,7 +57,26 @@
       <!-- 일정 목록 -->
       <div class="bg-white rounded-lg shadow-sm p-4">
         <h3 class="font-semibold text-lg mb-3">일정 목록</h3>
-        <div v-if="schedules.length === 0" class="text-center py-8 text-gray-500">
+        
+        <!-- 로딩 상태 -->
+        <div v-if="isLoading" class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-sm text-gray-500">일정을 불러오는 중...</p>
+        </div>
+        
+        <!-- 에러 메시지 -->
+        <div v-else-if="errorMessage" class="text-center py-8">
+          <p class="text-red-500 mb-2">{{ errorMessage }}</p>
+          <button 
+            @click="fetchSchedules"
+            class="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+          >
+            다시 시도
+          </button>
+        </div>
+        
+        <!-- 일정 목록 -->
+        <div v-else-if="schedules.length === 0" class="text-center py-8 text-gray-500">
           등록된 일정이 없습니다.
         </div>
         <div v-else class="space-y-3">
@@ -82,11 +101,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import MobileLayout from '@/mobile/components/MobileLayout.vue'
 import { getMonthlyCalendar } from '@/api/schedule'
+import { useTeacherStore } from '@/stores/teacherStore'
 
 const router = useRouter()
+const teacherStore = useTeacherStore()
 const currentDate = ref(new Date())
 const selectedDate = ref(new Date())
 const schedules = ref([])
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 const currentMonthText = computed(() => {
   const date = currentDate.value
@@ -196,11 +219,21 @@ const viewScheduleDetail = (schedule) => {
 }
 
 const fetchSchedules = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  
   try {
+    // teacherStore 초기화 확인
+    if (!teacherStore.selectedTeachers || teacherStore.selectedTeachers.length === 0) {
+      // localStorage에서 로드 시도
+      teacherStore.loadSelectedTeachers()
+    }
+    
     const response = await getMonthlyCalendar(
       currentMonth.value.year,
       currentMonth.value.month
     )
+    
     // interceptors에서 이미 response.data를 반환하므로 직접 사용
     // API 응답이 배열인 경우 그대로 사용, 객체인 경우 data 속성 확인
     if (Array.isArray(response)) {
@@ -212,8 +245,14 @@ const fetchSchedules = async () => {
     }
   } catch (error) {
     console.error('일정 조회 오류:', error)
+    // 401 에러가 아닌 경우에만 에러 메시지 표시 (401은 인터셉터에서 처리)
+    if (error.response && error.response.status !== 401) {
+      errorMessage.value = '일정을 불러오는 중 오류가 발생했습니다.'
+    }
     schedules.value = []
     // 에러 발생 시에도 빈 배열로 설정하여 화면이 표시되도록 함
+  } finally {
+    isLoading.value = false
   }
 }
 
