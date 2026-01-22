@@ -1,6 +1,5 @@
 <script setup>
-import { computed, inject } from 'vue'
-import { useUserStore } from '@/stores/auth'
+import { inject } from 'vue'
 import useAuth from '@/hooks/auth'
 import { useForm } from 'vee-validate'
 import * as yup from 'yup'
@@ -11,7 +10,6 @@ const validationSchema = yup.object({
   password: yup.string().min(8, '최소 8자 이상 입력해주세요.').required('비밀번호를 입력해주세요.')
 })
 
-const authStore = useUserStore()
 const { loginApp } = useAuth()
 const { errors, handleSubmit, defineField, setValues } = useForm({
   validationSchema

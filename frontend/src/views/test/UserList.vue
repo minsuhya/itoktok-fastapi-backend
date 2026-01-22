@@ -1,6 +1,6 @@
 <script setup>
 // user list tailwindcss vue component
-import { ref, computed, onBeforeMount } from 'vue'
+import { ref, onBeforeMount } from 'vue'
 import { list_users } from '@/api/test'
 import PaginationView from '@/components/PaginationView.vue'
 

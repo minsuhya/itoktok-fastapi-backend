@@ -9,7 +9,7 @@ import {
 import ScheduleFormSliding from '@/views/ScheduleFormSliding.vue'
 import DailyViewSliding from '@/views/DailyViewSliding.vue'
 import { getMonthlyCalendar, deleteScheduleList, updateScheduleDate } from '@/api/schedule'
-import { ref, reactive, onMounted, onBeforeMount, watch } from 'vue'
+import { ref, reactive, onBeforeMount, watch } from 'vue'
 import { useCalendarStore } from '@/stores/calendarStore'
 import { useTeacherStore } from '@/stores/teacherStore'
 
@@ -192,8 +192,8 @@ const fetchSchedule = async (year, month) => {
     const data = await getMonthlyCalendar(year, month)
 
     // 각 날짜별 일정을 시간순으로 정렬
-    Object.keys(data.data).forEach(date => {
-      data.data[date].sort((a, b) => {
+    Object.keys(data).forEach(date => {
+      data[date].sort((a, b) => {
         // 시간을 비교하기 위해 시간 문자열을 Date 객체로 변환
         const timeA = new Date(`2000-01-01 ${a.schedule_time}`)
         const timeB = new Date(`2000-01-01 ${b.schedule_time}`)
@@ -201,7 +201,7 @@ const fetchSchedule = async (year, month) => {
       })
     })
 
-    schedule_data.value = data.data
+    schedule_data.value = data
     setDateInfo(year, month - 1)
     console.log('schedule_data:', schedule_data.value)
   } catch (error) {

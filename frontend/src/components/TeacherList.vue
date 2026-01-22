@@ -10,13 +10,14 @@ const counselors = ref([])
 
 onMounted(async () => {
   try {
-    const teachers = await readTeachers()
+    const teachersResponse = await readTeachers()
+    const teachers = Array.isArray(teachersResponse) ? teachersResponse : []
     console.log('teachers:', teachers)
     counselors.value = teachers.map((teacher) => ({
       id: teacher.id,
       username: teacher.username,
       name: teacher.full_name,
-      role: teacher.user_type === 'center' ? '센터' : '상담사',
+      role: teacher.user_type === '1' ? '센터' : '상담사',
       checked: true,
       color: teacher.usercolor
     }))

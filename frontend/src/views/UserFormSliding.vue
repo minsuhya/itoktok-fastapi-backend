@@ -1,6 +1,6 @@
 <script setup>
-import { watch, ref, reactive, onBeforeMount, defineEmits, inject } from 'vue'
-import { useForm, Form, Field, ErrorMessage } from 'vee-validate'
+import { watch, reactive, onBeforeMount, defineEmits, inject } from 'vue'
+import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
 import { readUser, updateUser, registerUser, checkUsername } from '@/api/user'
@@ -19,33 +19,33 @@ const emit = defineEmits(['close'])
 // vee-validate 스키마 정의
 const schema = yup.object({
   id: yup.string().nullable(),
-  username: yup.string().when('id', {
-    is: (val) => !val || val === '',
-    then: () =>
-      yup
-        .string()
+  username: yup.string().when('id', (id, schema) => {
+    if (!id || id === '') {
+      return schema
         .min(4, '4자 이상 입력해주세요.')
+        .max(20, '20자 이하로 입력해주세요.')
         .required('아이디를 입력해주세요.')
         .test('usernameDup', '이미 등록된 아이디입니다.', async (value) => {
           const response = await checkUsername(value)
           return !response.exists
-        }),
-    otherwise: () => yup.string().notRequired()
+        })
+    }
+    return schema.notRequired()
   }),
 
-  password: yup.string().when('id', {
-    is: (val) => !val || val === '',
-    then: () => yup.string().required('비밀번호를 입력해주세요.'),
-    otherwise: () => yup.string().notRequired()
+  password: yup.string().when('id', (id, schema) => {
+    if (!id || id === '') {
+      return schema.required('비밀번호를 입력해주세요.')
+    }
+    return schema.notRequired()
   }),
-  password_confirm: yup.string().when('password', {
-    is: (val) => val && val.length > 0,
-    then: () =>
-      yup
-        .string()
+  password_confirm: yup.string().when('password', (password, schema) => {
+    if (password && password.length > 0) {
+      return schema
         .oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.')
-        .required('비밀번호 확인을 입력해주세요.'),
-    otherwise: () => yup.string().notRequired()
+        .required('비밀번호 확인을 입력해주세요.')
+    }
+    return schema.notRequired()
   }),
   full_name: yup.string().required('상담사명을 입력해주세요.'),
   email: yup.string().required('이메일을 입력해주세요.').email('올바른 이메일을 입력하세요.'),

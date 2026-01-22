@@ -1,16 +1,16 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useCalendarStore } from '@/stores/calendarStore'
 
+defineOptions({ name: 'CalendarView' })
+
 const router = useRouter()
-const route = useRoute()
 const calendarStore = useCalendarStore()
 const currentDate = ref(new Date())
 const selectedDate = ref(null) 
 const today = new Date()
 
-const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 const days = ['일', '월', '화', '수', '목', '금', '토']
 
 const currentMonth = computed(() => {

@@ -1,9 +1,7 @@
 <script setup>
-import { ref, reactive, inject, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { getDailyCalendar } from '@/api/schedule'
-
-const showModal = inject('showModal')
 
 // 상담 일정
 const props = defineProps({
@@ -56,13 +54,6 @@ const convertTo12HourFormat = (hour) => {
   return `${adjustedHour} ${period}`
 }
 
-function formatHour(hour) {
-  if (hour < 10) {
-    return `0${hour}:00`
-  }
-  return `${hour}:00`
-}
-
 const closeForm = () => {
   emit('close')
 }
@@ -75,7 +66,7 @@ const fetchDailySchedule = async () => {
 
   try {
     const data = await getDailyCalendar(year, month, day)
-    schedule_data.value = data.data
+    schedule_data.value = data
     console.log('daily sliding schedule_data:', schedule_data.value)
   } catch (error) {
     console.error('Error fetching monthly schedule data:', error)
@@ -132,8 +123,7 @@ const getScheduleHeight = (start, end) => {
 
 // 시작 시간에 따른 top 위치 계산 함수 추가
 const getScheduleTop = (start_time) => {
-  const [hours, minutes] = start_time.split(':').map(Number)
-  const minutesFromHourStart = minutes
+  const minutesFromHourStart = Number(start_time.split(':')[1])
   const MINUTES_PER_PIXEL = 50 / 90 // 50분을 97px로 나눈 비율
   return minutesFromHourStart * (1 / MINUTES_PER_PIXEL)
 }

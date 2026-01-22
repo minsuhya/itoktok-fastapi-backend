@@ -1,6 +1,6 @@
 <script setup>
-import { ref, reactive, onMounted, watch, toRefs, toRaw, inject } from 'vue'
-import { useForm, Field, Form, ErrorMessage } from 'vee-validate'
+import { reactive, onMounted, inject } from 'vue'
+import { Field, Form, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
 import { useUserStore } from '@/stores/auth'
 import { readCenterInfo, updateCenterInfo } from '@/api/center'
@@ -46,15 +46,13 @@ const combined = reactive({
 
 const schema = yup.object({
   password: yup.string(),
-  password_confirm: yup.string().when('password', {
-    is: (val) => val && val.length > 0,
-    then: () =>
-      yup
-        .string()
-        .oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.')
-        .required('비밀번호 확인을 입력해주세요.'),
-    otherwise: () => yup.string().notRequired()
-  }),
+  password_confirm: yup.string().when('password', (password, schema) =>
+    password && password.length > 0
+      ? schema
+          .oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.')
+          .required('비밀번호 확인을 입력해주세요.')
+      : schema.notRequired()
+  ),
   email: yup.string().required('이메일을 입력해주세요.').email('올바른 이메일을 입력하세요.'),
   full_name: yup.string().required('이름을 입력해주세요.'),
   hp_number: yup

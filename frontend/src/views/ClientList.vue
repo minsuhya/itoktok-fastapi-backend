@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount, inject } from 'vue'
+import { ref, onBeforeMount, inject } from 'vue'
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import { readClientInfos, updateClientConsultantStauts } from '@/api/client'
 import PaginationView from '@/components/PaginationView.vue'

@@ -1,5 +1,4 @@
 <script setup>
-import { useRouter } from 'vue-router'
 import { register } from '@/api/test'
 
 // vue tailwindcss user registeration form

@@ -141,11 +141,9 @@ const isAllTeachers = ref(false)
 const schema = yup.object({
   program_type: yup.string().required('프로그램 유형을 선택하세요'),
   program_name: yup.string().required('프로그램명을 입력하세요'),
-  teacher_username: yup.string().when('is_all_teachers', {
-    is: false,
-    then: () => yup.string().required('담당 선생님을 선택하세요'),
-    otherwise: () => yup.string().nullable()
-  })
+  teacher_username: yup.string().when('is_all_teachers', (isAllTeachers, schema) =>
+    isAllTeachers ? schema.nullable() : schema.required('담당 선생님을 선택하세요')
+  )
 })
 
 const formData = reactive({
@@ -172,7 +170,7 @@ const handleAllTeachersChange = (e) => {
 const loadTeachers = async () => {
   try {
     const response = await readTeachers()
-    teachers.value = response
+    teachers.value = Array.isArray(response) ? response : []
     console.log("teachers", teachers.value)
   } catch (error) {
     console.error('Error fetching teachers:', error)

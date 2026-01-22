@@ -30,7 +30,7 @@ const props = defineProps({
     type: String,
     default: () => {
       const now = new Date()
-      return `${now.getHours().toString().padStart(2, '0')}:00}`
+      return `${now.getHours().toString().padStart(2, '0')}:00`
     }
   }
 })
@@ -53,7 +53,7 @@ const filterClients = async () => {
 
   try {
     const data = await searchClientInfos(search)
-    clients.value = data.data
+    clients.value = data
     filteredClients.value = clients.value
   } catch (error) {
     console.error('Error fetching clients:', error)
@@ -85,7 +85,7 @@ const endTimeOptions = ref([])
 
 const generateTimeOptions = () => {
   const options = []
-  let currentTime = today
+  const currentTime = today
   currentTime.setHours(9, 0, 0, 0) // 자정 시작
   while (currentTime.getHours() < 18) {
     options.push(formatTime(currentTime))
@@ -120,7 +120,7 @@ function formatHour(hm) {
 
   // 시간 문자열에 ':' 포함 여부 확인 
   if (!hmString.includes(':')) {
-    const hourNum = parseInt(hmString)
+    const hourNum = parseInt(hmString, 10)
     if (hourNum < 10) {
       return `0${hourNum}:00`
     }
@@ -128,7 +128,7 @@ function formatHour(hm) {
   }
 
   const [hour, minute] = hmString.split(':')
-  const hourNum = parseInt(hour)
+  const hourNum = parseInt(hour, 10)
   if (hourNum < 10) {
     return `0${hourNum}:${minute}`
   }
@@ -147,7 +147,7 @@ const updateEndTimeOptions = (preserveFinishTime = false) => {
   const endDate = new Date(startDate)
   endDate.setHours(startDate.getHours() + 1) // 1시간 뒤까지
 
-  let currentDate = new Date(startDate)
+  const currentDate = new Date(startDate)
   currentDate.setMinutes(currentDate.getMinutes() + 10) // 10분 뒤부터
 
   while (currentDate <= endDate) {
@@ -171,13 +171,14 @@ const schema = yup.object({
   teacher_username: yup.string().required('상담사를 선택해주세요.'),
   client_name: yup.string().required('내담자를 선택해주세요.'),
   phone_number: yup.string().required('휴대전화번호를 입력하세요.'),
-  program_id: yup.string().when('teacher_username', {
-    is: (value) => value && value.length > 0,
-    then: () => yup.string().required('프로그램을 선택해주세요.'),
-    otherwise: () => yup.string()
-  }),
+  program_id: yup.string().when('teacher_username', (teacherUsername, schema) =>
+    teacherUsername && teacherUsername.length > 0
+      ? schema.required('프로그램을 선택해주세요.')
+      : schema
+  ),
   start_date: yup.string().required('일정시작일을 선택해주세요.'),
   finish_date: yup.string().transform((value, originalValue, context) => {
+    void originalValue
     // start_date가 있는 경우 1년 후의 날짜로 자동 설정
     const startDate = context?.parent?.start_date;
     if (startDate) {
@@ -333,6 +334,11 @@ const fetchScheduleInfo = async () => {
     // repeat_days 파싱
     form.repeat_days = parseRepeatDays(form.repeat_days)
   } catch (error) {
+    if (error?.response?.status === 404) {
+      resetForm()
+      emit('close')
+      return
+    }
     console.error('Error fetching schedule info:', error)
     showModal('일정 정보를 불러오는 중 오류가 발생했습니다.')
   }
@@ -340,8 +346,9 @@ const fetchScheduleInfo = async () => {
 
 const fetchTeacherList = async () => {
   try {
-    const teacherList = await readTeachers()
-    teacher_options.value = teacherList.map((item) => ({
+  const teacherListResponse = await readTeachers()
+  const teacherList = Array.isArray(teacherListResponse) ? teacherListResponse : []
+  teacher_options.value = teacherList.map((item) => ({
       value: item.username,
       text: item.full_name
     }))
@@ -488,7 +495,8 @@ const deleteScheduleInfo = async () => {
     if (!confirm(confirmMessage)) return
 
     // 삭제 API 호출
-    await deleteSchedule(form.id, props.scheduleListId, form.update_range)
+    const scheduleId = props.scheduleId || form.id
+    await deleteSchedule(scheduleId, props.scheduleListId, form.update_range)
     showModal('일정이 삭제되었습니다.')
     emit('close')
   } catch (error) {
@@ -496,6 +504,17 @@ const deleteScheduleInfo = async () => {
     showModal('일정 삭제 중 오류가 발생했습니다.')
   }
 }
+
+const templateBindings = {
+  closeForm,
+  deleteScheduleInfo,
+  filterClients,
+  onSubmit,
+  schema,
+  selectClient,
+  userStore
+}
+void templateBindings
 </script>
 
 <template>

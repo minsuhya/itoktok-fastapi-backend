@@ -2,16 +2,14 @@
 import {
   ChevronRightIcon,
   ChevronLeftIcon,
-  PlusIcon,
-  PencilSquareIcon,
-  TrashIcon
+  PlusIcon
 } from '@heroicons/vue/20/solid'
 import ScheduleFormSliding from '@/views/ScheduleFormSliding.vue'
 import DailyViewSliding from '@/views/DailyViewSliding.vue'
 import { ref, reactive, onBeforeMount, watch } from 'vue'
 import { useCalendarStore } from '@/stores/calendarStore'
 import { useTeacherStore } from '@/stores/teacherStore'
-import { getWeeklyCalendar, deleteScheduleList, updateScheduleDateTime } from '@/api/schedule'
+import { getWeeklyCalendar, updateScheduleDateTime } from '@/api/schedule'
 
 const calendarStore = useCalendarStore()
 const teacherStore = useTeacherStore()
@@ -38,35 +36,6 @@ const hoveredSchedule = ref(null) // 마우스 오버된 일정 추적
 
 // 날짜 관련 Reference
 const weekNames = ['Mon', 'Tue', 'Web', 'Thu', 'Fri', 'Sat', 'Sun']
-
-const zoom = (day_index, time_index, item_index, event) => {
-  event.stopPropagation() // 이벤트 전파 중지
-  if (!isZoomed[day_index]) {
-    isZoomed[day_index] = {}
-  }
-  if (!isZoomed[day_index][time_index]) {
-    isZoomed[day_index][time_index] = {}
-  }
-  isZoomed[day_index][time_index][item_index] = !isZoomed[day_index][time_index][item_index]
-
-  // Sibling 요소 hidden 처리
-  const parentElement = event.target.closest('.relative')
-  if (parentElement) {
-    const siblings = parentElement.parentElement.children
-    for (let sibling of siblings) {
-      if (sibling !== parentElement) {
-        sibling.style.display = isZoomed[day_index][time_index][item_index] ? 'none' : ''
-      }
-    }
-  }
-}
-
-// 시간 변환 함수
-const convertTo12HourFormat = (hour) => {
-  const period = hour >= 12 ? 'PM' : 'AM'
-  const adjustedHour = hour % 12 || 12
-  return `${adjustedHour} ${period}`
-}
 
 function formatHour(hour) {
   if (hour < 10) {
@@ -168,19 +137,6 @@ const clickCalendarSchedule = (scheduleId, scheduleListId, scheduleDate) => {
   toggleForm()
 }
 
-// 해당 일정 삭제
-const deleteCalendarSchedule = async (scheduleListId) => {
-  if (!confirm('해당 일정을 삭제하시겠습니까?')) return
-  if (!scheduleListId) return
-
-  try {
-    await deleteScheduleList(scheduleListId)
-    fetchSchedule(currentDateInfo.value.currentYear, currentDateInfo.value.currentMonth)
-  } catch (error) {
-    console.error('Error deleting schedule:', error)
-  }
-}
-
 // Schedule 가져오기
 const fetchSchedule = async (year, month, day) => {
   year = year || new Date().getFullYear()
@@ -191,7 +147,7 @@ const fetchSchedule = async (year, month, day) => {
 
   try {
     const data = await getWeeklyCalendar(year, month, day)
-    schedule_data.value = data.data
+    schedule_data.value = data
     setDateInfo(year, month - 1, day)
     console.log('schedule_data:', schedule_data.value)
   } catch (error) {
@@ -262,8 +218,7 @@ const calculateScheduleHeight = (startTime, finishTime) => {
 
 // 시작 시간에 따른 top 위치 계산 함수 추가
 const calculateScheduleTop = (startTime) => {
-  const [hours, minutes] = startTime.split(':').map(Number)
-  const minutesFromHourStart = minutes
+  const minutesFromHourStart = Number(startTime.split(':')[1])
   return (minutesFromHourStart / 60) * 90 // 90px 높이 기준으로 비율 계산
 }
 

@@ -1,8 +1,5 @@
 <script setup>
-import { ref } from 'vue'
-import { useUserStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import useAuth from '@/hooks/auth'
 import { useForm } from 'vee-validate'
 import * as yup from 'yup'
 import { forgot_password } from '@/api/user'
@@ -25,7 +22,7 @@ const [email, emailAttrs] = defineField('email')
 const onSubmit = handleSubmit(async (values) => {
   try {
     // login
-    const res = await forget_password(values)
+    const res = await forgot_password(values)
     console.log('forgot-password: ', res)
 
     // rediect after login

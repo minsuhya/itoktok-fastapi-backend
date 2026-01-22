@@ -1,5 +1,3 @@
-import LayoutView from '@/components/LayoutView.vue'
-
 export default [
   {
     path: '/admin',

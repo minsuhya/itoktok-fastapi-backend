@@ -1,6 +1,6 @@
 <script setup>
 import { watch, ref, reactive, onBeforeMount, defineEmits, inject } from 'vue'
-import { useForm, Form, Field, ErrorMessage } from 'vee-validate'
+import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useUserStore } from '@/stores/auth'
 import * as yup from 'yup'
 import { registerClientInfo, updateClientInfo, readClientInfo } from '@/api/client'
@@ -66,6 +66,7 @@ const fetchClientInfo = async () => {
     Object.keys(form).forEach((key) => {
       form[key] = ''
     })
+    form.center_username = userStore.user.center_username || userStore.user.username || ''
     return
   }
   console.log('props.clientId: ', props.clientId)
@@ -81,9 +82,10 @@ const fetchClientInfo = async () => {
 
 const fetchTeacherList = async () => {
   try {
-    const teacherList = await readTeachers()
-    console.log('teacherList:', teacherList)
-    consultant_options.value = teacherList.map((item) => ({
+  const teacherListResponse = await readTeachers()
+  const teacherList = Array.isArray(teacherListResponse) ? teacherListResponse : []
+  console.log('teacherList:', teacherList)
+  consultant_options.value = teacherList.map((item) => ({
       value: item.username,
       text: item.full_name
     }))
@@ -103,6 +105,9 @@ const onSubmit = async (values) => {
   Object.assign(form, values)
   if (!form.consultant_status) {
     form.consultant_status = '1'
+  }
+  if (!form.center_username) {
+    form.center_username = userStore.user.center_username || userStore.user.username || ''
   }
   
   try {

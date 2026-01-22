@@ -1,11 +1,9 @@
 <script setup>
-import { ref, onBeforeMount, inject } from 'vue'
+import { ref, onBeforeMount } from 'vue'
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import { readUsers } from '@/api/user'
 import PaginationView from '@/components/PaginationView.vue'
 import UserFormSliding from '@/views/UserFormSliding.vue'
-
-const showModal = inject('showModal')
 
 // Pagination
 const currentPage = ref(1)

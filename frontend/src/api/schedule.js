@@ -1,6 +1,9 @@
 import { useTeacherStore } from '@/stores/teacherStore'
 import axios from 'axios'
 
+const unwrapResponseData = (response) =>
+  response && typeof response === 'object' && 'data' in response ? response.data : response
+
 export const createSchedule = async (scheduleCreate) => {
   return axios.post('/schedules', scheduleCreate)
 }
@@ -39,11 +42,12 @@ export const getMonthlyCalendar = async (year, month) => {
   const teacherStore = useTeacherStore()
   const selectedTeachers = teacherStore.selectedTeachers || []
 
-  return axios.get(`/schedules/calendar/${year}/${month}`, {
+  const response = await axios.get(`/schedules/calendar/${year}/${month}`, {
       params: {
         selected_teachers: selectedTeachers.join(',')
       }
   })
+  return unwrapResponseData(response)
 }
 
 // 주간 일정 조회
@@ -51,11 +55,12 @@ export const getWeeklyCalendar = async (year, month, day) => {
   const teacherStore = useTeacherStore()
   const selectedTeachers = teacherStore.selectedTeachers || []
 
-  return axios.get(`/schedules/calendar/${year}/${month}/${day}`, {
+  const response = await axios.get(`/schedules/calendar/${year}/${month}/${day}`, {
       params: {
         selected_teachers: selectedTeachers.join(',')
       }
   })
+  return unwrapResponseData(response)
 }
 
 // 일별 일정 조회
@@ -63,11 +68,12 @@ export const getDailyCalendar = async (year, month, day) => {
   const teacherStore = useTeacherStore()
   const selectedTeachers = teacherStore.selectedTeachers || []
 
-  return axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`, {
+  const response = await axios.get(`/schedules/calendar/daily/${year}/${month}/${day}`, {
     params: {
       selected_teachers: selectedTeachers.join(',')
     }
   })
+  return unwrapResponseData(response)
 }
 
 export const updateScheduleDate = async (params) => {
@@ -80,7 +86,7 @@ export const updateScheduleDate = async (params) => {
         update_all_future: params.updateAllFuture
       }
     })
-    return response.data
+    return unwrapResponseData(response)
   } catch (error) {
     console.error('Error updating schedule date:', error)
     throw error
@@ -98,7 +104,7 @@ export const updateScheduleDateTime = async (params) => {
         update_all_future: params.updateAllFuture
       }
     })
-    return response.data
+    return unwrapResponseData(response)
   } catch (error) {
     console.error('Error updating schedule date and time:', error)
     throw error
