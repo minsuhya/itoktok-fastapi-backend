@@ -8,7 +8,7 @@ ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다
 
 **플랫폼:**
 - **데스크톱 버전**: 관리자/센터장용 전체 기능 관리 인터페이스
-- **모바일 버전**: 선생님용 경량화된 일정 및 내담자 관리 인터페이스 (`/mobile` 경로)
+- **모바일 버전**: Expo 프레임워크로 신규 구축 예정 (현 코드베이스 제외)
 
 **주요 사용자 역할:**
 - **최고관리자 (is_superuser == 1)**: 시스템 전체 관리 권한
@@ -31,7 +31,6 @@ ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다
 ```bash
 docker compose up -d
 # Frontend: http://www.itoktok.com:8081
-# Mobile: http://www.itoktok.com:8081/mobile
 # Backend API: http://api.itoktok.com:3000
 # API Docs: http://api.itoktok.com:3000/docs
 ```
@@ -40,7 +39,6 @@ docker compose up -d
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 # Frontend: http://localhost:2080
-# Mobile: http://localhost:2080/mobile
 # Backend API: http://localhost:3000
 # API Docs: http://localhost:3000/docs
 ```
@@ -150,13 +148,9 @@ pnpm format
 frontend/src/
 ├── api/          # API 통신 (axios)
 ├── views/        # 데스크톱 페이지 컴포넌트
-├── mobile/       # 모바일 버전 (선생님용)
-│   ├── components/  # 모바일 전용 컴포넌트
-│   └── views/       # 모바일 페이지 컴포넌트
 ├── components/   # 재사용 컴포넌트
 ├── router/       # Vue Router 설정
-│   ├── admin/       # 데스크톱 라우트
-│   └── mobile/      # 모바일 라우트
+│   └── admin/       # 데스크톱 라우트
 ├── stores/       # Pinia 상태 관리
 ├── hooks/        # Composable 함수
 └── assets/       # 정적 자원
@@ -197,24 +191,7 @@ frontend/src/
 
 ### 모바일 버전
 
-**경로:** `/mobile` (선생님용 경량화 인터페이스)
-
-**주요 화면:**
-- **HomeView**: 달력과 일정 목록 홈
-- **ScheduleView**: 일정 상세 및 관리
-- **ClientListView**: 내담자 조회
-- **ClientDetailView**: 내담자 상세 정보
-- **TreatmentStatusView**: 치료 현황
-- **SettingsView**: 설정 및 프로필 관리
-
-**모바일 컴포넌트:**
-- **MobileLayout**: 헤더 + 컨텐츠 + 하단 네비게이션
-- **MobileHeader**: 상단 헤더 (뒤로가기, 제목, 액션 버튼)
-- **MobileBottomNav**: 하단 네비게이션 바
-
-**중요 참고사항:**
-- API 응답 구조: `interceptors.js`에서 이미 `response.data`를 추출하므로, 모바일 뷰에서는 `response` 직접 사용 (`.data` 중복 접근 금지)
-- 상세 내용: `frontend/src/mobile/README.md` 및 `frontend/MOBILE_DEPLOYMENT_ISSUE.md` 참조
+모바일은 Expo 프레임워크로 신규 구축 예정이며, 현 저장소에는 포함하지 않는다.
 
 ## 환경 변수
 
@@ -277,14 +254,9 @@ itoktok/
 │   ├── src/
 │   │   ├── api/               # API 통신 레이어
 │   │   ├── views/             # 데스크톱 페이지
-│   │   ├── mobile/            # 모바일 버전
-│   │   │   ├── components/   # 모바일 컴포넌트
-│   │   │   ├── views/        # 모바일 페이지
-│   │   │   └── README.md     # 모바일 가이드
 │   │   ├── components/        # 공통 컴포넌트
 │   │   ├── router/            # 라우팅
-│   │   │   ├── admin/        # 데스크톱 라우트
-│   │   │   └── mobile/       # 모바일 라우트
+│   │   │   └── admin/        # 데스크톱 라우트
 │   │   ├── stores/            # Pinia 상태 관리
 │   │   └── hooks/             # Composables
 │   ├── public/                # 정적 파일
@@ -292,7 +264,6 @@ itoktok/
 │   ├── .env.development       # 개발 환경 변수
 │   ├── .env.production        # 프로덕션 환경 변수
 │   ├── package.json           # pnpm 의존성
-│   └── MOBILE_DEPLOYMENT_ISSUE.md  # 모바일 배포 이슈 가이드
 ├── conf/                       # Nginx 설정 파일
 │   ├── nginx.conf             # 프로덕션 설정
 │   └── nginx.dev.conf         # 개발 설정
@@ -347,7 +318,6 @@ itoktok/
 1. `cd frontend && pnpm install`
 2. `pnpm dev` 실행 (핫 리로드)
 3. 데스크톱: http://localhost:5173
-4. 모바일: http://localhost:5173/mobile
 
 **Docker 개발:**
 1. `pnpm build`로 빌드
@@ -358,7 +328,7 @@ itoktok/
 1. `pnpm lint` - ESLint 검사
 2. `pnpm format` - Prettier 포맷팅
 3. `pnpm build` - 프로덕션 빌드 테스트
-4. 모바일/데스크톱 양쪽 모두 테스트
+4. 주요 데스크톱 플로우 테스트
 
 ## 중요 개발 참고사항
 
@@ -387,7 +357,6 @@ session.refresh(team)  # 관련 객체도 refresh 필요!
 - 슬라이딩 폼: `*FormSliding.vue`
 - 리스트 뷰: `*List.vue` 또는 `*ListView.vue`
 - 메인 뷰: `*View.vue`
-- 모바일 컴포넌트: `Mobile*.vue` (예: `MobileLayout.vue`, `MobileHeader.vue`)
 
 ### API 응답 구조 (중요!)
 **axios 인터셉터 구조:**
@@ -395,7 +364,6 @@ session.refresh(team)  # 관련 객체도 refresh 필요!
 - 따라서 API 호출 후 `response.data`가 아닌 `response`를 직접 사용해야 함
 - 잘못된 예: `const data = response.data.items` (오류 발생)
 - 올바른 예: `const data = response.items`
-- 특히 모바일 뷰에서 이 문제가 발생하기 쉬우므로 주의!
 
 ### 페이지네이션
 - 백엔드: `fastapi-pagination` 사용
@@ -450,10 +418,9 @@ docker compose logs -f  # 로그 확인
 ### 배포 후 확인 사항
 
 1. **데스크톱 버전**: http://www.itoktok.com:8081 접속 확인
-2. **모바일 버전**: http://www.itoktok.com:8081/mobile 접속 확인
-3. **API 문서**: http://api.itoktok.com:3000/docs 확인
-4. 로그인 및 주요 기능 동작 테스트
-5. 브라우저 콘솔에서 오류 확인
+2. **API 문서**: http://api.itoktok.com:3000/docs 확인
+3. 로그인 및 주요 기능 동작 테스트
+4. 브라우저 콘솔에서 오류 확인
 
 ### Nginx 설정
 
@@ -475,21 +442,9 @@ env DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
 
 ## 알려진 이슈 및 해결 방법
 
-### 모바일 버전 빈 화면 문제
+### API 응답 스키마 혼용
 
-**증상:** 로그인 후 일정 페이지로 이동 시 화면이 출력되지 않음
-
-**원인:** axios 인터셉터에서 이미 `response.data`를 반환하는데, 모바일 뷰에서 `response.data`를 다시 접근
-
-**해결방법:**
-- 모바일 뷰에서 API 응답을 `response` 직접 사용 (`.data` 제거)
-- 자세한 내용: `frontend/MOBILE_DEPLOYMENT_ISSUE.md` 참조
-
-### teacherStore 초기화 문제
-
-모바일 뷰에서 `teacherStore.selectedTeachers`가 undefined일 수 있음
-- 빈 배열 기본값 설정 필요
-- 또는 모바일 앱 초기화 시 store 초기화
+- axios 인터셉터가 `response.data`를 이미 반환하므로, 호출부에서는 `response`를 직접 사용
 
 ## 추가 참고사항
 
@@ -501,11 +456,9 @@ env DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
 
 ### 성능 최적화
 - Vue Router lazy loading으로 코드 스플리팅
-- 모바일 버전은 경량화된 인터페이스로 로딩 속도 최적화
 - Nginx에서 정적 파일 캐싱 활용
 
 ### 개발 문서
 - 백엔드 상세: `backend/CLAUDE.md`
 - 프론트엔드 상세: `frontend/CLAUDE.md`
-- 모바일 가이드: `frontend/src/mobile/README.md`
-- 모바일 이슈: `frontend/MOBILE_DEPLOYMENT_ISSUE.md`
+- (모바일은 Expo 신규 구축 예정으로 현 저장소에 포함하지 않음)
