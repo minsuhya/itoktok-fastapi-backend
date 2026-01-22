@@ -15,18 +15,18 @@ class UserBaseSchema(BaseModel):
     username: str
     email: EmailStr
     full_name: str
-    birth_date: Optional[str] = None
-    zip_code: Optional[str] = None
-    address: Optional[str] = None
-    address_extra: Optional[str] = None
-    phone_number: Optional[str] = None
+    birth_date: Optional[str] = ""
+    zip_code: Optional[str] = ""
+    address: Optional[str] = ""
+    address_extra: Optional[str] = ""
+    phone_number: Optional[str] = ""
     hp_number: str
     user_type: str  # 사용자 타입 (1: 센터, 2: 상담사)
-    center_username: str
+    center_username: Optional[str] = ""
     is_active: int = 1  # 사용자 활성화 여부 (0: 비활성화, 1: 활성화)
     is_superuser: Optional[int] = 0  # 관리자 여부 (0: 일반 사용자, 1: 관리자)
     usercolor: str = "#a668e3"  # 일정 색상
-    expertise: str  # 전문분야
+    expertise: Optional[str] = ""  # 전문분야
     deleted_at: Optional[datetime] = None
 
     @validator("is_superuser", pre=True, always=True)
@@ -40,6 +40,22 @@ class UserBaseSchema(BaseModel):
         raise ValueError(
             "Input should be a valid integer or a string that can be parsed as an integer"
         )
+
+    @validator(
+        "birth_date",
+        "zip_code",
+        "address",
+        "address_extra",
+        "phone_number",
+        "center_username",
+        "expertise",
+        pre=True,
+        always=True,
+    )
+    def normalize_optional_strings(cls, v):
+        if v is None:
+            return ""
+        return v
 
 
 class UserCreate(UserBaseSchema):

@@ -39,8 +39,9 @@ ENV PATH="${PATH}:$VENV_PATH/bin"
 WORKDIR /backend
 
 # copy .env, toml and sources
-COPY --chown=fastapi $APP_TOML ./pyproject.toml
-# COPY --chown=fastapi $APP_ROOT ./$APP_ROOT
+COPY --chown=fastapi:pythonapp $APP_TOML ./pyproject.toml
+RUN sudo chown -R $USR:$GRP /backend
+# COPY --chown=fastapi:pythonapp $APP_ROOT ./$APP_ROOT
 # make virtualenv in project
 RUN poetry config virtualenvs.in-project true
 # install dependencies only

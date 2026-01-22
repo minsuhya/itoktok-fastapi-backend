@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlmodel import Session, desc, select
 
-from ..core import get_session
+from ..core import get_session, oauth2_scheme
 from ..crud.schedule import (
     create_schedule_info,
     delete_schedule_info,
@@ -35,23 +35,29 @@ from .auth import get_current_user
 router = APIRouter(
     prefix="/schedules",
     tags=["schedules"],
-    dependencies=[Depends(get_session)],
+    dependencies=[Depends(get_session), Depends(oauth2_scheme)],
     responses={404: {"description": "API Not found"}},
 )
 
 
 @router.post("", response_model=Schedule)
 def create_schedule(
-    schedule_create: ScheduleCreate, session: Session = Depends(get_session)
+    schedule_create: ScheduleCreate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     # exclude_unset=True 옵션을 사용하여 세팅되지 않은 필드 제외
-    schedule_data = schedule_create.dict(exclude_unset=True)
+    schedule_data = schedule_create.model_dump(exclude_unset=True)
     schedule = create_schedule_info(session, ScheduleCreate(**schedule_data))
     return schedule
 
 
 @router.get("/{schedule_list_id}", response_model=ScheduleListRead)
-def read_schedule(schedule_list_id: int, session: Session = Depends(get_session)):
+def read_schedule(
+    schedule_list_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     schedule_list_info = get_schedule(session, schedule_list_id)
     print("schedule_list_info:", schedule_list_info)
     if not schedule_list_info:
@@ -61,7 +67,10 @@ def read_schedule(schedule_list_id: int, session: Session = Depends(get_session)
 
 @router.get("", response_model=List[ScheduleRead])
 def read_schedules(
-    skip: int = 0, limit: int = 10, session: Session = Depends(get_session)
+    skip: int = 0,
+    limit: int = 10,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     return get_schedules(session, skip=skip, limit=limit)
 
@@ -74,6 +83,7 @@ def update_schedule(
     schedule_update: ScheduleUpdate,
     schedule_list_id: Optional[int] = None,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     schedule = update_schedule_info(
         session, schedule_id, schedule_update, schedule_list_id=schedule_list_id
@@ -91,6 +101,7 @@ def delete_schedule(
     schedule_list_id: int,
     update_range: str,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     schedule = delete_schedule_info(
         session, schedule_id, schedule_list_id, update_range
@@ -102,7 +113,9 @@ def delete_schedule(
 
 @router.delete("/list/{schedule_list_id}", response_model=SuccessResponse[ScheduleRead])
 def delete_schedule_list(
-    schedule_list_id: int, session: Session = Depends(get_session)
+    schedule_list_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     delete_schedule_list_info(session, schedule_list_id)
     return SuccessResponse(data={})
@@ -193,6 +206,7 @@ async def update_schedule_date(
     new_date: str,
     update_all_future: bool = False,
     db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         # 현재 일정 정보 조회
@@ -260,6 +274,7 @@ async def update_schedule_date_time(
     new_time: int,
     update_all_future: bool = False,
     db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         # 현재 일정 정보 조회

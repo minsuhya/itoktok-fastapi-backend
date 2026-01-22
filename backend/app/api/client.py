@@ -37,6 +37,8 @@ def create_client(
     current_user: User = Depends(get_current_user),
 ):
     info.registered_by = current_user.username
+    if not info.center_username:
+        info.center_username = current_user.center_username or current_user.username
     return create_client_info(db, info)
 
 

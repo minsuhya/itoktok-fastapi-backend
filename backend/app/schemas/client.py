@@ -27,8 +27,10 @@ class ClientInfoBase(BaseModel):
     consultation_path: Optional[str] = Field(
         default="", max_length=20, description="Consultation Path"
     )
-    center_username: str = Field(..., max_length=15, description="center_username")
-    registered_by: Optional[str] = Field(default=None, max_length=15, description="Register")
+    center_username: str = Field(..., max_length=20, description="center_username")
+    registered_by: Optional[str] = Field(
+        default=None, max_length=20, description="Register"
+    )
 
 
 # ClientInfo Create Schema

@@ -7,7 +7,11 @@ from sqlalchemy.orm import joinedload
 from sqlmodel import Session, desc, select
 
 from ..models.user import User, UserSearchSelectedTeacher
-from ..schemas.user import UserUpdate, UserSearchSelectedTeacherCreate, UserSearchSelectedTeacherUpdate
+from ..schemas.user import (
+    UserUpdate,
+    UserSearchSelectedTeacherCreate,
+    UserSearchSelectedTeacherUpdate,
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -17,8 +21,12 @@ def get_password_hash(password: str) -> str:
 
 
 def create_user(session: Session, user: User) -> User:
-    if user.user_type == 1:  # center로 가입할 경우 center_username을 username으로 설정
+    if (
+        not user.center_username and user.user_type == 1
+    ):  # center로 가입할 경우 center_username을 username으로 설정
         user.center_username = user.username
+    if user.expertise is None:
+        user.expertise = ""
     user.password = get_password_hash(user.password)
     session.add(user)
     session.commit()
@@ -46,7 +54,9 @@ def get_users(
     # statement = select(User).offset(skip).limit(limit)
     # return session.exec(statement).all()
 
-    statement = select(User).options(joinedload(User.center_info)).order_by(desc(User.id))
+    statement = (
+        select(User).options(joinedload(User.center_info)).order_by(desc(User.id))
+    )
 
     # 로그인 사용자 타입에 따라 조회 조건 설정
     if login_user:
@@ -102,22 +112,25 @@ def get_teachers(session: Session, current_user: User) -> List[User]:
     return session.exec(statement).all()
 
 
-def get_user_selected_teachers(session: Session, username: str) -> Optional[UserSearchSelectedTeacher]:
+def get_user_selected_teachers(
+    session: Session, username: str
+) -> Optional[UserSearchSelectedTeacher]:
     """사용자가 선택한 상담사 목록 조회"""
-    statement = select(UserSearchSelectedTeacher).where(UserSearchSelectedTeacher.username == username)
+    statement = select(UserSearchSelectedTeacher).where(
+        UserSearchSelectedTeacher.username == username
+    )
     return session.exec(statement).first()
 
 
 def create_user_selected_teachers(
-    session: Session, 
-    data: UserSearchSelectedTeacherCreate
+    session: Session, data: UserSearchSelectedTeacherCreate
 ) -> UserSearchSelectedTeacher:
     """사용자가 선택한 상담사 목록 생성"""
     db_selected = UserSearchSelectedTeacher(
         username=data.username,
         selected_teacher=data.selected_teacher,
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
     session.add(db_selected)
     session.commit()
@@ -126,19 +139,17 @@ def create_user_selected_teachers(
 
 
 def update_user_selected_teachers(
-    session: Session,
-    username: str,
-    data: UserSearchSelectedTeacherUpdate
+    session: Session, username: str, data: UserSearchSelectedTeacherUpdate
 ) -> Optional[UserSearchSelectedTeacher]:
     """사용자가 선택한 상담사 목록 업데이트"""
     db_selected = get_user_selected_teachers(session, username)
     if not db_selected:
         return None
-        
+
     data_dict = data.model_dump(exclude_unset=True)
     for key, value in data_dict.items():
         setattr(db_selected, key, value)
-    
+
     session.add(db_selected)
     session.commit()
     session.refresh(db_selected)

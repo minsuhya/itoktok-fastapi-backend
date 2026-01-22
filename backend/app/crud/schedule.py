@@ -99,6 +99,8 @@ def get_schedule(session: Session, schedule_list_id: int) -> Optional[ScheduleLi
 
     result = session.exec(statement).first()
     # print("result:", result)
+    if not result:
+        return None
 
     # 현재 일시 가져오기
     now = datetime.now()
@@ -293,7 +295,9 @@ def get_schedule_for_month(
     if login_user:
         # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 일정 조회
         if login_user.user_type == "1":
-            statement = statement.join(User).where(User.center_username == login_user.username)
+            statement = statement.join(User).where(
+                User.center_username == login_user.username
+            )
         # 선생님(user_type=2)인 경우 자신만 조회
         elif login_user.user_type == "2":
             statement = statement.join(User).where(User.username == login_user.username)
@@ -306,8 +310,11 @@ def get_schedule_for_month(
             )
         )
     else:
-        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
-        statement = statement.where(Schedule.teacher_username == login_user.username)
+        # 선택된 상담사가 없는 경우, 선생님은 본인만, 센터장은 센터 전체
+        if login_user.user_type == "2":
+            statement = statement.where(
+                Schedule.teacher_username == login_user.username
+            )
 
     # 쿼리 출력
     print("Generated SQL:", statement.compile(compile_kwargs={"literal_binds": True}))
@@ -425,7 +432,9 @@ def get_schedule_for_week(
     if login_user:
         # 센터장(user_type=1)인 경우 자신이 센터장인 센터의 일정 조회
         if login_user.user_type == "1":
-            statement = statement.join(User).where(User.center_username == login_user.username)
+            statement = statement.join(User).where(
+                User.center_username == login_user.username
+            )
         # 선생님(user_type=2)인 경우 자신만 조회
         elif login_user.user_type == "2":
             statement = statement.join(User).where(User.username == login_user.username)
@@ -438,8 +447,11 @@ def get_schedule_for_week(
             )
         )
     else:
-        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
-        statement = statement.where(Schedule.teacher_username == login_user.username)
+        # 선택된 상담사가 없는 경우, 선생님은 본인만, 센터장은 센터 전체
+        if login_user.user_type == "2":
+            statement = statement.where(
+                Schedule.teacher_username == login_user.username
+            )
 
     return session.exec(statement).all()
 
@@ -550,7 +562,9 @@ def generate_weekly_schedule_with_empty_days(start_date: date, schedule_data):
 
 # 일별 스케줄 조회
 # Function to get the schedule for a specific day from the database
-def get_schedule_for_day(session: Session, target_date: date, login_user, selected_teachers=None):
+def get_schedule_for_day(
+    session: Session, target_date: date, login_user, selected_teachers=None
+):
     statement = select(ScheduleList).where(ScheduleList.schedule_date == target_date)
 
     statement = statement.join(Schedule).where(ScheduleList.schedule_id == Schedule.id)
@@ -569,8 +583,11 @@ def get_schedule_for_day(session: Session, target_date: date, login_user, select
             )
         )
     else:
-        # 선택된 상담사가 없는 경우, 현재 로그인한 사용자의 상담사만 조회
-        statement = statement.where(Schedule.teacher_username == login_user.username)
+        # 선택된 상담사가 없는 경우, 선생님은 본인만, 센터장은 센터 전체
+        if login_user.user_type == "2":
+            statement = statement.where(
+                Schedule.teacher_username == login_user.username
+            )
 
     return session.exec(statement).all()
 

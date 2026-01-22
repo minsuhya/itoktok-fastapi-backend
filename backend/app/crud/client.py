@@ -53,7 +53,8 @@ def get_client_infos(
     if search_qry:
         query = query.where(ClientInfo.client_name.like(f"%{search_qry}%"))
     if login_user.is_superuser != 1:  # 최고관리자일경우 - 센터 정보만
-        query = query.where(ClientInfo.center_username == login_user.username)
+        center_username = login_user.center_username or login_user.username
+        query = query.where(ClientInfo.center_username == center_username)
     return paginate(
         session,
         query,
@@ -74,7 +75,6 @@ def search_client_infos(session: Session, search_qry: str = "") -> Page[ClientIn
 def update_client_info(
     session: Session, info: ClientInfoUpdate, db_info: ClientInfo
 ) -> Optional[ClientInfo]:
-
     # Pydantic 모델을 dict로 변환
     info_data = info.dict(exclude_unset=True)
     print("info_data", info_data)
