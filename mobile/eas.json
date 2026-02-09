@@ -1,0 +1,25 @@
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+        "EXPO_PUBLIC_TOKEN_KEY": "access_token"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://itoktok-api.gillilab.com",
+        "EXPO_PUBLIC_TOKEN_KEY": "access_token"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://itoktok-api.gillilab.com",
+        "EXPO_PUBLIC_TOKEN_KEY": "access_token"
+      }
+    }
+  }
+}
