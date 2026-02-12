@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { useState } from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import Screen from '@/components/ui/Screen'
@@ -60,8 +60,19 @@ export default function LoginScreen() {
           placeholder="비밀번호"
           secureTextEntry
         />
+        <View style={styles.passwordHelpRow}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
+            <Text style={styles.link}>비밀번호를 잊어버렸나요?</Text>
+          </TouchableOpacity>
+        </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Button title={isSubmitting ? '로그인 중...' : '로그인'} onPress={handleLogin} disabled={isSubmitting} />
+        <View style={styles.signupRow}>
+          <Text style={styles.signupLabel}>회원이 아니신가요?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+            <Text style={styles.link}>회원가입</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Screen>
   )
@@ -117,5 +128,24 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginBottom: spacing.md,
     ...typography.caption
+  },
+  passwordHelpRow: {
+    alignItems: 'flex-end',
+    marginBottom: spacing.md
+  },
+  signupRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    gap: spacing.xs
+  },
+  signupLabel: {
+    ...typography.caption,
+    color: colors.textSecondary
+  },
+  link: {
+    ...typography.caption,
+    color: colors.primary
   }
 })

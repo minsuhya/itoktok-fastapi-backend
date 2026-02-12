@@ -1,14 +1,11 @@
-import React from 'react'
 import { Stack } from 'expo-router'
 
-export default function ScheduleLayout() {
+export default function UsersLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="weekly" />
-      <Stack.Screen name="monthly" />
+      <Stack.Screen name="[id]" />
       <Stack.Screen name="form" />
-      <Stack.Screen name="memo" />
     </Stack>
   )
 }

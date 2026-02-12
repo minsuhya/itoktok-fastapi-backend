@@ -7,6 +7,7 @@ from .api import (
     client_router,
     customer_router,
     inquiry_router,
+    password_router,
     program_router,
     record_router,
     schedule_router,
@@ -19,6 +20,7 @@ from .core import app
 
 app.include_router(auth_router)
 app.include_router(signup_router)
+app.include_router(password_router)
 app.include_router(customer_router)
 app.include_router(teacher_router)
 app.include_router(program_router)

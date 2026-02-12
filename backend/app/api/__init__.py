@@ -4,6 +4,7 @@ from .center import router as center_router
 from .client import router as client_router
 from .customer import router as customer_router
 from .inquiry import router as inquiry_router
+from .password import router as password_router
 from .program import router as program_router
 from .record import router as record_router
 from .schedule import router as schedule_router
@@ -18,6 +19,7 @@ __all__ = [
     signup_router,
     teacher_router,
     customer_router,
+    password_router,
     program_router,
     voucher_router,
     schedule_router,

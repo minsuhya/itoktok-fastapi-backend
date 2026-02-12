@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
@@ -11,7 +11,8 @@ import { colors, spacing, typography } from '@/lib/theme'
 import { searchClients } from '@/lib/api/clients'
 import { getTeachers } from '@/lib/api/users'
 import { getPrograms } from '@/lib/api/programs'
-import { createSchedule, deleteSchedule, getSchedule, normalizeRepeatDays, ScheduleDetail, updateSchedule } from '@/lib/api/schedules'
+import { createSchedule, deleteSchedule, getSchedule, normalizeRepeatDays, updateSchedule } from '@/lib/api/schedules'
+import type { ScheduleDetail } from '@/lib/api/schedules'
 import { toApiErrorMessage } from '@/lib/api/utils'
 
 type ClientOption = {
@@ -39,6 +40,23 @@ function getTodayDate() {
   return new Date().toISOString().split('T')[0]
 }
 
+function isValidDateString(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false
+  }
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) {
+    return false
+  }
+
+  const parsed = new Date(year, month - 1, day)
+  return (
+    parsed.getFullYear() === year &&
+    parsed.getMonth() === month - 1 &&
+    parsed.getDate() === day
+  )
+}
+
 export default function ScheduleFormScreen() {
   const router = useRouter()
   const { date, schedule_list_id, schedule_id } = useLocalSearchParams<{
@@ -56,6 +74,7 @@ export default function ScheduleFormScreen() {
   const [programOptions, setProgramOptions] = useState<ProgramOption[]>([])
   const [selectedStart, setSelectedStart] = useState('10:00')
   const [selectedEnd, setSelectedEnd] = useState('10:50')
+  const [updateRange, setUpdateRange] = useState<'single' | 'all'>('single')
   const [editMeta, setEditMeta] = useState<EditMeta | null>(null)
   const [editDetail, setEditDetail] = useState<ScheduleDetail | null>(null)
   const [isOptionsLoading, setIsOptionsLoading] = useState(true)
@@ -65,6 +84,8 @@ export default function ScheduleFormScreen() {
   const [formError, setFormError] = useState('')
 
   const isEditMode = Boolean(schedule_list_id && schedule_id)
+  const initialDate = typeof date === 'string' ? date : getTodayDate()
+  const [selectedDate, setSelectedDate] = useState(initialDate)
 
   const timeOptions = useMemo(() => {
     const options = [] as string[]
@@ -114,6 +135,7 @@ export default function ScheduleFormScreen() {
         setProgramId(detail.program_id || null)
         setSelectedStart(detail.schedule?.start_time || detail.schedule_time || '10:00')
         setSelectedEnd(detail.schedule?.finish_time || detail.schedule_finish_time || '10:50')
+        setSelectedDate(detail.schedule_date || detail.schedule?.start_date || initialDate)
         setMemo(detail.schedule_memo || detail.schedule?.memo || '')
         setEditMeta({
           scheduleListId: detail.id || Number(schedule_list_id),
@@ -129,7 +151,7 @@ export default function ScheduleFormScreen() {
     }
 
     loadEdit()
-  }, [schedule_list_id, schedule_id])
+  }, [schedule_list_id, schedule_id, initialDate])
 
   useEffect(() => {
     let isMounted = true
@@ -148,7 +170,7 @@ export default function ScheduleFormScreen() {
             phone: item.phone_number
           })))
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
           setClientOptions([])
         }
@@ -161,7 +183,9 @@ export default function ScheduleFormScreen() {
     }
   }, [clientName])
 
-  const selectedDate = typeof date === 'string' ? date : getTodayDate()
+  useEffect(() => {
+    setSelectedDate(initialDate)
+  }, [initialDate])
 
   const handleSubmit = async () => {
     if (isSubmitting) return
@@ -186,6 +210,11 @@ export default function ScheduleFormScreen() {
       return
     }
 
+    if (!isValidDateString(selectedDate)) {
+      setFormError('날짜 형식은 YYYY-MM-DD 이어야 합니다.')
+      return
+    }
+
     setFormError('')
     setIsSubmitting(true)
 
@@ -197,14 +226,14 @@ export default function ScheduleFormScreen() {
           client_id: clientId,
           program_id: programId,
           schedule_type: editDetail?.schedule?.schedule_type || 1,
-          start_date: editDetail?.schedule?.start_date || selectedDate,
-          finish_date: editDetail?.schedule?.finish_date || selectedDate,
+          start_date: selectedDate,
+          finish_date: selectedDate,
           start_time: selectedStart,
           finish_time: selectedEnd,
           repeat_type: editDetail?.schedule?.repeat_type || '2',
           repeat_days: repeatDays,
           schedule_status: '1',
-          update_range: 'single',
+          update_range: updateRange,
           memo
         })
         router.back()
@@ -246,7 +275,7 @@ export default function ScheduleFormScreen() {
     setIsSubmitting(true)
     setFormError('')
     try {
-      await deleteSchedule(editMeta.scheduleId, editMeta.scheduleListId, 'single')
+      await deleteSchedule(editMeta.scheduleId, editMeta.scheduleListId, updateRange)
       router.back()
     } catch (error) {
       setFormError(toApiErrorMessage(error, '일정을 삭제하지 못했습니다.'))
@@ -258,7 +287,12 @@ export default function ScheduleFormScreen() {
   const handleDelete = () => {
     if (!editMeta || isSubmitting) return
 
-    Alert.alert('일정 삭제', '선택한 일정을 삭제하시겠어요?', [
+    const message =
+      updateRange === 'all'
+        ? '선택한 일정 이후의 반복 일정까지 삭제됩니다. 진행할까요?'
+        : '선택한 일정을 삭제하시겠어요?'
+
+    Alert.alert('일정 삭제', message, [
       {
         text: '취소',
         style: 'cancel'
@@ -291,6 +325,31 @@ export default function ScheduleFormScreen() {
         )}
 
         <Text style={styles.dateText}>선택 날짜: {selectedDate}</Text>
+        <TextField
+          label="일정 날짜 (YYYY-MM-DD)"
+          value={selectedDate}
+          onChangeText={setSelectedDate}
+          placeholder="2026-01-31"
+        />
+
+        {editMeta ? (
+          <>
+            <Text style={styles.label}>수정 범위</Text>
+            <View style={styles.chipRow}>
+              <Chip
+                label="이번 일정만"
+                selected={updateRange === 'single'}
+                onPress={() => setUpdateRange('single')}
+              />
+              <Chip
+                label="이후 일정 전체"
+                selected={updateRange === 'all'}
+                onPress={() => setUpdateRange('all')}
+              />
+            </View>
+          </>
+        ) : null}
+
         <TextField label="내담자" value={clientName} onChangeText={setClientName} placeholder="이름 검색" />
         <View style={styles.chipRow}>
           {clientOptions.map((option) => (

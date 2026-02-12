@@ -11,9 +11,11 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
+import TeacherFilterChips from '@/components/ui/TeacherFilterChips'
 import { colors, spacing, typography } from '@/lib/theme'
 import { getDailySchedule, ScheduleEvent } from '@/lib/api/schedules'
 import { toApiErrorMessage } from '@/lib/api/utils'
+import { useTeacherFilters } from '@/lib/useTeacherFilters'
 
 export default function ScheduleScreen() {
   const router = useRouter()
@@ -22,6 +24,14 @@ export default function ScheduleScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const {
+    teachers,
+    selectedTeachers,
+    selectedTeacherSet,
+    error: teacherFilterError,
+    toggleTeacher,
+    selectAll
+  } = useTeacherFilters()
 
   const dateLabel = useMemo(() => format(selectedDate, 'M월 d일 EEEE', { locale: ko }), [selectedDate])
   const selectedDateKey = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate])
@@ -43,7 +53,10 @@ export default function ScheduleScreen() {
       setIsLoading(true)
     }
     try {
-      const data = await getDailySchedule(selectedDate)
+      const data = await getDailySchedule(
+        selectedDate,
+        selectedTeachers.length > 0 ? selectedTeachers : undefined
+      )
       setEvents(data)
       setLoadError('')
     } catch (error) {
@@ -53,7 +66,7 @@ export default function ScheduleScreen() {
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }, [selectedDate])
+  }, [selectedDate, selectedTeachers])
 
   useEffect(() => {
     loadSchedule(false)
@@ -116,6 +129,33 @@ export default function ScheduleScreen() {
         }
       >
         <SectionHeader title="일정" subtitle={dateLabel} />
+
+        <View style={styles.modeRow}>
+          <TouchableOpacity style={[styles.modeButton, styles.modeButtonActive]}>
+            <Text style={[styles.modeText, styles.modeTextActive]}>일간</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modeButton}
+            onPress={() => router.push({ pathname: '/(tabs)/schedule/weekly', params: { date: selectedDateKey } })}
+          >
+            <Text style={styles.modeText}>주간</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modeButton}
+            onPress={() => router.push({ pathname: '/(tabs)/schedule/monthly', params: { date: selectedDateKey } })}
+          >
+            <Text style={styles.modeText}>월간</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TeacherFilterChips
+          teachers={teachers}
+          selectedTeacherSet={selectedTeacherSet}
+          onToggleTeacher={toggleTeacher}
+          onSelectAll={selectAll}
+        />
+
+        {teacherFilterError ? <Text style={styles.filterError}>{teacherFilterError}</Text> : null}
 
         <Card style={styles.calendarCard}>
           <Calendar
@@ -209,6 +249,35 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.xl
+  },
+  modeRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.md
+  },
+  modeButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: spacing.sm
+  },
+  modeButtonActive: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary
+  },
+  modeText: {
+    ...typography.caption,
+    color: colors.textSecondary
+  },
+  modeTextActive: {
+    color: colors.primary
+  },
+  filterError: {
+    ...typography.caption,
+    color: colors.danger,
+    marginBottom: spacing.sm
   },
   calendarCard: {
     padding: spacing.md,

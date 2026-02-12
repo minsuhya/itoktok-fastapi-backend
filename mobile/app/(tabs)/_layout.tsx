@@ -1,4 +1,3 @@
-import React from 'react'
 import { Tabs } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
 
@@ -42,6 +41,30 @@ export default function TabLayout() {
         options={{
           title: '설정',
           tabBarIcon: ({ color, size }) => <Feather name="settings" color={color} size={size} />
+        }}
+      />
+      <Tabs.Screen
+        name="programs"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="users"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="my-info"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="center-info"
+        options={{
+          href: null
         }}
       />
     </Tabs>
