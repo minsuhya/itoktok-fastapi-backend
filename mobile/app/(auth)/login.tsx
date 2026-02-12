@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import TextField from '@/components/ui/TextField'
 import { colors, spacing, typography } from '@/lib/theme'
 import { useAuth } from '@/lib/auth'
+import { toApiErrorMessage } from '@/lib/api/utils'
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -14,14 +15,25 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleLogin = async () => {
+    if (isSubmitting) return
+
+    if (!username.trim() || !password) {
+      setError('아이디와 비밀번호를 입력해주세요.')
+      return
+    }
+
     setError('')
+    setIsSubmitting(true)
     try {
       await signIn(username.trim(), password)
       router.replace('/(tabs)')
     } catch (err) {
-      setError('아이디 또는 비밀번호를 확인해주세요.')
+      setError(toApiErrorMessage(err, '아이디 또는 비밀번호를 확인해주세요.'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -49,7 +61,7 @@ export default function LoginScreen() {
           secureTextEntry
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button title="로그인" onPress={handleLogin} />
+        <Button title={isSubmitting ? '로그인 중...' : '로그인'} onPress={handleLogin} disabled={isSubmitting} />
       </View>
     </Screen>
   )

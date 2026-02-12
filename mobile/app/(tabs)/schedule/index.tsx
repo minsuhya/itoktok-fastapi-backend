@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Alert, PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useRouter } from 'expo-router'
@@ -9,9 +9,11 @@ import { Swipeable } from 'react-native-gesture-handler'
 import Screen from '@/components/ui/Screen'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { colors, spacing, typography } from '@/lib/theme'
 import { getDailySchedule, ScheduleEvent } from '@/lib/api/schedules'
+import { toApiErrorMessage } from '@/lib/api/utils'
 
 export default function ScheduleScreen() {
   const router = useRouter()
@@ -19,9 +21,14 @@ export default function ScheduleScreen() {
   const [events, setEvents] = useState<ScheduleEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   const dateLabel = useMemo(() => format(selectedDate, 'M월 d일 EEEE', { locale: ko }), [selectedDate])
   const selectedDateKey = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate])
+  const pendingCount = useMemo(
+    () => events.filter((event) => String(event.schedule_status) !== '2').length,
+    [events]
+  )
 
   const markedDates = useMemo(() => ({
     [selectedDateKey]: {
@@ -38,8 +45,10 @@ export default function ScheduleScreen() {
     try {
       const data = await getDailySchedule(selectedDate)
       setEvents(data)
+      setLoadError('')
     } catch (error) {
       setEvents([])
+      setLoadError(toApiErrorMessage(error, '일정을 불러오지 못했습니다.'))
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
@@ -143,13 +152,18 @@ export default function ScheduleScreen() {
               <Text style={styles.cardAction}>새 일정</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.cardSubtitle}>완료되지 않은 상담 5건</Text>
+          <Text style={styles.cardSubtitle}>완료되지 않은 상담 {pendingCount}건</Text>
         </Card>
 
         <View style={styles.section} {...panResponder.panHandlers}>
           <Text style={styles.sectionTitle}>타임라인</Text>
           {isLoading ? (
             <Text style={styles.loading}>일정을 불러오는 중입니다...</Text>
+          ) : loadError ? (
+            <Card style={styles.errorCard}>
+              <Text style={styles.errorText}>{loadError}</Text>
+              <Button title="다시 시도" onPress={() => loadSchedule(false)} variant="secondary" />
+            </Card>
           ) : events.length === 0 ? (
             <EmptyState title="오늘 일정이 없습니다" description="새로운 일정을 추가해보세요." />
           ) : (
@@ -268,6 +282,14 @@ const styles = StyleSheet.create({
   loading: {
     ...typography.body,
     color: colors.textSecondary
+  },
+  errorCard: {
+    gap: spacing.md,
+    marginBottom: spacing.md
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.danger
   },
   swipeActionLeft: {
     justifyContent: 'center',
