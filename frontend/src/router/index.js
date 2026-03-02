@@ -2,7 +2,6 @@ import { isLogin } from '@/utils/token'
 import { createRouter, createWebHistory } from 'vue-router'
 import adminRoutes from './admin'
 import commonRoutes from './common'
-import mobileRoutes from './mobile'
 import testRoutes from './test'
 
 const router = createRouter({
@@ -39,18 +38,12 @@ const router = createRouter({
     ...testRoutes,
     ...commonRoutes,
     ...adminRoutes,
-    ...mobileRoutes,
   ]
 })
 
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isLogin()) {
-    // 모바일 경로인 경우 모바일 로그인으로 리다이렉트
-    if (to.path.startsWith('/mobile')) {
-      next({ name: 'MobileLogin' })
-    } else {
-      next({ name: 'Login' })
-    }
+    next({ name: 'Login' })
   } else {
     next()
   }
