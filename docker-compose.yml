@@ -20,7 +20,7 @@ services:
       - std-net
     logging:
       options:
-        max-size: "20m"  
+        max-size: "20m"
         max-file: "1"
 
   api:
@@ -41,61 +41,41 @@ services:
       - std-net
     logging:
       options:
-        max-size: "20m"  
+        max-size: "20m"
         max-file: "1"
 
-  # mariadb
-  # db:
-  #   image: mariadb:10
-  #   container_name: std-mysql
-  #   restart: unless-stopped
-  #   ports:
-  #     - 3308:3306
-  #   env_file: db.my.env
-  #   volumes:
-  #     - ./std-db/conf.d:/etc/mysql/conf.d
-  #     - ./std-db/initdb.d:/docker-entrypoint-initdb.d
-  #     - stdmydb_data:/var/lib/mysql # docker volume
-  #   networks:
-  #     - std-net
+  frontend:
+    build:
+      context: ./frontend
+    container_name: react-web-dev
+    volumes:
+      - ./frontend:/app # 로컬 코드 마운트
+      - /app/node_modules # 컨테이너 내부 라이브러리 보호
+    ports:
+      - "5173:5173"
+    environment:
+      - WATCHPACK_POLLING=true # 파일 변경 감지 보장 (일부 OS 필수)
+    restart: always
 
-  # postgresql
-  # db:
-  #   image: postgres:14
-  #   container_name: std-pgsql
-  #   restart: always
-  #   env_file:
-  #     - db.pg.env
-  #   ports:
-  #     - "5432:5432/tcp"
-  #   volumes:
-  #     - stdpgdb_data:/var/lib/postgresql/data
-
-  # mongo:
-  #   image: mongo:6
-  #   container_name: std-mongo
-  #   restart: always
-  #   ports:
-  #     - 27018:27017/tcp
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: rupi
-  #     MONGO_INITDB_ROOT_PASSWORD: rupi
-  #   volumes:
-  #     - stdmg_data:/data/db
-  #     - stdmg_cfg:/data/configdb
-  #   networks:
-  #     - std-net
+  mobile:
+    build:
+      context: ./mobile
+    container_name: expo-mobile-dev
+    volumes:
+      - ./mobile:/app # 로컬 코드 마운트
+      - /app/node_modules # 컨테이너 내부 라이브러리 보호
+    ports:
+      - "8082:8081"
+    environment:
+      # 서버의 실제 공인 IP를 입력하세요 (예: 123.123.123.123)
+      # 외부 작업자가 다른 네트워크에 있다면 아래 옵션을 tunnel로 변경 권장
+      # - EXPO_PUBLIC_PACKAGER_PROXY_URL=exp://[공인IP]:8081
+      # 또는 최신 버전에서 권장되는 방식
+      - REACT_NATIVE_PACKAGER_HOSTNAME=3.35.51.192
+    stdin_open: true # 대화형 모드 활성화 (QR 코드 가시성)
+    tty: true # 컬러 로그 출력
+    restart: always
 
 networks:
   std-net:
     driver: bridge
-
-# volumes:
-#   #   stdpgdb_data:
-#   #     name: stdpgdb_data
-#   stdmydb_data:
-#     name: stdmydb_data
-#   stdmg_data:
-#     name: stdmg_data
-#   stdmg_cfg:
-#     name: stdmg_cfg
