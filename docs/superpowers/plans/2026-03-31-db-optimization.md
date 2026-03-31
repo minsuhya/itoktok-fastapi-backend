@@ -162,7 +162,7 @@ git commit -m "chore: 테이블 사용 현황 분석 스크립트 추가"
 - Create: `backend/scripts/verify_schema.py`
 - Read: `database/itoktok-20260330-schema.sql`
 
-- [ ] **Step 1: SQL 덤프에서 테이블 목록 추출**
+- [x] **Step 1: SQL 덤프에서 테이블 목록 추출**
 
 ```bash
 grep "^CREATE TABLE" /Users/rupi/Colima/gillilab/itoktok/database/itoktok-20260330-schema.sql | sed "s/CREATE TABLE[^'\`]*['\`]\([^'\`]*\)['\`].*/\1/"
@@ -170,7 +170,7 @@ grep "^CREATE TABLE" /Users/rupi/Colima/gillilab/itoktok/database/itoktok-202603
 
 예상 출력: DB에 실제 존재하는 테이블 목록
 
-- [ ] **Step 2: SQLModel 모델에서 테이블 목록 추출**
+- [x] **Step 2: SQLModel 모델에서 테이블 목록 추출**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -190,7 +190,7 @@ for t in SQLModel.metadata.tables:
 "
 ```
 
-- [ ] **Step 3: 스키마 정합성 검증 스크립트 작성**
+- [x] **Step 3: 스키마 정합성 검증 스크립트 작성**
 
 `backend/scripts/verify_schema.py` 를 생성한다:
 
@@ -301,24 +301,21 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: 스크립트 실행**
+- [x] **Step 4: 스크립트 실행**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
 poetry run python scripts/verify_schema.py
 ```
 
-- [ ] **Step 5: 불일치 항목 기록**
+- [x] **Step 5: 불일치 항목 기록**
 
-출력 결과에서 `[경고]` 항목을 노트로 기록한다. 모델에만 있고 DB에 없는 컬럼은 Task 5 Alembic migration에서 추가할 대상이다.
+실행 결과:
+- 공통 테이블 14개: 전부 OK (컬럼 일치)
+- DB에만 있는 테이블: `notice`, `config` (모델 없음 — 레거시/직접 관리 테이블)
+- 모델에만 있고 DB에 없는 테이블/컬럼: 없음
 
-- [ ] **Step 6: 커밋**
-
-```bash
-cd /Users/rupi/Colima/gillilab/itoktok
-git add backend/scripts/verify_schema.py
-git commit -m "chore: 스키마 정합성 검증 스크립트 추가"
-```
+- [x] **Step 6: 커밋**
 
 ---
 
