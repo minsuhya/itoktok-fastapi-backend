@@ -39,14 +39,14 @@
 **Files:**
 - Create: `backend/scripts/analyze_db_usage.py`
 
-- [ ] **Step 1: scripts 디렉토리 생성**
+- [x] **Step 1: scripts 디렉토리 생성**
 
 ```bash
 mkdir -p /Users/rupi/Colima/gillilab/itoktok/backend/scripts
 touch /Users/rupi/Colima/gillilab/itoktok/backend/scripts/__init__.py
 ```
 
-- [ ] **Step 2: 분석 스크립트 작성**
+- [x] **Step 2: 분석 스크립트 작성**
 
 `backend/scripts/analyze_db_usage.py` 를 생성한다:
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 3: 스크립트 실행 및 결과 확인**
+- [x] **Step 3: 스크립트 실행 및 결과 확인**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -142,11 +142,11 @@ poetry run python scripts/analyze_db_usage.py
 
 예상 출력: `Customer`, `CenterDirector`, `Teacher` 가 CRUD/API 에서 사용됨을 확인 (teacher_router, customer_router가 main.py에 등록되어 있으므로)
 
-- [ ] **Step 4: 결과를 docs에 기록**
+- [x] **Step 4: 결과를 docs에 기록**
 
 분석 결과를 `docs/superpowers/specs/2026-03-31-db-optimization-design.md` 의 단계 1 산출물 표에 실제 결과로 업데이트한다.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -325,7 +325,7 @@ poetry run python scripts/verify_schema.py
 - Modify: `backend/pyproject.toml`
 - Create: `backend/alembic.ini`, `backend/alembic/env.py`, `backend/alembic/script.py.mako`
 
-- [ ] **Step 1: alembic 의존성 추가**
+- [x] **Step 1: alembic 의존성 추가**
 
 `backend/pyproject.toml` 의 `[tool.poetry.dependencies]` 섹션에 다음을 추가한다:
 
@@ -338,7 +338,7 @@ cd /Users/rupi/Colima/gillilab/itoktok/backend
 poetry add alembic
 ```
 
-- [ ] **Step 2: Alembic 초기화**
+- [x] **Step 2: Alembic 초기화**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -355,7 +355,7 @@ poetry run alembic init alembic
   Generating .../backend/alembic/script.py.mako ...  done
 ```
 
-- [ ] **Step 3: alembic.ini 설정**
+- [x] **Step 3: alembic.ini 설정**
 
 `backend/alembic.ini` 에서 `sqlalchemy.url` 라인을 찾아 다음과 같이 수정한다 (환경변수 사용):
 
@@ -366,7 +366,7 @@ sqlalchemy.url =
 
 (실제 URL은 env.py에서 환경변수로 처리할 예정)
 
-- [ ] **Step 4: env.py 수정**
+- [x] **Step 4: env.py 수정**
 
 `backend/alembic/env.py` 전체를 다음으로 교체한다:
 
@@ -441,7 +441,7 @@ else:
     run_migrations_online()
 ```
 
-- [ ] **Step 5: env.py 동작 확인**
+- [x] **Step 5: env.py 동작 확인**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -452,7 +452,7 @@ poetry run alembic current
 
 예상 출력: `INFO  [alembic.runtime.migration] Context impl MySQLImpl.` (오류 없이 실행됨)
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -467,7 +467,7 @@ git commit -m "chore: Alembic 초기화 및 env.py 설정"
 **Files:**
 - Create: `backend/alembic/versions/<hash>_baseline.py` (자동 생성)
 
-- [ ] **Step 1: 현재 상태로 baseline migration 생성**
+- [x] **Step 1: 현재 상태로 baseline migration 생성**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -477,7 +477,7 @@ poetry run alembic revision --autogenerate -m "baseline"
 
 예상 결과: `backend/alembic/versions/<hash>_baseline.py` 파일 생성
 
-- [ ] **Step 2: 생성된 파일 수동 검토**
+- [x] **Step 2: 생성된 파일 수동 검토**
 
 생성된 `versions/<hash>_baseline.py` 를 열어 확인한다:
 - `upgrade()` 함수에 CREATE TABLE 문들이 있으면 — DB가 이미 존재하므로 `upgrade()`/`downgrade()` 내용을 모두 비워야 함
@@ -494,7 +494,7 @@ def downgrade() -> None:
     pass  # baseline
 ```
 
-- [ ] **Step 3: stamp head 적용 (DB 변경 없이 버전 마킹)**
+- [x] **Step 3: stamp head 적용 (DB 변경 없이 버전 마킹)**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -507,7 +507,7 @@ poetry run alembic stamp head
 INFO  [alembic.runtime.migration] Running stamp_revision -> <hash>
 ```
 
-- [ ] **Step 4: 적용 확인**
+- [x] **Step 4: 적용 확인**
 
 ```bash
 poetry run alembic current
@@ -515,7 +515,7 @@ poetry run alembic current
 
 예상 출력: `<hash> (head)` — 현재 버전이 head로 설정됨
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -530,7 +530,7 @@ git commit -m "chore: Alembic baseline migration 설정"
 **Files:**
 - Create: `backend/scripts/verify_legacy_mapping.py`
 
-- [ ] **Step 1: 검증 스크립트 작성**
+- [x] **Step 1: 검증 스크립트 작성**
 
 `backend/scripts/verify_legacy_mapping.py` 를 생성한다:
 
@@ -642,19 +642,19 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: 스크립트 실행**
+- [x] **Step 2: 스크립트 실행**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
 poetry run python scripts/verify_legacy_mapping.py
 ```
 
-- [ ] **Step 3: 결과에 따라 판단**
+- [x] **Step 3: 결과에 따라 판단**
 
 - 모두 `✅ 완전 중복` → Task 6 (코드 정리)로 진행
 - `⚠️ 이전 필요` 항목이 있으면 → 해당 데이터를 현행 테이블로 수동 이전 후 재실행
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -679,13 +679,13 @@ git commit -m "chore: 레거시 테이블 데이터 매핑 검증 스크립트 �
 - Modify: `backend/app/api/__init__.py`
 - Modify: `backend/app/schemas/` (customer, teacher 스키마)
 
-- [ ] **Step 1: api/__init__.py 확인**
+- [x] **Step 1: api/__init__.py 확인**
 
 ```bash
 cat /Users/rupi/Colima/gillilab/itoktok/backend/app/api/__init__.py
 ```
 
-- [ ] **Step 2: main.py에서 레거시 라우터 제거**
+- [x] **Step 2: main.py에서 레거시 라우터 제거**
 
 `backend/app/main.py` 에서 다음 두 줄을 제거한다:
 
@@ -704,7 +704,7 @@ app.include_router(customer_router)  # ← 제거
 app.include_router(teacher_router)   # ← 제거
 ```
 
-- [ ] **Step 3: models/user.py에서 레거시 클래스 제거**
+- [x] **Step 3: models/user.py에서 레거시 클래스 제거**
 
 `backend/app/models/user.py` 에서 다음을 제거한다:
 - `CenterDirector` 클래스 전체 (116~135번 라인)
@@ -713,7 +713,7 @@ app.include_router(teacher_router)   # ← 제거
 - `UserBase` 클래스 (107~113번 라인)
 - `TYPE_CHECKING` 블록에서 불필요한 import 정리
 
-- [ ] **Step 4: 레거시 파일 삭제**
+- [x] **Step 4: 레거시 파일 삭제**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -724,7 +724,7 @@ rm app/api/customer.py
 rm app/api/teacher.py
 ```
 
-- [ ] **Step 5: schemas에서 레거시 스키마 확인 및 제거**
+- [x] **Step 5: schemas에서 레거시 스키마 확인 및 제거**
 
 ```bash
 ls /Users/rupi/Colima/gillilab/itoktok/backend/app/schemas/
@@ -733,7 +733,7 @@ grep -r "Customer\|TeacherCreate\|TeacherRead\|TeacherUpdate" /Users/rupi/Colima
 
 customer, teacher 관련 스키마가 있으면 해당 파일에서 제거한다.
 
-- [ ] **Step 6: FastAPI 앱 시작 확인**
+- [x] **Step 6: FastAPI 앱 시작 확인**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -745,7 +745,7 @@ poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
 
 Ctrl+C 로 종료.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -762,7 +762,7 @@ git commit -m "refactor: 레거시 Customer, CenterDirector, Teacher 코드 제�
 **Files:**
 - Create: `backend/alembic/versions/<hash>_rename_legacy_tables.py`
 
-- [ ] **Step 1: rename migration 생성**
+- [x] **Step 1: rename migration 생성**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -770,7 +770,7 @@ export $(cat ../.env | grep CONN_URL | xargs)
 poetry run alembic revision -m "rename_legacy_tables"
 ```
 
-- [ ] **Step 2: 생성된 migration 파일 수정**
+- [x] **Step 2: 생성된 migration 파일 수정**
 
 생성된 `versions/<hash>_rename_legacy_tables.py` 를 다음과 같이 작성한다:
 
@@ -792,19 +792,19 @@ depends_on = None
 def upgrade() -> None:
     # 레거시 테이블을 _deprecated suffix로 rename
     # 1~2주 관찰 후 drop_legacy_tables migration으로 최종 삭제
-    op.rename_table("centerdirector", "centerdirector_deprecated_20260331")
-    op.rename_table("teacher", "teacher_deprecated_20260331")
-    op.rename_table("customer", "customer_deprecated_20260331")
+    op.rename_table("centerdirector", "centerdirector_deprecated_20260401")
+    op.rename_table("teacher", "teacher_deprecated_20260401")
+    op.rename_table("customer", "customer_deprecated_20260401")
 
 
 def downgrade() -> None:
     # 롤백: 원래 이름으로 복원
-    op.rename_table("centerdirector_deprecated_20260331", "centerdirector")
-    op.rename_table("teacher_deprecated_20260331", "teacher")
-    op.rename_table("customer_deprecated_20260331", "customer")
+    op.rename_table("centerdirector_deprecated_20260401", "centerdirector")
+    op.rename_table("teacher_deprecated_20260401", "teacher")
+    op.rename_table("customer_deprecated_20260401", "customer")
 ```
 
-- [ ] **Step 3: DB 백업 (필수)**
+- [x] **Step 3: DB 백업 (필수)**
 
 프로덕션 DB 전체 백업을 수행한다. 방법은 DB 호스팅 환경에 따라 다르지만 일반적으로:
 
@@ -815,7 +815,7 @@ mysqldump -h <host> -u <user> -p<password> <database> > backup_before_rename_$(d
 
 백업 파일이 생성되었음을 확인한다.
 
-- [ ] **Step 4: migration 적용**
+- [x] **Step 4: migration 적용**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -828,7 +828,7 @@ poetry run alembic upgrade head
 INFO  [alembic.runtime.migration] Running upgrade <prev> -> <hash>, rename_legacy_tables
 ```
 
-- [ ] **Step 5: 적용 확인**
+- [x] **Step 5: 적용 확인**
 
 ```bash
 poetry run alembic current
@@ -836,7 +836,7 @@ poetry run alembic current
 
 예상: 최신 revision이 head로 표시됨
 
-- [ ] **Step 6: 앱 정상 동작 확인**
+- [x] **Step 6: 앱 정상 동작 확인**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok/backend
@@ -846,7 +846,7 @@ poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
 
 `http://localhost:3000/docs` 접속하여 주요 API(users, clients, schedules) 동작 확인 후 Ctrl+C 종료.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 cd /Users/rupi/Colima/gillilab/itoktok
@@ -891,9 +891,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_table("centerdirector_deprecated_20260331")
-    op.drop_table("teacher_deprecated_20260331")
-    op.drop_table("customer_deprecated_20260331")
+    op.drop_table("centerdirector_deprecated_20260401")
+    op.drop_table("teacher_deprecated_20260401")
+    op.drop_table("customer_deprecated_20260401")
 
 
 def downgrade() -> None:
@@ -937,12 +937,12 @@ git commit -m "chore: 레거시 테이블 최종 삭제 migration 적용"
 
 ## 성공 기준 체크리스트
 
-- [ ] `analyze_db_usage.py` 실행 결과가 docs에 반영됨
-- [ ] `verify_schema.py` 실행 결과 불일치 0건 (또는 모두 처리됨)
-- [ ] `alembic current` 가 정상적으로 head revision을 출력함
-- [ ] `/customers`, `/teachers` 엔드포인트가 Swagger UI에서 사라짐
-- [ ] FastAPI 앱이 오류 없이 시작됨
-- [ ] 레거시 테이블이 `_deprecated_20260331` suffix로 rename됨
+- [x] `analyze_db_usage.py` 실행 결과가 docs에 반영됨
+- [x] `verify_schema.py` 실행 결과 불일치 0건 (또는 모두 처리됨)
+- [x] `alembic current` 가 정상적으로 head revision을 출력함
+- [x] `/customers`, `/teachers` 엔드포인트가 Swagger UI에서 사라짐
+- [x] FastAPI 앱이 오류 없이 시작됨
+- [x] 레거시 테이블이 `_deprecated_20260401` suffix로 rename됨
 - [ ] 1~2주 관찰 후 deprecated 테이블 최종 삭제 완료
 - [ ] 프로덕션 데이터 손실 0건
 
