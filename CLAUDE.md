@@ -30,9 +30,9 @@ ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다
 **프로덕션 모드:**
 ```bash
 docker compose up -d
-# Frontend: http://www.itoktok.com:8081
-# Backend API: http://api.itoktok.com:3000
-# API Docs: http://api.itoktok.com:3000/docs
+# Frontend: http://itoktok-www.gillilab.com:8082
+# Backend API: http://itoktok-api.gillilab.com:8082
+# API Docs: http://localhost:3000/docs
 ```
 
 **개발 모드:**
@@ -44,7 +44,7 @@ docker compose -f docker-compose.dev.yml up -d
 ```
 
 **참고:**
-- 데이터베이스는 외부 MySQL 서버를 사용 (`.env`의 `CONN_URL`로 설정)
+- 데이터베이스는 외부 MySQL 서버(AWS RDS)를 사용 (`.env`의 `CONN_URL`로 설정)
 - docker-compose의 MariaDB/PostgreSQL/MongoDB는 주석 처리되어 있음
 
 ## 백엔드 개발 (FastAPI)
@@ -90,9 +90,10 @@ backend/app/
 ```
 
 **데이터베이스:**
-- MySQL/MariaDB (주 데이터베이스, 외부 서버 사용)
+- MySQL/MariaDB (주 데이터베이스, 외부 AWS RDS 사용)
   - 연결: `CONN_URL` 환경 변수 (예: `mysql+pymysql://user:password@host:port/database`)
   - SQLModel/SQLAlchemy ORM 사용
+  - 마이그레이션: Alembic 사용
 - MongoDB (보조 데이터베이스, 선택적 사용)
   - 연결: `MONGO_URI`, `MONGO_DB` 환경 변수
 
@@ -106,9 +107,9 @@ backend/app/
 
 - `/auth/login` - 로그인, JWT 토큰 발급
 - `/signup` - 회원가입 (센터장 등록)
-- `/users` - 사용자 관리
+- `/password` - 비밀번호 재설정
+- `/users` - 사용자 관리 (선생님 관리 포함)
 - `/centers` - 센터 정보 관리
-- `/teachers` - 선생님 관리
 - `/clients` - 내담자 관리
 - `/programs` - 프로그램 관리
 - `/schedules` - 일정 관리
@@ -417,17 +418,19 @@ docker compose logs -f  # 로그 확인
 
 ### 배포 후 확인 사항
 
-1. **데스크톱 버전**: http://www.itoktok.com:8081 접속 확인
-2. **API 문서**: http://api.itoktok.com:3000/docs 확인
+1. **데스크톱 버전**: http://itoktok-www.gillilab.com:8082 접속 확인
+2. **API 문서**: http://localhost:3000/docs 확인
 3. 로그인 및 주요 기능 동작 테스트
 4. 브라우저 콘솔에서 오류 확인
 
 ### Nginx 설정
 
+Nginx는 도메인(server_name) 기반으로 API와 프론트엔드를 분리합니다.
+
 - **프로덕션**: `conf/nginx.conf`
-  - 포트: 8081 (HTTP), 443 (HTTPS)
-  - 프론트엔드: `frontend/dist/` 서빙
-  - API 프록시: `/api` → `http://api:3000`
+  - 포트: 8082 (Host) → 80 (Container)
+  - `itoktok-api.gillilab.com` → `std-api:3000` (API 프록시)
+  - `itoktok-www.gillilab.com` → `frontend/dist/` (정적 파일 서빙)
 
 - **개발**: `conf/nginx.dev.conf`
   - 포트: 2080 (HTTP), 2443 (HTTPS)
