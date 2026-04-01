@@ -137,6 +137,7 @@ env.bak/
 venv.bak/
 .omc/
 .openchrome/
+.claude-octopus/
 
 # Spyder project settings
 .spyderproject
