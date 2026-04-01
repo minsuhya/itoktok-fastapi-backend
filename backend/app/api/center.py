@@ -1,28 +1,20 @@
-from typing import List, Union
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, desc, select
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session
 
 from ..core import get_session, oauth2_scheme
-from ..crud.center import (  # center director; center info
-    create_center_director,
+from ..crud.center import (
     create_center_info,
-    delete_center_director,
     delete_center_info,
-    get_center_director_by_id,
-    get_center_directors,
     get_center_info_by_username,
     get_center_infos,
-    update_center_director,
     update_center_info,
 )
-from ..models.user import CenterDirector, CenterInfo
+from ..models.user import CenterInfo
 from ..schemas import ErrorResponse, SuccessResponse
 from .auth import get_current_user
-from ..schemas.user import (  # center director; center info
-    CenterDirectorCreate,
-    CenterDirectorRead,
-    CenterDirectorUpdate,
+from ..schemas.user import (
     CenterInfoCreate,
     CenterInfoRead,
     CenterInfoUpdate,
@@ -34,66 +26,6 @@ router = APIRouter(
     dependencies=[Depends(get_session), Depends(oauth2_scheme)],
     responses={404: {"description": "API Not found"}},
 )
-
-
-##### Center Director CRUD #####
-@router.post("/register", response_model=CenterDirectorRead)
-def register_center_director(
-    director: CenterDirectorCreate,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    director_data = CenterDirector.model_validate(director)
-    return create_center_director(session, director_data)
-
-
-@router.get("/{director_id}", response_model=CenterDirectorRead)
-def read_center_director(
-    director_id: int,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    print("read", director_id)
-    director = get_center_director_by_id(session, director_id)
-    if not director:
-        raise HTTPException(status_code=404, detail="Center Director not found")
-    return director
-
-
-@router.get("", response_model=List[CenterDirectorRead])
-def read_center_directors(
-    skip: int = 0,
-    limit: int = 10,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    return get_center_directors(session, skip=skip, limit=limit)
-
-
-@router.put("/{director_id}", response_model=SuccessResponse[CenterDirectorRead])
-def update_center_director_endpoint(
-    director_id: int,
-    director: CenterDirectorUpdate,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    existing_director = get_center_director_by_id(session, director_id)
-    if not existing_director:
-        raise HTTPException(status_code=404, detail="Center Director not found")
-    return SuccessResponse(
-        data=update_center_director(session, director, existing_director)
-    )
-
-
-@router.delete("/{director_id}", response_model=SuccessResponse[bool])
-def delete_center_director_endpoint(
-    director_id: int,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    if not delete_center_director(session, director_id):
-        raise HTTPException(status_code=404, detail="Center Director not found")
-    return SuccessResponse(data=True)
 
 
 ##### Center Info CRUD #####

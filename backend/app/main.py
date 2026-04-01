@@ -5,14 +5,12 @@ from .api import (
     auth_router,
     center_router,
     client_router,
-    customer_router,
     inquiry_router,
     password_router,
     program_router,
     record_router,
     schedule_router,
     signup_router,
-    teacher_router,
     users_router,
     voucher_router,
 )
@@ -21,8 +19,6 @@ from .core import app
 app.include_router(auth_router)
 app.include_router(signup_router)
 app.include_router(password_router)
-app.include_router(customer_router)
-app.include_router(teacher_router)
 app.include_router(program_router)
 app.include_router(voucher_router)
 app.include_router(schedule_router)

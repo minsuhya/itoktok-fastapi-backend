@@ -1,13 +1,7 @@
-from datetime import date, datetime, timezone
-from enum import Enum
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, validator
-
-
-class Role(str, Enum):
-    center_director = "center_director"
-    teacher = "teacher"
 
 
 # User Schema
@@ -113,99 +107,6 @@ class CenterInfoRead(CenterInfoBase):
 
     class Config:
         from_attributes = True
-
-
-# CenterDirector Schema
-class CenterDirectorCreate(BaseModel):
-    username: str
-    password: str
-    full_name: str
-    email: EmailStr
-    address: Optional[str] = None
-    position: str
-    mobile_number: str
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    signature_image: Optional[str] = None
-    profile_image: Optional[str] = None
-    qualification_number: Optional[str] = None
-    receive_alerts: bool = False
-    receive_schedule_alerts: bool = False
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
-    deleted_at: Optional[datetime] = None
-
-
-class CenterDirectorRead(UserBaseSchema):
-    id: int
-    address: Optional[str] = None
-    position: str
-    mobile_number: str
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    signature_image: Optional[str] = None
-    profile_image: Optional[str] = None
-    qualification_number: Optional[str] = None
-    receive_alerts: bool = False
-    receive_schedule_alerts: bool = False
-
-
-class CenterDirectorUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    address: Optional[str] = None
-    position: Optional[str] = None
-    mobile_number: Optional[str] = None
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    signature_image: Optional[str] = None
-    profile_image: Optional[str] = None
-    qualification_number: Optional[str] = None
-    receive_alerts: Optional[bool] = None
-    receive_schedule_alerts: Optional[bool] = None
-
-
-class TeacherCreate(BaseModel):
-    username: str
-    password: str
-    full_name: str
-    email: EmailStr
-    company_number: Optional[str] = None
-    address: Optional[str] = None
-    position: str
-    mobile_number: str
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    profile_image: Optional[str] = None
-    teacher_role: str
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
-    deleted_at: Optional[datetime] = None
-
-
-class TeacherRead(UserBaseSchema):
-    id: int
-    company_number: Optional[str] = None
-    address: Optional[str] = None
-    position: str
-    mobile_number: str
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    profile_image: Optional[str] = None
-    teacher_role: str
-
-
-class TeacherUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    company_number: Optional[str] = None
-    address: Optional[str] = None
-    position: Optional[str] = None
-    mobile_number: Optional[str] = None
-    office_number: Optional[str] = None
-    birthdate: Optional[date] = None
-    profile_image: Optional[str] = None
-    teacher_role: Optional[str] = None
 
 
 class UserSearchSelectedTeacherBase(BaseModel):

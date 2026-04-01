@@ -16,7 +16,7 @@ sys.path.insert(0, str(BASE_DIR))
 load_dotenv(BASE_DIR.parent / ".env")
 
 # 모든 모델 import (메타데이터 등록을 위해 필수)
-from app.models.user import User, CenterInfo, CenterDirector, Teacher, UserSearchSelectedTeacher  # noqa
+from app.models.user import User, CenterInfo, UserSearchSelectedTeacher  # noqa
 from app.models.client import ClientInfo  # noqa
 from app.models.schedule import Schedule, ScheduleList  # noqa
 from app.models.program import Program  # noqa
@@ -24,7 +24,6 @@ from app.models.record import Record  # noqa
 from app.models.voucher import Voucher  # noqa
 from app.models.announcement import Announcement  # noqa
 from app.models.inquiry import Inquiry  # noqa
-from app.models.customer import Customer  # noqa
 
 config = context.config
 
