@@ -44,10 +44,18 @@ def create_client(
 
 # 클라이언트 정보 조회 by ID
 @router.get("/{info_id}", response_model=SuccessResponse[ClientInfoRead])
-def read_client_info(info_id: int, db: Session = Depends(get_session)):
+def read_client_info(
+    info_id: int,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     db_info = get_client_info_by_id(db, info_id)
     if db_info is None:
         raise HTTPException(status_code=404, detail="Client info not found")
+    if not current_user.is_superuser:
+        user_center = current_user.center_username or current_user.username
+        if db_info.center_username != user_center:
+            raise HTTPException(status_code=403, detail="Access denied")
     return SuccessResponse(data=db_info)
 
 

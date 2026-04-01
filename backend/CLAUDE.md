@@ -4,7 +4,7 @@
 
 ## 프로젝트 개요
 
-이 프로젝트는 SQLModel (SQLAlchemy + Pydantic)을 사용하여 데이터베이스를 관리하는 FastAPI 백엔드 애플리케이션입니다. PostgreSQL과 MongoDB 데이터베이스를 모두 지원하는 상담센터 관리 시스템을 위한 REST API를 제공합니다.
+이 프로젝트는 SQLModel (SQLAlchemy + Pydantic)을 사용하여 데이터베이스를 관리하는 FastAPI 백엔드 애플리케이션입니다. MySQL/MariaDB와 MongoDB 데이터베이스를 지원하는 상담센터 관리 시스템을 위한 REST API를 제공합니다.
 
 ## 개발 명령어
 
@@ -17,7 +17,7 @@ poetry install --no-root
 poetry shell
 
 # 핫 리로드와 함께 개발 서버 실행
-poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
 ```
 
 ### 테스트
@@ -58,16 +58,20 @@ app/
 ### 데이터베이스 아키텍처
 
 **이중 데이터베이스 지원:**
-- **PostgreSQL**: SQLModel을 통해 관리되는 주요 관계형 데이터베이스
+- **MySQL/MariaDB**: SQLModel을 통해 관리되는 주요 관계형 데이터베이스 (외부 AWS RDS)
 - **MongoDB**: 특정 사용 사례를 위한 보조 데이터베이스
 
 **데이터베이스 연결 파일:**
-- `app/core/mydb.py`: 현재 PostgreSQL 연결 설정
-- `app/core/pgdb.py`: 대체 PostgreSQL 설정 (샘플 데이터 삽입 포함)
+- `app/core/mydb.py`: MySQL 연결 설정 (현재 사용 중)
+- `app/core/pgdb.py`: PostgreSQL 설정 (미사용)
 - `app/core/mgdb.py`: MongoDB 연결 설정
 
+**마이그레이션:**
+- Alembic을 사용한 데이터베이스 마이그레이션 관리
+- 마이그레이션 파일: `alembic/versions/`
+
 **필수 환경 변수:**
-- `CONN_URL`: PostgreSQL 연결 문자열
+- `CONN_URL`: MySQL 연결 문자열 (예: `mysql+pymysql://user:pass@host:port/db`)
 - `MONGO_URI`: MongoDB 연결 문자열
 - `MONGO_DB`: MongoDB 데이터베이스 이름
 - `SECRET_KEY`: JWT 비밀 키
@@ -101,15 +105,17 @@ app/
 ### 주요 도메인 모델
 
 애플리케이션이 관리하는 항목:
-- **Users**: 센터 관리자 및 상담사/교사
+- **User**: 센터 관리자, 센터장, 상담사/교사 (통합 사용자 모델)
 - **CenterInfo**: 상담센터 정보
-- **ClientInfo**: 내담자/고객 정보
-- **Programs**: 치료 프로그램
-- **Schedules**: 예약 일정
-- **Records**: 세션 기록
-- **Vouchers**: 결제 바우처
-- **Inquiries**: 고객 문의
-- **Announcements**: 시스템 공지사항
+- **ClientInfo**: 내담자 정보
+- **Program**: 치료 프로그램
+- **Schedule**: 예약 일정
+- **Record**: 세션 기록
+- **Voucher**: 결제 바우처
+- **Inquiry**: 고객 문의
+- **Announcement**: 시스템 공지사항
+
+> **참고**: 과거의 Customer, CenterDirector, Teacher 레거시 모델은 User 모델로 통합되어 제거되었습니다.
 
 ## 중요한 개발 참고사항
 
@@ -149,12 +155,11 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(ROOT_DIR, "app"))
 ```
 
-### Mac M1 Docker 이슈
+### Mac M1/M2 Docker 이슈
 
-Mac M1에서 PostgreSQL 연결 오류 발생 시:
+ARM 아키텍처에서 빌드 시:
 - 빌드 방법: `env DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build`
-- 문제: SCRAM 인증에 올바른 libpq 버전 필요
-- 해결책: aarch64 바이너리 문제를 피하기 위해 linux/amd64 플랫폼으로 빌드
+- ARM 바이너리 호환성 문제를 피하기 위해 linux/amd64 플랫폼으로 빌드
 
 ### Poetry 설치
 

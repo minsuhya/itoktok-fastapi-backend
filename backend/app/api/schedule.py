@@ -40,6 +40,22 @@ router = APIRouter(
 )
 
 
+def check_schedule_access(schedule_id: int, current_user: User, session: Session):
+    """일정 소유자 또는 센터장/관리자인지 검증"""
+    sched = session.get(Schedule, schedule_id)
+    if not sched:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    if current_user.is_superuser:
+        return sched
+    user_center = current_user.center_username or current_user.username
+    teacher = session.query(User).filter(User.username == sched.teacher_username).first()
+    teacher_center = teacher.center_username if teacher else None
+    if current_user.username != sched.teacher_username:
+        if current_user.user_type != "1" or user_center != teacher_center:
+            raise HTTPException(status_code=403, detail="Access denied")
+    return sched
+
+
 @router.post("", response_model=Schedule)
 def create_schedule(
     schedule_create: ScheduleCreate,
@@ -85,6 +101,7 @@ def update_schedule(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    check_schedule_access(schedule_id, current_user, session)
     schedule = update_schedule_info(
         session, schedule_id, schedule_update, schedule_list_id=schedule_list_id
     )
@@ -103,6 +120,7 @@ def delete_schedule(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    check_schedule_access(schedule_id, current_user, session)
     schedule = delete_schedule_info(
         session, schedule_id, schedule_list_id, update_range
     )
@@ -209,6 +227,8 @@ async def update_schedule_date(
     current_user: User = Depends(get_current_user),
 ):
     try:
+        check_schedule_access(schedule_id, current_user, db)
+
         # 현재 일정 정보 조회
         current_schedule = (
             db.query(ScheduleList)
@@ -256,6 +276,8 @@ async def update_schedule_date(
             data={"success": True, "message": "Schedule updated successfully"}
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         return ErrorResponse(
@@ -277,6 +299,8 @@ async def update_schedule_date_time(
     current_user: User = Depends(get_current_user),
 ):
     try:
+        check_schedule_access(schedule_id, current_user, db)
+
         # 현재 일정 정보 조회
         current_schedule = (
             db.query(ScheduleList)
@@ -341,6 +365,8 @@ async def update_schedule_date_time(
             data={"success": True, "message": "Schedule updated successfully"}
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         return ErrorResponse(

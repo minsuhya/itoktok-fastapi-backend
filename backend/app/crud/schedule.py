@@ -1,4 +1,5 @@
 import calendar
+import json
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional, Union
@@ -28,7 +29,7 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
     # schedule_data 준비
     schedule_data = schedule_create.dict()
     if isinstance(schedule_data.get("repeat_days"), dict):
-        schedule_data["repeat_days"] = str(schedule_data["repeat_days"])
+        schedule_data["repeat_days"] = json.dumps(schedule_data["repeat_days"])
 
     # schedule 생성
     schedule = Schedule(**schedule_data)
@@ -44,7 +45,7 @@ def create_schedule_info(session: Session, schedule_create: ScheduleCreate) -> S
         if schedule.repeat_type == 1:  # 매일
             create_schedule = True
         elif schedule.repeat_type == 2:  # 매주
-            repeat_days = eval(schedule.repeat_days)
+            repeat_days = json.loads(schedule.repeat_days.replace("'", '"').replace("True", "true").replace("False", "false"))
             weekday = current_date.weekday()
             weekday_map = {
                 0: "mon",
@@ -152,11 +153,11 @@ def update_schedule_info(
         schedule_list.teacher_username = schedule_update.teacher_username
         schedule_list.client_id = schedule_update.client_id
         schedule_list.program_id = schedule_update.program_id
-        schedule_list.schedule_time = schedule.start_time
-        schedule_list.schedule_finish_time = schedule.finish_time
+        schedule_list.schedule_time = schedule_update.start_time or schedule_list.schedule_time
+        schedule_list.schedule_finish_time = schedule_update.finish_time or schedule_list.schedule_finish_time
         schedule_list.schedule_memo = schedule_update.memo or ""
         schedule_list.schedule_status = schedule_update.schedule_status
-        schedule_list.updated_by = schedule.updated_by
+        schedule_list.updated_by = schedule_update.updated_by or schedule.updated_by
 
         session.add(schedule_list)
         session.commit()
@@ -168,7 +169,7 @@ def update_schedule_info(
     for key, value in update_data.items():
         if key in schedule_fields:
             if key == "repeat_days" and isinstance(value, dict):
-                value = str(value)
+                value = json.dumps(value)
             setattr(schedule, key, value)
 
     schedule.finish_date = schedule_update.finish_date
@@ -198,7 +199,7 @@ def update_schedule_info(
         if schedule.repeat_type == 1:
             create_schedule = True
         elif schedule.repeat_type == 2:
-            repeat_days = eval(schedule.repeat_days)
+            repeat_days = json.loads(schedule.repeat_days.replace("'", '"').replace("True", "true").replace("False", "false"))
             weekday = current_date.weekday()
             weekday_map = {
                 0: "mon",
@@ -252,18 +253,26 @@ def delete_schedule_info(
             session.commit()
             return schedule
     else:
-        # 오늘 날짜 이후의 schedule_list 항목 삭제
-        today = datetime.now().date()
-        session.exec(
+        # 선택한 일정 날짜 이후의 schedule_list 항목 삭제
+        selected_list = session.get(ScheduleList, schedule_list_id)
+        target_date = selected_list.schedule_date if selected_list else datetime.now().date()
+
+        future_items = session.exec(
             select(ScheduleList)
             .where(ScheduleList.schedule_id == schedule.id)
-            .where(ScheduleList.schedule_date >= today)
-            .delete()
-        )
-
-        # schedule 삭제
-        session.delete(schedule)
+            .where(ScheduleList.schedule_date >= target_date)
+        ).all()
+        for item in future_items:
+            session.delete(item)
         session.commit()
+
+        # 남은 schedule_list가 없으면 부모 schedule도 삭제
+        remaining = session.exec(
+            select(ScheduleList).where(ScheduleList.schedule_id == schedule.id)
+        ).all()
+        if not remaining:
+            session.delete(schedule)
+            session.commit()
 
         return schedule
 
