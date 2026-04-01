@@ -34,19 +34,20 @@ export default [
         name: 'Client',
         component: () => import('@/views/ClientList.vue')
       },
-      // 상담장 관리
+      // 상담사 관리 - 센터장/관리자만 접근
       {
         path: 'counselor',
         name: 'Counselor',
-        component: () => import('@/views/UserList.vue')
+        component: () => import('@/views/UserList.vue'),
+        meta: { allowedRoles: ['admin', 'center'] }
       },
-      // 일별일정
+      // 주간일정
       {
         path: 'weekly',
         name: 'Weekly',
         component: () => import('@/views/WeeklyView.vue')
       },
-      // 월별일정
+      // 월간일정
       {
         path: 'monthly',
         name: 'Monthly',

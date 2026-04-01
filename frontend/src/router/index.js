@@ -1,4 +1,5 @@
 import { isLogin } from '@/utils/token'
+import { useUserStore } from '@/stores/auth'
 import { createRouter, createWebHistory } from 'vue-router'
 import adminRoutes from './admin'
 import commonRoutes from './common'
@@ -44,9 +45,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isLogin()) {
     next({ name: 'Login' })
-  } else {
-    next()
+    return
   }
+
+  const allowedRoles = to.meta.allowedRoles || to.matched.find(r => r.meta.allowedRoles)?.meta.allowedRoles
+  if (allowedRoles) {
+    const userStore = useUserStore()
+    if (!userStore.role || !allowedRoles.includes(userStore.role)) {
+      next({ name: 'Weekly' })
+      return
+    }
+  }
+
+  next()
 })
 
 export default router

@@ -26,7 +26,7 @@
         >
       </div>
     </div>
-    <div class="mt-5 flex lg:ml-4 lg:mt-0">
+    <div v-if="canManage" class="mt-5 flex lg:ml-4 lg:mt-0">
       <span class="sm:ml-3">
         <button
           type="button"
@@ -58,17 +58,17 @@
           <td class="px-6 py-4">{{ program.is_all_teachers ? '전체' : program.teacher?.full_name }}</td>
           <td class="px-6 py-4">{{ program.created_at }}</td>
           <td class="px-6 py-4">
-            <div class="flex items-center space-x-2">
-              <a 
-                href="#" 
-                @click.prevent="toggleForm(program.id)" 
+            <div v-if="canManage" class="flex items-center space-x-2">
+              <a
+                href="#"
+                @click.prevent="toggleForm(program.id)"
                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
               >
                 수정
               </a>
-              <a 
-                href="#" 
-                @click.prevent="handleDelete(program.id)" 
+              <a
+                href="#"
+                @click.prevent="handleDelete(program.id)"
                 class="font-medium text-red-600 dark:text-red-500 hover:underline"
               >
                 삭제
@@ -88,12 +88,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import ProgramFormSliding from './ProgramFormSliding.vue'
 import { readPrograms, deleteProgram } from '@/api/program'
+import { useUserStore } from '@/stores/auth'
 
 const showModal = inject('showModal')
+const userStore = useUserStore()
+const canManage = computed(() => userStore.role === 'admin' || userStore.role === 'center')
 
 const isFormVisible = ref(false)
 const selectedProgramId = ref('')

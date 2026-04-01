@@ -30,11 +30,13 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response) {
       if (error.response.status === 401) {
-        // Unauthorized access, redirect to login
+        const requestUrl = error.config?.url || ''
+        if (requestUrl.includes('/auth/login')) {
+          return Promise.reject(error)
+        }
         logoutApp()
         window.location.href = '/login'
       }
-      // Handle other status codes as needed
     }
     return Promise.reject(error)
   }
