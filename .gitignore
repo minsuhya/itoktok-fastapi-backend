@@ -4,6 +4,8 @@
 ### Custom
 mysql/data
 .src/
+frontend/dist/
+mobile/dist/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

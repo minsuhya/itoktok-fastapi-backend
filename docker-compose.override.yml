@@ -1,0 +1,46 @@
+---
+services:
+  # nginx 비활성화 (로컬에서는 사용하지 않음)
+  nginx:
+    profiles:
+      - prod
+
+  # API: 소스 마운트 + 핫 리로드
+  api:
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
+    volumes:
+      - ./backend/app:/backend/app
+      - ./backend/tests:/backend/tests
+      - ./data:/data
+
+  # Frontend: Vite 개발 서버 (HMR)
+  frontend:
+    image: node:22-alpine
+    container_name: std-frontend
+    working_dir: /app
+    command: sh -c "npm install -g pnpm && pnpm install && pnpm dev"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - std-net
+
+  # Mobile: Expo 개발 서버 (HMR)
+  mobile:
+    image: node:22-alpine
+    container_name: std-mobile
+    working_dir: /app
+    command: sh -c "npm install && npx expo start --web --host 0.0.0.0 --port 8081"
+    volumes:
+      - ./mobile:/app
+      - /app/node_modules
+    ports:
+      - "8081:8081"
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - std-net
