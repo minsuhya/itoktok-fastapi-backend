@@ -27,25 +27,28 @@ ITokTok은 아동 심리 상담센터를 위한 종합 관리 시스템입니다
 
 ### Docker Compose 실행
 
-**프로덕션 모드:**
+**로컬 개발:**
 ```bash
 docker compose up -d
+# API: http://localhost:3000
+# API Docs: http://localhost:3000/docs
+# Frontend (Vite HMR): http://localhost:5173
+# Mobile Web (Expo HMR): http://localhost:8081
+```
+
+**운영:**
+```bash
+docker compose -f docker-compose.yml up -d
 # Frontend: http://itoktok-www.gillilab.com:8082
+# Mobile: http://itoktok-m.gillilab.com:8082
 # Backend API: http://itoktok-api.gillilab.com:8082
 # API Docs: http://localhost:3000/docs
 ```
 
-**개발 모드:**
-```bash
-docker compose -f docker-compose.dev.yml up -d
-# Frontend: http://localhost:2080
-# Backend API: http://localhost:3000
-# API Docs: http://localhost:3000/docs
-```
-
 **참고:**
+- 로컬: `docker-compose.override.yml`이 자동 병합되어 nginx 비활성, HMR 활성화
+- 운영: `-f docker-compose.yml`로 base만 사용, nginx가 정적 파일 서빙
 - 데이터베이스는 외부 MySQL 서버(AWS RDS)를 사용 (`.env`의 `CONN_URL`로 설정)
-- docker-compose의 MariaDB/PostgreSQL/MongoDB는 주석 처리되어 있음
 
 ## 백엔드 개발 (FastAPI)
 
@@ -190,9 +193,11 @@ frontend/src/
 - **UserFormSliding**: 사용자 등록/수정
 - **ClientFormSliding**: 내담자 등록/수정
 
-### 모바일 버전
+### 모바일 버전 (Expo)
 
-모바일은 Expo 프레임워크로 신규 구축 예정이며, 현 저장소에는 포함하지 않는다.
+모바일은 Expo 프레임워크로 구축 중이며, `mobile/` 디렉토리에 위치합니다.
+로컬 개발 시 `docker compose up`으로 Expo 웹 개발 서버가 http://localhost:8081 에서 실행됩니다.
+운영 시 `npx expo export --platform web`으로 빌드한 결과물이 nginx를 통해 서빙됩니다.
 
 ## 환경 변수
 
@@ -265,13 +270,13 @@ itoktok/
 │   ├── .env.development       # 개발 환경 변수
 │   ├── .env.production        # 프로덕션 환경 변수
 │   ├── package.json           # pnpm 의존성
+├── mobile/                     # Expo 모바일 (React Native)
 ├── conf/                       # Nginx 설정 파일
-│   ├── nginx.conf             # 프로덕션 설정
-│   └── nginx.dev.conf         # 개발 설정
+│   └── nginx.conf             # 운영 설정
 ├── data/                       # 데이터 파일
 ├── .env                        # 백엔드 환경 변수
-├── docker-compose.yml          # 프로덕션 Docker Compose
-└── docker-compose.dev.yml      # 개발 Docker Compose
+├── docker-compose.yml          # 운영 Docker Compose
+└── docker-compose.override.yml # 로컬 개발 Docker Compose (자동 병합)
 ```
 
 ## 비즈니스 로직 핵심
@@ -307,7 +312,7 @@ itoktok/
 ### 백엔드 작업
 
 1. `.env` 파일에 데이터베이스 연결 정보 설정
-2. Docker Compose로 백엔드 실행: `docker compose -f docker-compose.dev.yml up -d api`
+2. Docker Compose로 전체 스택 실행: `docker compose up -d`
 3. 또는 로컬 개발: `cd backend && poetry run uvicorn app.main:app --reload`
 4. API 문서 확인: http://localhost:3000/docs
 5. 테스트 실행: `cd backend && poetry run pytest tests`
@@ -321,9 +326,8 @@ itoktok/
 3. 데스크톱: http://localhost:5173
 
 **Docker 개발:**
-1. `pnpm build`로 빌드
-2. `docker compose -f docker-compose.dev.yml up -d` 실행
-3. http://localhost:2080 접속
+1. `docker compose up -d` 실행 (frontend 서비스 자동 포함)
+2. http://localhost:5173 접속 (Vite HMR 활성)
 
 **배포 전 체크리스트:**
 1. `pnpm lint` - ESLint 검사
@@ -404,37 +408,38 @@ pnpm format
 
 ```bash
 # 1. 프론트엔드 빌드
-cd frontend
-pnpm build
+cd frontend && pnpm build && cd ..
 
-# 2. Docker Compose로 전체 스택 실행
-cd ..
-docker compose up -d
+# 2. 모바일 웹 빌드
+cd mobile && npx expo export --platform web && cd ..
 
-# 3. 서비스 확인
-docker compose ps
-docker compose logs -f  # 로그 확인
+# 3. Docker Compose로 운영 스택 실행
+docker compose -f docker-compose.yml up -d
+
+# 4. 서비스 확인
+docker compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml logs -f
 ```
 
 ### 배포 후 확인 사항
 
 1. **데스크톱 버전**: http://itoktok-www.gillilab.com:8082 접속 확인
-2. **API 문서**: http://localhost:3000/docs 확인
-3. 로그인 및 주요 기능 동작 테스트
-4. 브라우저 콘솔에서 오류 확인
+2. **모바일 웹**: http://itoktok-m.gillilab.com:8082 접속 확인
+3. **API 문서**: http://localhost:3000/docs 확인
+4. 로그인 및 주요 기능 동작 테스트
+5. 브라우저 콘솔에서 오류 확인
 
 ### Nginx 설정
 
-Nginx는 도메인(server_name) 기반으로 API와 프론트엔드를 분리합니다.
+Nginx는 운영 환경에서만 사용되며, 도메인(server_name) 기반으로 서비스를 분리합니다.
 
-- **프로덕션**: `conf/nginx.conf`
+- **설정 파일**: `conf/nginx.conf`
   - 포트: 8082 (Host) → 80 (Container)
   - `itoktok-api.gillilab.com` → `std-api:3000` (API 프록시)
-  - `itoktok-www.gillilab.com` → `frontend/dist/` (정적 파일 서빙)
+  - `itoktok-www.gillilab.com` → `frontend/dist/` (데스크톱 정적 파일)
+  - `itoktok-m.gillilab.com` → `mobile/dist/` (모바일 웹 정적 파일)
 
-- **개발**: `conf/nginx.dev.conf`
-  - 포트: 2080 (HTTP), 2443 (HTTPS)
-  - 동일한 구조, 개발용 설정
+- **로컬 개발**: nginx 미사용, 각 서비스 직접 접속
 
 ### Mac M1/M2 빌드 이슈
 
