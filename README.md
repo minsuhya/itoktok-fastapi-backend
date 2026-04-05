@@ -52,6 +52,11 @@
 - VeeValidate + Yup (폼 검증)
 - pnpm (패키지 관리)
 
+### Mobile
+- Expo SDK 54 (React Native)
+- expo-router (파일 기반 라우팅)
+- TypeScript
+
 ## 시스템 구성
 
 ### 사용자 등급 및 권한
@@ -140,10 +145,18 @@
 - tailwind.config.js: Tailwind CSS 설정
 - package.json: pnpm 의존성 관리
 
-### 기타 디렉토리
-- conf/: Nginx 설정 파일
+### Mobile (/mobile)
+- app/: Expo Router 페이지
+- components/: 재사용 컴포넌트
+- assets/: 이미지, 폰트
+- app.json: Expo 설정
+- package.json: npm 의존성 관리
+
+### 기타
+- conf/nginx.conf: Nginx 운영 설정 (3개 도메인 서빙)
 - data/: 데이터 파일
-- database/: 데이터베이스 관련 파일
+- docker-compose.yml: 운영 Docker Compose
+- docker-compose.override.yml: 로컬 개발 (자동 병합)
 
 ## 개발 환경 설정
 
@@ -165,18 +178,49 @@ pnpm install
 pnpm dev
 ```
 
-### Docker Compose
-```bash
-# 프로덕션
-docker compose up -d
+### Docker Compose (로컬 개발)
 
-# 개발
-docker compose -f docker-compose.dev.yml up -d
+```bash
+docker compose up -d
+```
+
+| 서비스 | URL |
+|--------|-----|
+| API | http://localhost:3000 |
+| API Docs | http://localhost:3000/docs |
+| Frontend (Vite HMR) | http://localhost:5173 |
+| Mobile Web (Expo HMR) | http://localhost:8081 |
+
+- `docker-compose.override.yml`이 자동 병합되어 nginx 비활성, HMR 활성화
+- 코드 변경 시 api, frontend, mobile 모두 즉시 반영
+
+### Docker Compose (운영)
+
+```bash
+# 프론트엔드/모바일 빌드 후 실행
+cd frontend && pnpm build && cd ..
+cd mobile && npx expo export --platform web && cd ..
+docker compose -f docker-compose.yml up -d
+```
+
+| 서비스 | URL |
+|--------|-----|
+| Frontend | http://itoktok-www.gillilab.com:8082 |
+| Mobile | http://itoktok-m.gillilab.com:8082 |
+| API | http://itoktok-api.gillilab.com:8082 |
+
+- Nginx가 도메인 기반으로 API 프록시 및 정적 파일 서빙
+- `-f docker-compose.yml`로 override 없이 base만 사용
+
+### Mac M1/M2 빌드
+
+```bash
+env DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
 ```
 
 ## 주의사항
-- .gitignore에 정의된 파일들은 버전 관리에서 제외
-- 환경별 설정 파일 확인 필요 (.env, .env.development, .env.production)
+- 환경별 설정 파일 확인 필요 (`.env`, `.env.development`, `.env.production`)
 - 데이터베이스는 외부 MySQL 서버 사용 (Docker 내 DB 없음)
 - 센터별 데이터 격리 필수
 - 개인정보 보호 정책 준수
+- `frontend/dist/`, `mobile/dist/`는 git에서 제외됨
