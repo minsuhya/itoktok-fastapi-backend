@@ -75,7 +75,7 @@ pnpm format
 
 `src/api/`의 모든 API 모듈은 중앙 집중식 구성으로 axios를 사용합니다:
 
-- **Base URL**: `VITE_API_BASE_URL` 환경 변수에서 설정
+- **Base URL**: `VITE_API_URL` 환경 변수에서 설정
 - **인터셉터** (`src/api/interceptors.js`):
   - Request: `Authorization: Bearer {token}` 헤더 자동 추가
   - Response: axios 응답에서 데이터 추출, 401(로그아웃 + 리다이렉트) 및 500 오류 처리
@@ -119,7 +119,7 @@ Yup 스키마 검증과 함께 VeeValidate 라이브러리 사용:
 
 필수 환경 변수:
 - `VITE_TOKEN_KEY`: JWT 토큰을 위한 localStorage 키
-- `VITE_API_BASE_URL`: 백엔드 API 기본 URL
+- `VITE_API_URL`: 백엔드 API 기본 URL
 
 ## 주요 기술적 결정
 

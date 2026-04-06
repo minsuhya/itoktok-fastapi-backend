@@ -201,9 +201,9 @@ frontend/src/
 
 ## 환경 변수
 
-### 백엔드 (.env)
+### 백엔드 (.env.development / .env.production)
 
-루트 디렉토리의 `.env` 파일:
+루트 디렉토리의 `.env.development` (로컬) / `.env.production` (운영) 파일:
 
 ```bash
 # MySQL/MariaDB 연결 (필수)
@@ -227,13 +227,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 **frontend/.env.development:**
 ```bash
-VITE_API_BASE_URL=http://localhost:2080
+VITE_API_URL=http://localhost:3000
 VITE_TOKEN_KEY=access_token
 ```
 
 **frontend/.env.production:**
 ```bash
-VITE_API_BASE_URL=http://itoktok-api.gillilab.com
+VITE_API_URL=https://itoktok-api.gillilab.com
 VITE_TOKEN_KEY=access_token
 ```
 
