@@ -7,6 +7,14 @@ mysql/data
 frontend/dist/
 mobile/dist/
 
+# 환경 설정 파일 (민감 정보)
+.env.development
+.env.production
+frontend/.env.development
+frontend/.env.production
+mobile/.env
+mobile/.env.production
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
